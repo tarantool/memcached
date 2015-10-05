@@ -7,7 +7,8 @@ box.cfg{
 
 local inst = require('memcached').create{
     name = 'memcached',
-    uri  = os.getenv('LISTEN'):match(':(.*)')
+    uri  = os.getenv('LISTEN'):match(':(.*)'),
+    expire_full_scan_time = 1
 }
 
 require('console').listen(os.getenv('ADMIN'))

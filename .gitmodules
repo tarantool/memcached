@@ -4,3 +4,6 @@
 [submodule "test-run"]
 	path = test-run
 	url = https://github.com/tarantool/test-run.git
+[submodule "third_party/memtier"]
+	path = third_party/memtier
+	url = https://github.com/RedisLabs/memtier_benchmark.git

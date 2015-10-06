@@ -5,6 +5,7 @@ CMakeFiles
 memcapable
 memaslap
 memslap
+memtier_benchmark
 .*.swp
 *~
 test/var

@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))
 from internal.memcached_connection import MemcachedBinaryConnection
 from internal.memcached_connection import STATUS, COMMANDS
 
-mc = MemcachedBinaryConnection("localhost", iproto.py_con.port)
+mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
 
 def iequal(left, right, level = 1):
     if (left != right):
@@ -79,18 +79,6 @@ check("i", 5, "ex")
 res = mc.add("i", "ex2", 10, 5)
 iequal(res[0]['status'], STATUS['KEY_EEXISTS'])
 check("i", 5, "ex")
-
-print("""#-----------------------------------------------------------------------------#
-################################# Toobig Tests ################################
-#-----------------------------------------------------------------------------#""")
-
-# Toobig tests
-empty("toobig")
-mc.set("toobig", "not too big", 10, 10)
-val = "x" * 1024*1024*2
-res = mc.set("toobig", val, 10, 10);
-iequal(res[0]['status'], STATUS['E2BIG'])
-check("toobig", 10, "not too big")
 
 print("""#-----------------------------------------------------------------------------#
 ############################# Diagnostics REPLACE #############################

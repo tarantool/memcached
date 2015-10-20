@@ -5,10 +5,10 @@ box.cfg{
     slab_alloc_arena = 0.1,
 }
 
-local inst = require('memcached').create{
-    name = 'memcached',
-    uri  = os.getenv('LISTEN'):match(':(.*)')
-}
+local inst = require('memcached').create(
+    'memcached',
+    os.getenv('LISTEN'):match(':(.*)')
+)
 
 require('console').listen(os.getenv('ADMIN'))
 

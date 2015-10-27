@@ -80,6 +80,7 @@ memcached_skip_request(struct memcached_connection *con) {
 
 static inline int
 memcached_loop_process(struct memcached_connection *con) {
+	int rv = 0;
 	if (con->noprocess)
 		goto noprocess;
 	/* Process message */
@@ -88,7 +89,6 @@ memcached_loop_process(struct memcached_connection *con) {
 		box_txn_begin();
 		con->txn = 1;
 	}
-	int rv = 0;
 	if (con->hdr->cmd < MEMCACHED_BIN_CMD_MAX) {
 		rv = mc_handler[con->hdr->cmd](con);
 		if (box_txn()) box_txn_commit();
@@ -237,9 +237,14 @@ memcached_loop_error(struct memcached_connection *con) {
 }
 
 static inline void
+memcached_connection_flush()
+{
+}
+
+static inline void
 memcached_loop(struct memcached_connection *con)
 {
-	int rc = 0, rv = 0;
+	int rc = 0;
 	size_t to_read = 24;
 	int batch_count = 0;
 
@@ -254,6 +259,8 @@ memcached_loop(struct memcached_connection *con)
 		}
 		to_read = 24;
 next:
+		con->noreply = false;
+		con->noprocess = false;
 		rc = memcached_loop_parse(con);
 		if (rc == -1) {
 			memcached_loop_error(con);
@@ -271,7 +278,7 @@ next:
 		}
 		assert(!con->close_connection);
 		rc = memcached_loop_process(con);
-		if (rv == -1)
+		if (rc == -1)
 			memcached_loop_error(con);
 		if (con->close_connection) {
 			say_debug("Requesting exit. Exiting.");
@@ -285,8 +292,6 @@ next:
 		/* Write back answer */
 		if (!con->noreply)
 			memcached_flush(con);
-		con->noreply = false;
-		con->noprocess = false;
 		continue;
 	}
 	memcached_flush(con);

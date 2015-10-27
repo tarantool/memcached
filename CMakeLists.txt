@@ -16,16 +16,19 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 
+if(NOT INSTALL_LOCAL)
+    set(INSTALL_LOCAL False)
+endif()
+
 # Find Tarantool and Lua dependecies
 set(TARANTOOL_FIND_REQUIRED ON)
-# find_package(Tarantool)
 include_directories(${TARANTOOL_INCLUDEDIR})
 
 # Find other dependecies
 
 # Set CFLAGS
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=c11 -D_GNU_SOURCE")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fPIC -std=c11 -Wall -Wextra -D_GNU_SOURCE")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fPIC -std=c11 -Wall -Wextra -D_GNU_SOURCE -g -ggdb3")
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small)
 

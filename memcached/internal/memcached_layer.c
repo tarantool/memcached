@@ -969,10 +969,20 @@ static inline int
 stat_append(struct memcached_connection *con, const char *key,
 	    const char *valfmt, ...)
 {
-	size_t key_len = strlen(key);
-	va_list va; va_start(va, valfmt);
-	char val[256] = {0};
-	size_t val_len = vsnprintf(val, 256, valfmt, va);
+	size_t key_len = 0;
+	if (key) key_len = strlen(key);
+	size_t val_len = 0;
+	char val_tmp[256] = {0};
+	char *val = NULL;
+	if (valfmt) {
+		va_list va;
+		va_start(va, valfmt);
+		val_len = vsnprintf(val_tmp, 256, valfmt, va);
+		va_end(va);
+		val = val_tmp;
+	} else {
+		val = NULL;
+	}
 	if (write_output(con, 0, 0, 0, key_len,
 			 val_len, NULL, key, val) == -1)
 		return -1;
@@ -1052,7 +1062,7 @@ memcached_bin_process_stat(struct memcached_connection *con)
 		return -1;
 	}
 	/* finish */
-	stat_append(con, "", "");
+	stat_append(con, NULL, NULL);
 	return 0;
 }
 

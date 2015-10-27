@@ -8,6 +8,8 @@ local log    = require('log')
 
 local fmt = string.format
 
+ffi.load(package.searchpath('memcached.internal', package.cpath), true)
+
 ffi.cdef[[
 struct memcached_stat {
     /* connection informations */

@@ -36,11 +36,11 @@
 #include <small/ibuf.h>
 #include <small/obuf.h>
 
-#include "box/memcached.h"
-#include "box/memcached_layer.h"
+#include "memcached.h"
+#include "memcached_layer.h"
 
-#include "box/memcached_network.h"
-#include "box/memcached_persistent.h"
+#include "memcached_network.h"
+#include "memcached_persistent.h"
 
 
 static inline int
@@ -211,7 +211,7 @@ memcached_loop_read(struct memcached_connection *con, size_t to_read)
 		return -1;
 	}
 	ssize_t read = mnet_read_ibuf(con->fd, con->in, to_read);
-	if (read < to_read) {
+	if (read < (ssize_t )to_read) {
 		return -1;
 	}
 	con->cfg->stat.bytes_read += read;

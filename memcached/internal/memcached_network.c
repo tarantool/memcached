@@ -65,7 +65,7 @@ iobuf_delete(struct ibuf *ibuf, struct obuf *obuf)
 	mempool_free(&obuf_pool, obuf);
 }
 
-ssize_t
+size_t
 mnet_writev(int fd, struct iovec *iov, int iovcnt, size_t size_hint)
 {
 	size_t iov_len = 0;
@@ -95,7 +95,7 @@ mnet_writev(int fd, struct iovec *iov, int iovcnt, size_t size_hint)
 	}
 }
 
-ssize_t
+size_t
 mnet_write(int fd, void *buf, size_t sz)
 {
 	size_t written = 0;
@@ -115,7 +115,7 @@ mnet_write(int fd, void *buf, size_t sz)
 	}
 }
 
-ssize_t
+size_t
 mnet_read_ahead(int fd, void *buf, size_t bufsz, size_t sz)
 {
 	size_t total = 0;
@@ -139,7 +139,7 @@ mnet_read_ahead(int fd, void *buf, size_t bufsz, size_t sz)
 	}
 }
 
-ssize_t
+size_t
 mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz)
 {
 	if (ibuf_reserve_nothrow(buf, sz) == NULL) {

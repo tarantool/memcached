@@ -13,6 +13,8 @@ find_path(_dir tarantool.h
   PATH_SUFFIXES include/tarantool
 )
 
+message(STATUS "PATH: ${_dir}")
+
 if (_dir)
     set(_config "-")
     file(READ "${_dir}/tarantool.h" _config0)
@@ -20,7 +22,9 @@ if (_dir)
     unset(_config0)
     extract_definition(PACKAGE_VERSION TARANTOOL_VERSION ${_config})
     extract_definition(INSTALL_PREFIX TARANTOOL_INSTALL_PREFIX ${_config})
-    extract_definition(MODULE_INCLUDEDIR TARANTOOL_INCLUDEDIR ${_config})
+    #    extract_definition(MODULE_INCLUDEDIR TARANTOOL_INCLUDEDIR ${_config})
+    set (TARANTOOL_INCLUDEDIR ${_dir})
+    set (MODULE_INCLUDEDIR ${_dir})
     unset(_config)
 endif (_dir)
 unset (_dir)

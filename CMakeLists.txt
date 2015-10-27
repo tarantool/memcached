@@ -4,13 +4,15 @@ include(cmake/BuildLibmemcached.cmake)
 include(cmake/BuildMemtier.cmake)
 include(cmake/FindTarantool.cmake)
 
+include_directories(${CMAKE_SOURCE_DIR}/third_party)
+
 libmemcached_build()
      memtier_build()
 
-project(memcached C CXX) # uncomment for C++
+project(memcached C)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebugInfo)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 
@@ -22,17 +24,16 @@ include_directories(${TARANTOOL_INCLUDEDIR})
 # Find other dependecies
 
 # Set CFLAGS
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra")
-# Set CXXFLAGS (uncomment for C++)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=c11 -D_GNU_SOURCE")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fPIC -std=c11 -Wall -Wextra -D_GNU_SOURCE")
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small)
 
 # Build module
 add_subdirectory(memcached)
 
 # Add `make test`
 if(POLICY CMP0037)
-cmake_policy(SET CMP0037 OLD) # don't blame `test` target name
+    cmake_policy(SET CMP0037 OLD) # don't blame `test` target name
 endif(POLICY CMP0037)
-add_custom_target(test COMMAND ${PROJECT_SOURCE_DIR}/test/test-run.py)
+add_subdirectory(test)

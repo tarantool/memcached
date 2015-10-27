@@ -58,23 +58,23 @@ struct memcached_stat {
 
 struct memcached_service {
 	/* expiration configuration */
-	struct fiber         *expire_fiber;
-	bool                  expire_enabled;
-	uint32_t              expire_count;
-	uint32_t              expire_time;
+	struct fiber *expire_fiber;
+	bool          expire_enabled;
+	int           expire_count;
+	uint32_t      expire_time;
 	/* flush */
-	bool                  flush_enabled;
-	uint32_t              batch_count;
+	bool          flush_enabled;
+	int           batch_count;
 	/* configurable */
-	int                   readahead;
-	const char           *uri;
-	const char           *name;
-	uint32_t              space_id;
+	int           readahead;
+	const char   *uri;
+	const char   *name;
+	uint32_t      space_id;
 	/* properties */
-	uint64_t              cas;
-	uint64_t              flush;
+	uint64_t      cas;
+	uint64_t      flush;
+	int           verbosity;
 	struct memcached_stat stat;
-	int                   verbosity;
 };
 
 /**

@@ -17,6 +17,9 @@ def iequal(left, right, level = 1):
         tb = traceback.extract_stack()[-(level + 1)]
         print "Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
                 repr(left), repr(right))
+        if (isinstance(left, basestring)):
+            if (len(left) != len(right)):
+                print("length is different")
         return False
     return True
 

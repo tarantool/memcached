@@ -5,20 +5,20 @@
 
 #include <small/ibuf.h>
 
-ssize_t
+size_t
 mnet_writev(int fd, struct iovec *iov, int iovcnt, size_t size_hint);
 
-ssize_t
+size_t
 mnet_write(int fd, void *buf, size_t sz);
 
-ssize_t
+size_t
 mnet_read_ahead(int fd, void *buf, size_t bufsz, size_t sz);
 
-ssize_t
+size_t
 mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz);
 
 static inline int
-mnet_move_iov(struct iovec *iov, ssize_t nwr, size_t *iov_len)
+mnet_move_iov(struct iovec *iov, size_t nwr, size_t *iov_len)
 {
 	nwr += *iov_len;
 	struct iovec *begin = iov;

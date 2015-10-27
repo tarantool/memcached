@@ -1,12 +1,15 @@
-add_library(imemcached SHARED
-            memcached_constants.c
-            memcached_layer.c
-            memcached_network.c
-            memcached_persistent.c
-            memcached.c
+add_library(internalso SHARED
+        "internal/memcached_constants.c"
+        "internal/memcached_layer.c"
+        "internal/memcached_network.c"
+        "internal/memcached_persistent.c"
+        "internal/memcached.c"
 )
-set_target_properties(imemcached PROPERTIES PREFIX "" OUTPUT_NAME "imemcached")
+
+target_link_libraries(internalso small)
+
+set_target_properties(internalso PROPERTIES PREFIX "" OUTPUT_NAME "internal")
 
 # Install module
 install(FILES memcached.lua DESTINATION ${TARANTOOL_LUADIR}/${PROJECT_NAME}/)
-install(TARGETS imemcached LIBRARY DESTINATION ${TARANTOOL_LIBDIR}/${PROJECT_NAME}/)
+install(TARGETS  internalso LIBRARY DESTINATION ${TARANTOOL_LIBDIR}/${PROJECT_NAME}/)

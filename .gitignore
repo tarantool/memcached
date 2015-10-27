@@ -11,3 +11,6 @@ memtier_benchmark
 test/var
 *.pyc
 *.reject
+00000*
+*.so
+*.dylib

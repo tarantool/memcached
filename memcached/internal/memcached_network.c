@@ -41,7 +41,7 @@ iobuf_mempool_destroy()
 struct ibuf *
 ibuf_new()
 {
-	void *ibuf = mempool_alloc_nothrow(&ibuf_pool);
+	void *ibuf = mempool_alloc(&ibuf_pool);
 	if (ibuf == NULL) return NULL;
 	ibuf_create((struct ibuf *)ibuf, cord_slab_cache(), iobuf_readahead);
 	return ibuf;
@@ -50,7 +50,7 @@ ibuf_new()
 struct obuf *
 obuf_new()
 {
-	void *obuf = mempool_alloc_nothrow(&obuf_pool);
+	void *obuf = mempool_alloc(&obuf_pool);
 	if (obuf == NULL) return NULL;
 	obuf_create((struct obuf *)obuf, cord_slab_cache(), iobuf_readahead);
 	return obuf;
@@ -142,7 +142,7 @@ mnet_read_ahead(int fd, void *buf, size_t bufsz, size_t sz)
 size_t
 mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz)
 {
-	if (ibuf_reserve_nothrow(buf, sz) == NULL) {
+	if (ibuf_reserve(buf, sz) == NULL) {
 		memcached_error_ENOMEM(sz, "mnet_read_ibuf", "ibuf");
 		return -1;
 	}

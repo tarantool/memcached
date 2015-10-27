@@ -198,7 +198,7 @@ memcached_flush(struct memcached_connection *con) {
 	if (ibuf_used(con->in) == 0)
 		ibuf_reset(con->in);
 	obuf_reset(con->out);
-	if (ibuf_reserve_nothrow(con->in, con->cfg->readahead) == NULL)
+	if (ibuf_reserve(con->in, con->cfg->readahead) == NULL)
 		return -1;
 	return total;
 }
@@ -206,7 +206,7 @@ memcached_flush(struct memcached_connection *con) {
 static inline int
 memcached_loop_read(struct memcached_connection *con, size_t to_read)
 {
-	if (ibuf_reserve_nothrow(con->in, to_read) == NULL) {
+	if (ibuf_reserve(con->in, to_read) == NULL) {
 /*		memcached_error_ENOMEM(to_read,"memcached_loop_read","ibuf");*/
 		return -1;
 	}
@@ -407,7 +407,7 @@ memcached_expire_start(struct memcached_service *p)
 	struct fiber *expire_fiber = NULL;
 	char name[128];
 	snprintf(name, 128, "%s_memcached_expire", p->name);
-	expire_fiber = fiber_new_nothrow(name, memcached_expire_loop);
+	expire_fiber = fiber_new(name, memcached_expire_loop);
 	const box_error_t *err = box_error_last();
 	if (err) {
 		say_error("Can't start the expire fiber");

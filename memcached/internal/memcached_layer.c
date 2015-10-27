@@ -121,23 +121,23 @@ write_output(struct memcached_connection *con, uint16_t err, uint64_t cas,
 	hdro.cas     = mp_bswap_u64(cas);
 	size_t to_alloc = ext_len + key_len + val_len +
 			sizeof(struct memcached_hdr);
-	if (obuf_reserve_nothrow(out, to_alloc) == NULL) {
+	if (obuf_reserve(out, to_alloc) == NULL) {
 		memcached_error_ENOMEM(to_alloc,"write_output","obuf");
 		return -1;
 	}
 	size_t rv = 0;
-	rv = obuf_dup_nothrow(out, &hdro, sizeof(struct memcached_hdr));
+	rv = obuf_dup(out, &hdro, sizeof(struct memcached_hdr));
 	assert(rv == sizeof(struct memcached_hdr));
 	if (ext) {
-		rv = obuf_dup_nothrow(out, ext, ext_len);
+		rv = obuf_dup(out, ext, ext_len);
 		assert(rv == ext_len);
 	}
 	if (key) {
-		rv = obuf_dup_nothrow(out, key, key_len);
+		rv = obuf_dup(out, key, key_len);
 		assert(rv == key_len);
 	}
 	if (val) {
-		rv = obuf_dup_nothrow(out, val, val_len);
+		rv = obuf_dup(out, val, val_len);
 		assert(rv == val_len);
 	}
 	return 0;

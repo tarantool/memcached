@@ -1,14 +1,9 @@
 #!/usr/bin/env tarantool
 
--- local mc = require('memcached')
-
-require('log').info(
-    require('yaml').encode({pcall(require, 'mc')}))
-
-
-require('log').info('%s', tostring(mc))
-
-box.cfg{}
+box.cfg{
+    wal_mode = 'none',
+    slab_alloc_arena = 0.1,
+}
 
 local inst = require('memcached').create('memcached',
     os.getenv('LISTEN'):match(':(.*)'), {

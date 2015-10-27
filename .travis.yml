@@ -1,0 +1,26 @@
+language: c
+
+sudo: false
+
+compiler:
+  - gcc
+
+cache:
+  directories:
+    - $HOME/tarantool-1.6
+
+before_install:
+  - git submodule update --init --recursive
+
+before_script:
+  - travis/install-tarantool.sh
+  - pip install --user geventconnpool python-daemon PyYAML
+  - pip install --user six==1.9.0 msgpack-python gevent
+
+script:
+  - TARANTOOL_DIR="$HOME/local/include/tarantool" cmake . -DCMAKE_BUILD_TYPE=Release
+  - PATH="$HOME/local/bin/:$PATH" make test-memcached
+  - ls -al test/var/
+  - cat test/var/binary.log
+  - cat test/var/tarantool.log
+  - PATH="$HOME/local/bin/:$PATH" make test-memcached-capable

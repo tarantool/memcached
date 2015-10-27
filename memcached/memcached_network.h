@@ -14,14 +14,8 @@ mnet_write(int fd, void *buf, size_t sz);
 ssize_t
 mnet_read_ahead(int fd, void *buf, size_t bufsz, size_t sz);
 
-static inline ssize_t
-mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz)
-{
-	ibuf_reserve(buf, sz);
-	ssize_t n = mnet_read_ahead(fd, buf->wpos, ibuf_unused(buf), sz);
-	buf->wpos += n;
-	return n;
-}
+ssize_t
+mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz);
 
 static inline int
 mnet_move_iov(struct iovec *iov, ssize_t nwr, size_t *iov_len)
@@ -42,5 +36,20 @@ mnet_add_to_iov(struct iovec *iov, ssize_t size)
 	iov->iov_len += size;
 	iov->iov_base = (char *) iov->iov_base - size;
 }
+
+void
+iobuf_mempool_create();
+
+void
+iobuf_mempool_destroy();
+
+struct ibuf *
+ibuf_new();
+
+struct obuf *
+obuf_new();
+
+void
+iobuf_delete(struct ibuf *ibuf, struct obuf *obuf);
 
 #endif /* TARANTOOL_MEMCACHED_NETWORK_H_INCLUDED */

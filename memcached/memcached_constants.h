@@ -59,8 +59,18 @@ enum memcached_binary_response {
 	MEMCACHED_BIN_RES_NOT_SUPPORTED   = 0x83,
 	MEMCACHED_BIN_RES_SERVER_ERROR    = 0x84, /* No in memc */
 	MEMCACHED_BIN_RES_EBUSY           = 0x85, /* No in memc */
-	MEMCACHED_BIN_RES_EAGAIN          = 0x86  /* No in memc */
+	MEMCACHED_BIN_RES_EAGAIN          = 0x86, /* No in memc */
+	MEMCACHED_BIN_RES_MAX
 };
+
+extern const char *memcached_binary_res_title[];
+
+static inline const char *
+memcached_get_result_title(uint32_t res) {
+	if (res >= MEMCACHED_BIN_RES_MAX)
+		return NULL;
+	return memcached_binary_res_title[res];
+}
 
 enum memcached_binary_cmd {
 	MEMCACHED_BIN_CMD_GET      = 0x00,

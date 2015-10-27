@@ -1,8 +1,9 @@
 add_library(imemcached SHARED
-            memcached_constants.cc
-            memcached_layer.cc
-            memcached_network.cc
-            memcached.cc
+            memcached_constants.c
+            memcached_layer.c
+            memcached_network.c
+            memcached_persistent.c
+            memcached.c
 )
 set_target_properties(imemcached PROPERTIES PREFIX "" OUTPUT_NAME "imemcached")
 

@@ -161,6 +161,12 @@ write_output_ok_empty(struct memcached_connection *con)
 }
 
 static inline int
+write_output_ok_cas(struct memcached_connection *con, uint64_t cas)
+{
+	return write_output_ok(con, cas, 0, 0, 0, NULL, NULL, NULL);
+}
+
+static inline int
 memcached_replace_tuple(struct memcached_connection *con,
 			const char *kpos, uint32_t klen, uint64_t expire,
 			const char *vpos, uint32_t vlen, uint64_t cas,
@@ -312,7 +318,7 @@ memcached_bin_process_set(struct memcached_connection *con)
 
 	if (memcached_package_verify(con, 1, 1, 1,
 			sizeof(struct memcached_set_ext)) == -1)
-		return 0;
+		return -1;
 	
 	int cmd = 0;
 	switch (h->cmd) {
@@ -406,7 +412,7 @@ memcached_bin_process_set(struct memcached_connection *con)
 				    con->cfg->space_id) == -1) {
 		box_txn_rollback();
 		return -1;
-	} else if (!con->noreply && write_output_ok_empty(con) == -1) {
+	} else if (!con->noreply && write_output_ok_cas(con, new_cas) == -1) {
 		return -1;
 	}
 	return 0;
@@ -422,7 +428,7 @@ memcached_bin_process_get(struct memcached_connection *con)
 	con->cfg->stat.cmd_get++;
 
 	if (memcached_package_verify(con, -1, 1, -1, 0) == -1)
-		return 0;
+		return -1;
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s '%.*s'", memcached_get_command_name(h->cmd),
@@ -696,7 +702,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 		con->cfg->stat.touch_misses++;
 		if (!con->noreply) {
 			memcached_error_KEY_ENOENT();
-			return 0;
+			return -1;
 		}
 		return 0;
 	}
@@ -798,7 +804,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 	if (!tuple_exists || tuple_expired) {
 		if (expire == 0xFFFFFFFFLL) {
 			memcached_error_KEY_ENOENT();
-			return 0;
+			return -1;
 		}
 		if (!tuple_exists) con->cfg->stat.reclaimed++;
 		val = ext->initial;
@@ -807,7 +813,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 		vpos = mp_decode_str(&pos, &vlen);
 		if (!safe_strtoull(vpos, vpos + vlen, &val)) {
 			memcached_error_DELTA_BADVAL();
-			return 0;
+			return -1;
 		}
 		if (h->cmd == MEMCACHED_BIN_CMD_INCR ||
 		    h->cmd == MEMCACHED_BIN_CMD_INCRQ) {

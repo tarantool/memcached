@@ -1,11 +1,8 @@
 #!/bin/sh
 set -e
 set -o verbose
-# rm -rf $HOME/tarantool-1.6
+rm -rf $HOME/tarantool-1.6
 # check to see if tarantool folder is empty
-if [ -d "$HOME/tarantool-1.6" && ! -d "$HOME/tarantool-1.6/.git" ]; then
-    rm -rf $HOME/tarantool-1.6
-fi
 if [ ! -d "$HOME/tarantool-1.6" ]; then
   echo 'Getting and building';
   cd $HOME/ && git clone https://github.com/tarantool/tarantool.git tarantool-1.6 -b 1.6

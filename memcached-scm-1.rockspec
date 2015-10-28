@@ -24,6 +24,9 @@ external_dependencies = {
     TARANTOOL = {
         header = 'tarantool/tarantool.h'
     };
+    SMALL = {
+        header = 'small/slab_cache.h'
+    };
 }
 
 build = {
@@ -34,8 +37,12 @@ build = {
         ['memcached.internal'] = {
             incdirs = {
                 '$(TARANTOOL_INCDIR)/tarantool',
+                '$(SMALL_INCDIR)/small',
                 'third_party'
-            };
+            },
+            libraries = {
+                'small'
+            },
             sources = {
                 'memcached/internal/memcached.c',
                 'memcached/internal/memcached_constants.c',

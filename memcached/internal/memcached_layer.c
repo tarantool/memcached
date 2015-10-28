@@ -888,7 +888,7 @@ memcached_bin_process_pend(struct memcached_connection *con)
 
 	if (!tuple_exists || tuple_expired) {
 		memcached_error_KEY_ENOENT();
-		return 0;
+		return -1;
 	}
 
 	uint32_t vlen = 0, klen = 0;

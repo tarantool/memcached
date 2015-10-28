@@ -17,6 +17,10 @@
 #include "memcached_layer.h"
 #include "memcached_network.h"
 
+#ifndef IOV_MAX
+#define IOV_MAX UIO_MAXIOV
+#endif
+
 static __thread struct mempool ibuf_pool, obuf_pool;
 
 static int iobuf_readahead = 16320;

@@ -12,12 +12,6 @@ if [ ! -d "$HOME/tarantool-1.6" ]; then
   cd $HOME/tarantool-1.6 && git submodule update --init --recursive
   cd $HOME/tarantool-1.6 && cmake . -DCMAKE_INSTALL_PREFIX=$HOME/local && make && make install
 else
-  if [ ! -d "$HOME/tarantool-1.6/.git" ]; then
-    rm -rf $HOME/tarantool-1.6
-    cd $HOME/ && git clone https://github.com/tarantool/tarantool.git tarantool-1.6 -b 1.6
-    cd $HOME/tarantool-1.6 && git submodule update --init --recursive
-    cd $HOME/tarantool-1.6 && cmake . -DCMAKE_INSTALL_PREFIX=$HOME/local
-  fi
   echo 'Using cached directory.';
   cd $HOME/tarantool-1.6 && git pull
   cd $HOME/tarantool-1.6 && git submodule update --init --recursive

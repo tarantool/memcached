@@ -327,7 +327,8 @@ memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
 	box_iterator_t *iter = *iterp;
 	box_tuple_t *tpl = NULL;
 	box_txn_begin();
-	for (int i = 0; i < p->expire_count; ++i) {
+	int i = 0;
+	for (i = 0; i < p->expire_count; ++i) {
 		if (box_iterator_next(iter, &tpl) == -1) {
 			box_txn_rollback();
 			return -1;

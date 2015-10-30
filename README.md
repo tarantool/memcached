@@ -65,6 +65,6 @@ Now you're set up and ready to go!
 * *verbosity* - verbosity of memcached logging. default is 0.
 * ~~*flush_enabled* - flush command availability. default is true~~
 
-## Conclusion
+## Caution
 
-This product is in early beta, use it at you own risk.
+This rock is in early beta.

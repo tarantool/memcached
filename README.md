@@ -7,7 +7,7 @@ Memcached protocol 'wrapper' for tarantool.
 ### Prerequisites
 
  * Tarantol 1.6.7+ with header files (tarantool && tarantool-dev packages). 
-   Use branch '1.6' on github or http://tarantool.org/dist/1.6
+   Use branch '1.6' on github or http://tarantool.org/dist/1.6 
  * Python >= 2.7, <3 with next packages (for testing only):
    - gevent
    - geventconnpool
@@ -21,6 +21,7 @@ Clone this repository and then build it using CMake:
 
 ``` bash
 git clone https://github.com/tarantool/memcached.git
+cd memcached && git submodule update --init --recursive
 cd memcached && cmake . -DCMAKE_BUILD_TYPE=RelWithDebugInfo
 make
 make install

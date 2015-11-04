@@ -14,5 +14,5 @@ macro   (memtier_build)
                                  ${CMAKE_CURRENT_BINARY_DIR}/test/bench/memtier_benchmark
         DEPENDS memtier_make
     )
-    add_custom_target(memtier ALL DEPENDS memtier_copy)
+    add_custom_target(memtier DEPENDS memtier_copy)
 endmacro(memtier_build)

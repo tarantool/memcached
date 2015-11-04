@@ -22,7 +22,7 @@ Clone this repository and then build it using CMake:
 ``` bash
 git clone https://github.com/tarantool/memcached.git
 cd memcached && git submodule update --init --recursive
-cd memcached && cmake . -DCMAKE_BUILD_TYPE=RelWithDebugInfo
+cd memcached && cmake . -DCMAKE_BUILD_TYPE=RelWithDebugInfo -DCMAKE_INSTALL_PREFIX=/usr
 make
 make install
 ```
@@ -47,11 +47,11 @@ Now you're set up and ready to go!
 ## API
 
 * `local memcached = require('memcached')` - acquire library for your use
-* `local instance = memcached.create(<name>, <uri>, <opts>)` - create a new instance, register it and run 
-  `name` - a string with instance name
-  `uri`  - a string with uri to bind to, for example: `0.0.0.0:11211`
-  `opts` - a table with options, the list of possible options is described in the configuration configuration section
-* `local instance = instance:cfg(<opts>)` - configure an existing instance. 
+* `local instance = memcached.create(<name>, <uri>, <opts>)` - create a new instance, register it and run  
+  `name` - a string with instance name  
+  `uri`  - a string with uri to bind to, for example: `0.0.0.0:11211`  
+  `opts` - a table with options, the list of possible options is described in the configuration configuration section  
+* `local instance = instance:cfg(<opts>)` - configure an existing instance.  
   `opts` - table with options that are in configuration section
 * `local instance = instance:start()` - start an instance
 * `local instance = instance:stop()` - stop an instance
@@ -62,7 +62,7 @@ Now you're set up and ready to go!
 * *readahead* - (default) size of readahead buffer for connection. default is `box->cfg->readahead`
 * *expire_enabled* - availability of expiration daemon. default is `true`.
 * *expire_items_per_iter* - scan count for expiration (that's processed in one transaction). default is 200.
-* *expire_full_scan_time* - time required for full index scan (in seconds). default is 3600
+* *expire_full_scan_time* - time required for full index scan (in seconds). defaiult is 3600
 * *verbosity* - verbosity of memcached logging. default is 0.
 * ~~*flush_enabled* - flush command availability. default is true~~
 

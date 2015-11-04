@@ -10,6 +10,8 @@ target_link_libraries(internalso small)
 
 set_target_properties(internalso PROPERTIES PREFIX "" OUTPUT_NAME "internal")
 
+message(STATUS "${TARANTOOL_LUADIR}:${TARANTOOL_LIBDIR}")
+
 # Install module
 install(FILES   init.lua   DESTINATION ${TARANTOOL_LUADIR}/${PROJECT_NAME}/)
 install(TARGETS internalso LIBRARY DESTINATION ${TARANTOOL_LIBDIR}/${PROJECT_NAME}/)

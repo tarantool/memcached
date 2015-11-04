@@ -21,15 +21,19 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 set(TARANTOOL_FIND_REQUIRED ON)
 include_directories(${TARANTOOL_INCLUDEDIR})
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small EXCLUDE_FROM_ALL)
+
 # Find other dependecies
 
 # Set CFLAGS
-set(CFLAGS_COMMON "-fPIC -D_GNU_SOURCE -std=c99")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS_COMMON} -O3")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -g -ggdb3")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${CFLAGS_COMMON} -O0")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -Wextra")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -O0 -Werror")
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small)
+# Enable GNU glibc extentions.
+add_definitions("-D_GNU_SOURCE")
 
 # Build module
 add_subdirectory(memcached)

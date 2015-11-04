@@ -20,5 +20,5 @@ macro   (libmemcached_build)
                                  ${CMAKE_CURRENT_BINARY_DIR}/test/bench/memslap
         DEPENDS libmemcached_make
     )
-    add_custom_target(libmemcached ALL DEPENDS libmemcached_copy)
+    add_custom_target(libmemcached DEPENDS libmemcached_copy)
 endmacro(libmemcached_build)

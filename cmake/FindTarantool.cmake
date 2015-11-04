@@ -8,12 +8,11 @@ macro(extract_definition name output input)
         ${output} "${_t}")
 endmacro()
 
-find_path(_dir tarantool.h
-  HINTS ENV TARANTOOL_DIR
-  PATH_SUFFIXES include/tarantool
+find_path(_dir "tarantool.h"
+               HINTS ENV TARANTOOL_DIR
+               PATH_SUFFIXES tarantool
+               PATHS /include /usr/include /usr/local/include /usr/share/include /opt/include
 )
-
-message(STATUS "PATH: ${_dir}")
 
 if (_dir)
     set(_config "-")

@@ -49,7 +49,7 @@ def set(key, expire, flags, value):
 
 def empty(key):
     res = mc.get(key)
-    return iequal(res[0]['status'], STATUS['KEY_ENOENT'], 1)
+    return iequal(res[0]['status'], STATUS['KEY_ENOENT'], 2)
 
 def delete(key, when):
     res = mc.delete(key)
@@ -61,6 +61,7 @@ print("""#----------------------------------------------------------------------
 #-----------------------------------------------------------------------------#""")
 
 # Toobig tests
+mc.flush()
 empty("toobig")
 mc.set("toobig", "not too big", 10, 10)
 val = "x" * 1024*1024*2

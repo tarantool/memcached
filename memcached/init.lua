@@ -209,6 +209,7 @@ local memcached_mt = {
             log.debug('client %s:%s connected', addr.host, addr.port)
             ffi.C.memcached_handler(self.service, socket:fd())
         end
+        jit.off(memcached_handler)
 
         if self.status == RUNNING then
             error(fmt("memcached '%s' is already started", self.name))

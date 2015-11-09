@@ -117,7 +117,19 @@ local typetable = {
         function() return 0 end,
         function(x) return x > 0 and x < 4 end,
         [[verbosity of memcached logging]]
-    }
+    },
+    if_not_exists = {
+        'boolean',
+        function() return false end,
+        function(x) return x end,
+        [[do not throw error if exists]]
+    },
+    space_name = {
+        'string',
+        function() return nil end,
+        function(x) return x end,
+        [[custom name of space to use/create]]
+    },
 --    flush_enabled = {
 --        'boolean',
 --        function() return true end,
@@ -250,20 +262,27 @@ local memcached_mt = {
 
 local function memcached_init(name, uri, opts)
     opts = opts or {}
+    if memcached_services[name] ~= nil then
+        if not opts.if_not_exists then
+            error(fmt("Instance with name '%s' is already created", name))
+        end
+        return memcached_services[name]
+    end
     local conf = config_initial(opts)
     local instance = {}
     instance.opts = conf
     instance.name = name
     instance.uri  = uri
-    local sname = '__mc_' .. instance.name
-    if box.space[sname] ~= nil then
-        error(fmt("Space with name '%s' is already created", sname))
+    instance.space_name = opts.space_name or '__mc_' .. instance.name
+    if box.space[instance.space_name] == nil then
+        instance.space = box.schema.create_space(instance.space_name)
+        instance.space:create_index('primary', {
+            parts = {1, 'str'},
+            type = 'hash'
+        })
+    else
+        instance.space = box.space[instance.space_name]
     end
-    instance.space = box.schema.create_space(sname)
-    instance.space:create_index('primary', {
-        parts = {1, 'str'},
-        type = 'hash'
-    })
     local service = ffi.C.memcached_create(instance.name, instance.space.id)
     if service == nil then
         error("can't allocate memory")

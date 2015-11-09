@@ -20,7 +20,4 @@ before_script:
 script:
   - TARANTOOL_DIR="$HOME/local/include/tarantool" cmake . -DCMAKE_BUILD_TYPE=Release
   - PATH="$HOME/local/bin/:$PATH" make test-memcached
-  - ls -al test/var/
-  - cat test/var/binary.log
-  - cat test/var/tarantool.log
   - PATH="$HOME/local/bin/:$PATH" make test-memcached-capable

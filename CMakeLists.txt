@@ -17,6 +17,8 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 
+find_program(RAGEL ragel)
+
 # Find Tarantool and Lua dependecies
 set(TARANTOOL_FIND_REQUIRED ON)
 include_directories(${TARANTOOL_INCLUDEDIR})

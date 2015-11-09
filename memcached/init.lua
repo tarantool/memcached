@@ -137,9 +137,14 @@ local typetable = {
 --    },
 }
 
+local err_enomem          = "Can't allocate memory for %s"
+local err_bad_args        = "Arguments must be in dictionary"
 local err_no_such_option  = "No such option '%s'"
 local err_bad_option_type = "Bad '%s' option type, expected '%s', got '%s'"
 local err_bad_value       = "Bad value for argument '%s'"
+local err_bad_instance    = "Instance with name '%s' is already created"
+local err_is_stopped      = "Memcached instance '%s' is already stopped"
+local err_is_started      = "Memcached instance '%s' is already started"
 
 local function config_check(cfg)
     for k, v in pairs(cfg) do
@@ -203,7 +208,7 @@ local conf_table = {
 local memcached_mt = {
     cfg = function (self, opts)
         if type(opts) ~= 'table' then
-            error('arguments must be in dictionary')
+            error(err_bad_args)
         end
         local stat, err = config_check(opts or {})
         if stat == false then
@@ -224,7 +229,7 @@ local memcached_mt = {
         jit.off(memcached_handler)
 
         if self.status == RUNNING then
-            error(fmt("memcached '%s' is already started", self.name))
+            error(fmt(err_is_started, self.name))
         end
         ffi.C.memcached_start(self.service)
         local parsed = uri.parse(self.uri)
@@ -242,7 +247,7 @@ local memcached_mt = {
     end,
     stop = function (self)
         if self.status == STOPPED then
-            error(fmt("memcached '%s' is already stopped", self.name))
+            error(fmt(err_is_stopped, self.name))
         end
         if (self.listener ~= nil) then
             self.listener:close()
@@ -264,7 +269,7 @@ local function memcached_init(name, uri, opts)
     opts = opts or {}
     if memcached_services[name] ~= nil then
         if not opts.if_not_exists then
-            error(fmt("Instance with name '%s' is already created", name))
+            error(fmt(err_bad_instance, name))
         end
         return memcached_services[name]
     end
@@ -285,7 +290,7 @@ local function memcached_init(name, uri, opts)
     end
     local service = ffi.C.memcached_create(instance.name, instance.space.id)
     if service == nil then
-        error("can't allocate memory")
+        error(fmt(err_enomem, "memcached service"))
     end
     instance.service = ffi.gc(service, ffi.C.memcached_free)
     memcached_services[instance.name] = setmetatable(instance,

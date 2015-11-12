@@ -39,28 +39,8 @@
 #include "memcached.h"
 #include "memcached_layer.h"
 
-#include "memcached_network.h"
-#include "memcached_persistent.h"
-
-
-static inline int
-memcached_need_txn(struct memcached_connection *con) {
-	uint8_t cmd = con->hdr->cmd;
-	if ((cmd >= MEMCACHED_BIN_CMD_SET &&
-	     cmd <= MEMCACHED_BIN_CMD_DECR) ||
-	    (cmd >= MEMCACHED_BIN_CMD_APPEND &&
-	     cmd <= MEMCACHED_BIN_CMD_PREPEND) ||
-	    (cmd >= MEMCACHED_BIN_CMD_SETQ &&
-	     cmd <= MEMCACHED_BIN_CMD_DECRQ) ||
-	    (cmd >= MEMCACHED_BIN_CMD_APPENDQ &&
-	     cmd <= MEMCACHED_BIN_CMD_PREPENDQ) ||
-	    (cmd >= MEMCACHED_BIN_CMD_TOUCH &&
-	     cmd <= MEMCACHED_BIN_CMD_GATQ) ||
-	    (cmd >= MEMCACHED_BIN_CMD_GATK &&
-	     cmd <= MEMCACHED_BIN_CMD_GATKQ))
-		return 1;
-	return 0;
-};
+#include "network.h"
+#include "proto_binary.h"
 
 static inline int
 memcached_skip_request(struct memcached_connection *con) {
@@ -69,123 +49,14 @@ memcached_skip_request(struct memcached_connection *con) {
 		con->len -= ibuf_used(in);
 		ibuf_reset(in);
 		ssize_t read = mnet_read_ibuf(con->fd, in, 1);
+		if (read == -1)
+			memcached_error_ENOMEM(1, "mnet_read_ibuf", "ibuf");
 		if (read < 1) {
 			return -1;
 		}
 		con->cfg->stat.bytes_read += read;
 	}
 	in->rpos += con->len;
-	return 0;
-}
-
-static inline int
-memcached_loop_process(struct memcached_connection *con) {
-	int rv = 0;
-	if (con->noprocess)
-		goto noprocess;
-	/* Process message */
-	con->noreply = false;
-	if (memcached_need_txn(con)) {
-		box_txn_begin();
-		con->txn = 1;
-	}
-	if (con->hdr->cmd < MEMCACHED_BIN_CMD_MAX) {
-		rv = mc_handler[con->hdr->cmd](con);
-		if (box_txn()) box_txn_commit();
-	} else {
-		rv = memcached_bin_process_unknown(con);
-	}
-noprocess:
-	con->write_end = obuf_create_svp(con->out);
-	memcached_skip_request(con);
-	return rv;
-}
-
-static inline __attribute__((unused)) void
-memcached_dump_hdr(struct memcached_hdr *hdr)
-{
-	if (!hdr) return;
-	say_debug("memcached package");
-	say_debug("magic:     0x%" PRIX8,        hdr->magic);
-	say_debug("cmd:       0x%" PRIX8,        hdr->cmd);
-	if (hdr->key_len > 0)
-		say_debug("key_len:   %" PRIu16, mp_bswap_u16(hdr->key_len));
-	if (hdr->ext_len > 0)
-		say_debug("ext_len:   %" PRIu8,  hdr->ext_len);
-	say_debug("tot_len:   %" PRIu32,         mp_bswap_u32(hdr->tot_len));
-	say_debug("opaque:    0x%" PRIX32,       mp_bswap_u32(hdr->opaque));
-	say_debug("cas:       %" PRIu64,         mp_bswap_u64(hdr->cas));
-}
-
-/**
- * return -1 on error (forced closing of connection)
- * return  0 in everything ok
- * - if con->noprocess == 1 then skip execution
- * return >1 if we need more data
- */
-static inline int
-memcached_loop_parse(struct memcached_connection *con) {
-	struct obuf     *out = con->out; (void )out;
-	struct ibuf      *in = con->in;
-	const char *reqstart = in->rpos;
-	/* Check that we have enough data for header */
-	if (reqstart + sizeof(struct memcached_hdr) > in->wpos) {
-		return sizeof(struct memcached_hdr) - (in->wpos - reqstart);
-	}
-	struct memcached_hdr *hdr = (struct memcached_hdr *)reqstart;
-	uint32_t tot_len = mp_bswap_u32(hdr->tot_len);
-	con->len = sizeof(struct memcached_hdr) + tot_len;
-	con->hdr = hdr;
-	/* error while parsing */
-	if (hdr->magic != MEMCACHED_BIN_REQUEST) {
-		memcached_error_EINVAL();
-		say_error("Wrong magic, closing connection");
-		con->close_connection = true;
-		return -1;
-	} else if (mp_bswap_u16(hdr->key_len) + hdr->ext_len > tot_len) {
-		memcached_error_EINVAL();
-		con->noprocess = true;
-		say_error("Object sizes are not consistent, skipping package");
-		return -1;
-	}
-	const char *reqend = reqstart + sizeof(struct memcached_hdr) + tot_len;
-	/* Check that we have enough data for body */
-	if (reqend > in->wpos) {
-		return (reqend - in->wpos);
-	}
-	hdr->key_len = mp_bswap_u16(hdr->key_len);
-	hdr->tot_len = tot_len;
-	hdr->opaque  = mp_bswap_u32(hdr->opaque);
-	hdr->cas     = mp_bswap_u64(hdr->cas);
-	const char *pos = reqstart + sizeof(struct memcached_hdr);
-	con->body.ext_len = hdr->ext_len;
-	con->body.key_len = hdr->key_len;
-	con->body.val_len = hdr->tot_len - (hdr->ext_len + hdr->key_len);
-	if (tot_len > MEMCACHED_MAX_SIZE) {
-		memcached_error_E2BIG();
-		say_error("Object is too big for cache, skipping package");
-		con->noprocess = true;
-		return -1;
-	}
-	if (con->body.ext_len > 0) {
-		con->body.ext = pos;
-		pos += hdr->ext_len;
-	} else {
-		con->body.ext = NULL;
-	}
-	if (con->body.key_len > 0) {
-		con->body.key = pos;
-		pos += hdr->key_len;
-	} else {
-		con->body.key = NULL;
-	}
-	if (con->body.val_len > 0) {
-		con->body.val = pos;
-		pos += con->body.val_len;
-	} else {
-		con->body.val = NULL;
-	}
-	assert(pos == reqend);
 	return 0;
 }
 
@@ -211,6 +82,8 @@ memcached_loop_read(struct memcached_connection *con, size_t to_read)
 		return -1;
 	}
 	ssize_t read = mnet_read_ibuf(con->fd, con->in, to_read);
+	if (read == -1)
+		memcached_error_ENOMEM(to_read, "mnet_read_ibuf", "ibuf");
 	if (read < (ssize_t )to_read) {
 		return -1;
 	}
@@ -227,18 +100,13 @@ memcached_loop_error(struct memcached_connection *con) {
 	if (errcode > box_error_code_MAX) {
 		errcode -= box_error_code_MAX;
 		/* TODO proper retval checking */
-		memcached_bin_error(con, errcode, errstr);
+		con->cb.process_error(con, errcode, errstr);
 	} else {
 		/* TODO proper retval checking */
 		memcached_error_SERVER_ERROR(
 				"SERVER ERROR %d: %s", errcode, errstr);
 	}
 	return 0;
-}
-
-static inline void
-memcached_connection_flush()
-{
 }
 
 static inline void
@@ -261,7 +129,7 @@ memcached_loop(struct memcached_connection *con)
 next:
 		con->noreply = false;
 		con->noprocess = false;
-		rc = memcached_loop_parse(con);
+		rc = con->cb.parse_request(con);
 		if (rc == -1) {
 			memcached_loop_error(con);
 			con->write_end = obuf_create_svp(con->out);
@@ -277,7 +145,10 @@ next:
 			continue;
 		}
 		assert(!con->close_connection);
-		rc = memcached_loop_process(con);
+		rc = 0;
+		if (!con->noprocess) rc = con->cb.process_request(con);
+		con->write_end = obuf_create_svp(con->out);
+		memcached_skip_request(con);
 		if (rc == -1)
 			memcached_loop_error(con);
 		if (con->close_connection) {
@@ -312,6 +183,7 @@ memcached_handler(struct memcached_service *p, int fd)
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;
 	con.cfg->stat.total_conns++;
+	memcached_set_binary(&con);
 	memcached_loop(&con);
 	con.cfg->stat.curr_conns--;
 	close(con.fd);
@@ -435,7 +307,7 @@ memcached_create(const char *name, uint32_t sid)
 {
 	iobuf_mempool_create();
 	struct memcached_service *srv = (struct memcached_service *)
-		box_persistent_malloc0(sizeof(struct memcached_service), NULL);
+		calloc(1, sizeof(struct memcached_service));
 	if (!srv) {
 		say_syserror("failed to allocate memory for memcached service");
 		return NULL;
@@ -446,12 +318,12 @@ memcached_create(const char *name, uint32_t sid)
 	srv->expire_time    = 3600;
 	srv->expire_fiber   = NULL;
 	srv->space_id       = sid;
-	srv->name           = box_persistent_strdup(name, NULL);
+	srv->name           = strdup(name);
 	srv->cas            = 1;
 	srv->readahead      = 16384;
 	if (!srv->name) {
 		say_syserror("failed to allocate memory for memcached service");
-		box_persistent_free(srv);
+		free(srv);
 		return NULL;
 	}
 	return srv;
@@ -461,8 +333,8 @@ void
 memcached_free(struct memcached_service *srv)
 {
 	memcached_stop(srv);
-	if (srv) box_persistent_free((void *)srv->name);
-	box_persistent_free(srv);
+	if (srv) free((void *)srv->name);
+	free(srv);
 }
 
 int

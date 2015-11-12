@@ -1,36 +1,39 @@
 add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/memcached/internal/memcached_text.c
+    OUTPUT ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${RAGEL} -G2 memcached/internal/memcached_text.rl
-                     -o memcached/internal/memcached_text.c
-    DEPENDS ${CMAKE_SOURCE_DIR}/memcached/internal/memcached_text.rl)
+    COMMAND ${RAGEL} -G2 memcached/internal/proto_text_parser.rl
+                     -o memcached/internal/proto_text_parser.c
+    DEPENDS ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.rl)
 
-add_custom_target(generate_memcached_text_c DEPENDS
-    ${CMAKE_SOURCE_DIR}/memcached/internal/memcached_text.c)
+add_custom_target(generate_proto_text_parser_c DEPENDS
+    ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c)
 
-# do not randomly try to re-generate memcached_text.c
+# do not randomly try to re-generate proto_text_parser.c
 # after a fresh checkout/branch switch.
 execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate
-    ${CMAKE_SOURCE_DIR}/memcached/internal/memcached_text.c)
+    ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c)
 
-set_source_files_properties(
-    ${CMAKE_SOURCE_DIR}/memcached/internal/memcached_text.c
-    PROPERTIES HEADER_FILE_ONLY true)
+# set_source_files_properties(
+#     ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c
+#     PROPERTIES HEADER_FILE_ONLY true)
 
 add_library(internalso SHARED
-        "internal/memcached_constants.c"
+        "internal/utils.c"
+        "internal/proto_binary.c"
+        "internal/proto_text_parser.c"
+        "internal/constants.c"
+        "internal/network.c"
         "internal/memcached_layer.c"
-        "internal/memcached_network.c"
-        "internal/memcached_persistent.c"
         "internal/memcached.c"
-        "internal/memcached_text.c"
 )
+
+set_property(DIRECTORY PROPERTY CLEAN_NO_CUSTOM true)
+
+add_dependencies(internalso generate_proto_text_parser_c)
 
 target_link_libraries(internalso small)
 
 set_target_properties(internalso PROPERTIES PREFIX "" OUTPUT_NAME "internal")
-
-message(STATUS "${TARANTOOL_LUADIR}:${TARANTOOL_LIBDIR}")
 
 # Install module
 install(FILES   init.lua   DESTINATION ${TARANTOOL_LUADIR}/${PROJECT_NAME}/)

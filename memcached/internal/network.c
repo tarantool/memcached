@@ -12,10 +12,10 @@
 #include <small/mempool.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>
+
 #include "memcached.h"
-#include "memcached_constants.h"
-#include "memcached_layer.h"
-#include "memcached_network.h"
+#include "constants.h"
+#include "network.h"
 
 #ifndef IOV_MAX
 #define IOV_MAX UIO_MAXIOV
@@ -147,7 +147,6 @@ size_t
 mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz)
 {
 	if (ibuf_reserve(buf, sz) == NULL) {
-		memcached_error_ENOMEM(sz, "mnet_read_ibuf", "ibuf");
 		return -1;
 	}
 	ssize_t n = mnet_read_ahead(fd, buf->wpos, ibuf_unused(buf), sz);

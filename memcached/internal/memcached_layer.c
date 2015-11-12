@@ -14,57 +14,13 @@
 
 #include "memcached.h"
 #include "memcached_layer.h"
-
-/* MEMCACHED_CONVERTION_FUNCTIONS */
-
-#define xisspace(c) isspace((unsigned char)c)
-
-static inline bool
-safe_strtoull(const char *begin, const char *end, uint64_t *out)
-{
-	assert(out != NULL);
-	errno = 0;
-	*out = 0;
-	char *endptr;
-	unsigned long long ull = strtoull(begin, &endptr, 10);
-	if ((errno == ERANGE) || (begin == endptr) || (endptr != end))
-		return false;
-
-	if (xisspace(*endptr) || (*endptr == '\0' && endptr != begin) ||
-	    endptr == end) {
-		if ((long long) ull < 0) {
-			/* only check for negative signs in the uncommon
-			 * case when the unsigned number is so big that
-			 * it's negative as a signed number. */
-			if (strchr(begin, '-') != NULL)
-				return false;
-		}
-		*out = ull;
-		return true;
-	}
-	return false;
-}
-
+#include "utils.h"
 /*
  * default exptime is 30*24*60*60 seconds
  * \* 1000000 to convert it to usec (need this precision)
  **/
 #define MAX_EXPTIME (30*24*60*60LL)
 #define INF_EXPTIME UINT64_MAX
-
-static inline __attribute__((unused)) void
-memcached_dump_hdr(struct memcached_hdr *hdr)
-{
-	if (!hdr) return;
-	say_debug("memcached package");
-	say_debug("magic:   0x%.2" PRIX8, hdr->magic);
-	say_debug("cmd:     0x%.2" PRIX8, hdr->cmd);
-	say_debug("key_len: %" PRIu16,    hdr->key_len);
-	say_debug("ext_len: %" PRIu8,     hdr->ext_len);
-	say_debug("tot_len: %" PRIu32,    hdr->tot_len);
-	say_debug("opaque:  0x%" PRIX32,  mp_bswap_u32(hdr->opaque));
-	say_debug("cas:     %" PRIu64,    hdr->cas);
-}
 
 static inline uint64_t
 convert_exptime (uint64_t exptime)
@@ -99,59 +55,14 @@ is_expired_tuple(struct memcached_service *p, box_tuple_t *tuple)
 }
 
 static inline int
-write_output(struct memcached_connection *con, uint16_t err, uint64_t cas,
-	     uint8_t ext_len, uint16_t key_len, uint32_t val_len,
-	     const char *ext, const char *key, const char *val
-	     )
-{
-	assert((ext && ext_len > 0) || (!ext && ext_len == 0));
-	assert((key && key_len > 0) || (!key && key_len == 0));
-	assert((val && val_len > 0) || (!val && val_len == 0));
-	struct memcached_hdr *hdri = con->hdr;
-	struct obuf *out = con->out;
-
-	struct memcached_hdr hdro;
-	memcpy(&hdro, hdri, sizeof(struct memcached_hdr));
-	hdro.magic   = MEMCACHED_BIN_RESPONSE;
-	hdro.ext_len = ext_len;
-	hdro.key_len = mp_bswap_u16(key_len);
-	hdro.status  = mp_bswap_u16(err);
-	hdro.tot_len = mp_bswap_u32(ext_len + key_len + val_len);
-	hdro.opaque  = mp_bswap_u32(hdro.opaque);
-	hdro.cas     = mp_bswap_u64(cas);
-	size_t to_alloc = ext_len + key_len + val_len +
-			sizeof(struct memcached_hdr);
-	if (obuf_reserve(out, to_alloc) == NULL) {
-		memcached_error_ENOMEM(to_alloc,"write_output","obuf");
-		return -1;
-	}
-	size_t rv = 0;
-	rv = obuf_dup(out, &hdro, sizeof(struct memcached_hdr));
-	assert(rv == sizeof(struct memcached_hdr));
-	if (ext) {
-		rv = obuf_dup(out, ext, ext_len);
-		assert(rv == ext_len);
-	}
-	if (key) {
-		rv = obuf_dup(out, key, key_len);
-		assert(rv == key_len);
-	}
-	if (val) {
-		rv = obuf_dup(out, val, val_len);
-		assert(rv == val_len);
-	}
-	return 0;
-}
-
-static inline int
 write_output_ok(struct memcached_connection *con, uint64_t cas,
 		uint8_t ext_len, uint16_t key_len, uint32_t val_len,
 		const char *ext, const char *key, const char *val
 		)
 {
-	return write_output(con, MEMCACHED_BIN_RES_OK,
-			    cas, ext_len, key_len,
-			    val_len, ext, key, val);
+	return con->cb.write_answer(con, MEMCACHED_RES_OK,
+				    cas, ext_len, key_len,
+				    val_len, ext, key, val);
 }
 
 static inline int
@@ -183,7 +94,7 @@ memcached_replace_tuple(struct memcached_connection *con,
 		       mp_sizeof_uint (flags);
 	char *begin  = (char *)box_txn_alloc(len);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_replace_tuple","tuple");
+		memcached_error_ENOMEM(len, "memcached_replace_tuple", "tuple");
 		return -1;
 	}
 	char *end = mp_encode_array(begin, 6);
@@ -195,71 +106,6 @@ memcached_replace_tuple(struct memcached_connection *con,
 	      end = mp_encode_uint (end, flags);
 	assert(end <= begin + len);
 	return box_replace(space_id, begin, end, NULL);
-}
-
-/**
- * Write error code message to output buffer
- *
- * \param[in] con    Connection object for writing output to
- * \param[in] err    Error code (status)
- * \param[in] errstr Eror string (if available) with description (may be NULL)
- *
- */
-int memcached_bin_error(struct memcached_connection *con,
-			uint16_t err, const char *errstr)
-{
-	if (!errstr) {
-		errstr = memcached_get_result_title(err);
-		if (!errstr) {
-			say_error("Unknown errcode - 0x%.2X", err);
-			errstr = "UNKNOWN ERROR";
-		}
-	}
-	say_error("memcached error %" PRIu16 ": %s", err, errstr);
-	size_t len = 0;
-	if (errstr) len = strlen(errstr);
-	if (write_output(con, err, 0, 0, 0, len, NULL, NULL, errstr) == -1)
-		return -1;
-	return 0;
-}
-
-/**
- * Process internal Tarantool error
- * (get exception from diag_area and write it out)
- *
- * \param[in] con    Connection object for writing output to
- */
-int memcached_bin_errori(struct memcached_connection *con)
-{
-	const box_error_t  *err = box_error_last();
-	uint16_t        errcode = box_error_code(err);
-	char       errfstr[256] = {0};
-	const char      *errstr = box_error_message(err);
-	int rv = 0;
-	switch(errcode) {
-	case ER_MEMORY_ISSUE:
-		errcode = MEMCACHED_BIN_RES_ENOMEM;
-		errstr  = NULL;
-		rv = -1;
-		break;
-	case ER_TUPLE_NOT_FOUND:
-		errcode = MEMCACHED_BIN_RES_KEY_ENOENT;
-		errstr  = NULL;
-		break;
-	case ER_TUPLE_FOUND:
-		errcode = MEMCACHED_BIN_RES_KEY_EEXISTS;
-		errstr  = NULL;
-		break;
-	default:
-		errcode = MEMCACHED_BIN_RES_SERVER_ERROR;
-		snprintf(errfstr, 256, "SERVER ERROR '%s'", errstr);
-		errstr = errfstr;
-		rv = -1;
-		break;
-	}
-	if (memcached_bin_error(con, errcode, errstr) == -1)
-		rv = -1;
-	return rv;
 }
 
 /**
@@ -375,11 +221,11 @@ memcached_bin_process_set(struct memcached_connection *con)
 		return -1;
 	}
 
-	/* Get existance flags */
+	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
-	/* Check for key (non)existance for different commands */
+	/* Check for key (non)existence for different commands */
 	if (cmd == MEMCACHED_SET_REPLACE && (!tuple_exists || tuple_expired)) {
 		memcached_error_KEY_ENOENT();
 		return -1;
@@ -457,7 +303,7 @@ memcached_bin_process_get(struct memcached_connection *con)
 		return -1;
 	}
 
-	/* Get existance flags */
+	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
@@ -485,7 +331,7 @@ memcached_bin_process_get(struct memcached_connection *con)
 		klen = 0;
 	}
 	ext.flags = mp_bswap_u32(flags);
-	if (write_output(con, MEMCACHED_BIN_RES_OK, cas,
+	if (con->cb.write_answer(con, MEMCACHED_RES_OK, cas,
 			 sizeof(struct memcached_get_ext), klen, vlen,
 			 (const char *)&ext, kpos, vpos) == -1)
 		return -1;
@@ -527,7 +373,7 @@ memcached_bin_process_delete(struct memcached_connection *con)
 		return -1;
 	}
 
-	/* Get existance flags */
+	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
@@ -561,7 +407,7 @@ memcached_bin_process_version(struct memcached_connection *con)
 
 	const char *vers = PACKAGE_VERSION;
 	int vlen = strlen(vers);
-	if (write_output(con, MEMCACHED_BIN_RES_OK,
+	if (con->cb.write_answer(con, MEMCACHED_RES_OK,
 		         0, 0, 0, vlen, NULL, NULL, vers))
 		return -1;
 	return 0;
@@ -694,7 +540,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 		return -1;
 	}
 	
-	/* Get existance flags */
+	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
@@ -739,7 +585,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 			klen = 0;
 		}
 	}
-	if (write_output(con, MEMCACHED_BIN_RES_OK, cas, elen, klen, vlen,
+	if (con->cb.write_answer(con, MEMCACHED_RES_OK, cas, elen, klen, vlen,
 			 (const char *)epos, kpos, vpos) == -1)
 		return -1;
 	return 0;
@@ -797,7 +643,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 		return -1;
 	}
 
-	/* Get existance flags */
+	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
@@ -834,7 +680,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 		return -1;
 	} else if (!con->noreply) {
 		val = mp_bswap_u64(val);
-		if (write_output(con, MEMCACHED_BIN_RES_OK, cas, 0, 0,
+		if (con->cb.write_answer(con, MEMCACHED_RES_OK, cas, 0, 0,
 				 sizeof(val), NULL, NULL,
 				 (const char *)&val) == -1)
 			return -1;
@@ -882,7 +728,7 @@ memcached_bin_process_pend(struct memcached_connection *con)
 		return -1;
 	}
 
-	/* Get existance flags */
+	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
@@ -924,7 +770,7 @@ memcached_bin_process_pend(struct memcached_connection *con)
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply) {
-		if (write_output(con, MEMCACHED_BIN_RES_OK, new_cas,
+		if (con->cb.write_answer(con, MEMCACHED_RES_OK, new_cas,
 				 0, 0, 0, NULL, NULL, NULL) == -1)
 			return -1;
 	}
@@ -958,14 +804,14 @@ memcached_bin_process_quit(struct memcached_connection *con)
 }
 
 int
-memcached_bin_process_unsupported(struct memcached_connection *con)
+memcached_process_unsupported(struct memcached_connection *con)
 {
 	memcached_error_NOT_SUPPORTED(memcached_get_command_name(con->hdr->cmd));
 	return -1;
 }
 
 int
-memcached_bin_process_unknown(struct memcached_connection *con)
+memcached_process_unknown(struct memcached_connection *con)
 {
 	memcached_error_UNKNOWN_COMMAND(con->hdr->cmd);
 	return -1;
@@ -989,7 +835,7 @@ stat_append(struct memcached_connection *con, const char *key,
 	} else {
 		val = NULL;
 	}
-	if (write_output(con, 0, 0, 0, key_len,
+	if (con->cb.write_answer(con, 0, 0, 0, key_len,
 			 val_len, NULL, key, val) == -1)
 		return -1;
 	return 0;
@@ -1072,66 +918,3 @@ memcached_bin_process_stat(struct memcached_connection *con)
 	return 0;
 }
 
-const mc_process_func_t mc_handler[] = {
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GET      , 0x00 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_SET      , 0x01 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_ADD      , 0x02 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_REPLACE  , 0x03 */
-	memcached_bin_process_delete,      /* MEMCACHED_BIN_CMD_DELETE   , 0x04 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_INCR     , 0x05 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_DECR     , 0x06 */
-	memcached_bin_process_quit,        /* MEMCACHED_BIN_CMD_QUIT     , 0x07 */
-	memcached_bin_process_flush,       /* MEMCACHED_BIN_CMD_FLUSH    , 0x08 */
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GETQ     , 0x09 */
-	memcached_bin_process_noop,        /* MEMCACHED_BIN_CMD_NOOP     , 0x0a */
-	memcached_bin_process_version,     /* MEMCACHED_BIN_CMD_VERSION  , 0x0b */
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GETK     , 0x0c */
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GETKQ    , 0x0d */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_APPEND   , 0x0e */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_PREPEND  , 0x0f */
-	memcached_bin_process_stat,        /* MEMCACHED_BIN_CMD_STAT     , 0x10 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_SETQ     , 0x11 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_ADDQ     , 0x12 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_REPLACEQ , 0x13 */
-	memcached_bin_process_delete,      /* MEMCACHED_BIN_CMD_DELETEQ  , 0x14 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_INCRQ    , 0x15 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_DECRQ    , 0x16 */
-	memcached_bin_process_quit,        /* MEMCACHED_BIN_CMD_QUITQ    , 0x17 */
-	memcached_bin_process_flush,       /* MEMCACHED_BIN_CMD_FLUSHQ   , 0x18 */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_APPENDQ  , 0x19 */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_PREPENDQ , 0x1a */
-	memcached_bin_process_verbosity,   /* MEMCACHED_BIN_CMD_VERBOSITY, 0x1b */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_TOUCH    , 0x1c */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GAT      , 0x1d */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GATQ     , 0x1e */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x1f */
-	memcached_bin_process_unsupported, /* MEMCACHED_._SASL_LIST_MECHS, 0x20 */
-	memcached_bin_process_unsupported, /* MEMCACHED_._SASL_AUTH      , 0x21 */
-	memcached_bin_process_unsupported, /* MEMCACHED_._SASL_STEP      , 0x22 */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GATK     , 0x23 */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GATKQ    , 0x24 */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x25 */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x26 */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x27 */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x28 */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x29 */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x2a */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x2b */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x2c */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x2d */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x2e */
-	memcached_bin_process_unknown,     /* RESERVED                   , 0x2f */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RGET     , 0x30 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RSET     , 0x31 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RSETQ    , 0x32 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RAPPEND  , 0x33 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RAPPENDQ , 0x34 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RPREPEND , 0x35 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RPREPENDQ, 0x36 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RDELETE  , 0x37 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RDELETEQ , 0x38 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RINCR    , 0x39 */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RINCRQ   , 0x3a */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RDECR    , 0x3b */
-	memcached_bin_process_unsupported, /* MEMCACHED_BIN_CMD_RDECRQ   , 0x3c */
-};

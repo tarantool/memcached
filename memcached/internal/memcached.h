@@ -9,7 +9,11 @@
  * 		     const char *pe);
  */
 
-#include "memcached_constants.h"
+
+#include <small/obuf.h>
+#include "constants.h"
+
+struct memcached_connection;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -77,6 +81,21 @@ struct memcached_service {
 	struct memcached_stat stat;
 };
 
+typedef int (* memcached_loop_func_t)(struct memcached_connection *con);
+
+typedef int (* memcached_error_func_t)(struct memcached_connection *con,
+				       uint16_t err, const char *errstr);
+
+typedef int (* memcached_write_func_t)(struct memcached_connection *con,
+				       uint16_t err, uint64_t cas,
+				       uint8_t ext_len, uint16_t key_len,
+				       uint32_t val_len, const char *ext,
+				       const char *key, const char *val);
+
+typedef int (* memcached_stat_func_t)(struct memcached_connection *con,
+				      const char *key,
+				      const char *valfmt, ...);
+
 /**
  * Single connection object, handles information about
  * 1) pointer to memcached stats
@@ -104,16 +123,23 @@ struct memcached_connection {
 //	};
 //	socklen_t addr_len;
 //	struct session           *session;
-	/* request data */
-	struct memcached_hdr     *hdr;
-	struct memcached_body     body;
+	union {
+		/* request data (binary) */
+		struct {
+			struct memcached_hdr  *hdr;
+			struct memcached_body  body;
+		};
+		/* request data (text) */
+		struct memcached_text_request  request;
+	};
 	size_t                    len;
-	/**
-	 *  0 if we need to continue transaction
-	 *  1 if transaction must be commited
-	 * -1 if transaction must be aborted
-	 **/
-	int                       txn;
+	struct {
+		memcached_loop_func_t     parse_request;
+		memcached_loop_func_t     process_request;
+		memcached_error_func_t    process_error;
+		memcached_write_func_t    write_answer;
+		memcached_stat_func_t     process_stat;
+	} cb;
 };
 
 enum memcached_options {

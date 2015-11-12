@@ -1,6 +1,8 @@
 #ifndef   TARANTOOL_BOX_MEMCACHED_LAYER_H_INCLUDED
 #define   TARANTOOL_BOX_MEMCACHED_LAYER_H_INCLUDED
 
+struct memcached_connection;
+
 enum memcached_set {
 	MEMCACHED_SET_CAS = 0,
 	MEMCACHED_SET_ADD,
@@ -10,73 +12,98 @@ enum memcached_set {
 
 typedef int (* mc_process_func_t)(struct memcached_connection *con);
 
-int memcached_bin_process_unknown(struct memcached_connection *con);
+int
+memcached_process_unsupported(struct memcached_connection *con);
 
-int memcached_bin_error(struct memcached_connection *con,
-		    uint16_t err, const char *errstr);
-int memcached_bin_errori(struct memcached_connection *con);
+int
+memcached_process_unknown(struct memcached_connection *con);
 
 int
 is_expired_tuple(struct memcached_service *p, box_tuple_t *tuple);
 
-extern const mc_process_func_t mc_handler[];
-
 #define memcached_error_ENOMEM(_bytes, _place, _for) \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_ENOMEM, \
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_ENOMEM, \
 			"Failed to allocate %u bytes in '%s' for %s", \
 			(_bytes), (_place), (_for))
 
 #define memcached_error_KEY_ENOENT() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_KEY_ENOENT, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_KEY_ENOENT])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_KEY_ENOENT, \
+		memcached_binary_res_title[MEMCACHED_RES_KEY_ENOENT])
 
 #define memcached_error_KEY_EEXISTS() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_KEY_EEXISTS, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_KEY_EEXISTS])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_KEY_EEXISTS, \
+		memcached_binary_res_title[MEMCACHED_RES_KEY_EEXISTS])
 
 #define memcached_error_E2BIG() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_E2BIG, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_E2BIG])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_E2BIG, \
+		memcached_binary_res_title[MEMCACHED_RES_E2BIG])
 
 #define memcached_error_EINVAL() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_EINVAL, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_EINVAL])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_EINVAL, \
+		memcached_binary_res_title[MEMCACHED_RES_EINVAL])
 
 #define memcached_error_NOT_STORED() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_NOT_STORED, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_NOT_STORED])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_NOT_STORED, \
+		memcached_binary_res_title[MEMCACHED_RES_NOT_STORED])
 
 #define memcached_error_DELTA_BADVAL() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_DELTA_BADVAL, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_DELTA_BADVAL])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_DELTA_BADVAL, \
+		memcached_binary_res_title[MEMCACHED_RES_DELTA_BADVAL])
 
 #define memcached_error_AUTH_ERROR() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_AUTH_ERROR, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_AUTH_ERROR])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_AUTH_ERROR, \
+		memcached_binary_res_title[MEMCACHED_RES_AUTH_ERROR])
 
 #define memcached_error_AUTH_CONTINUE() \
-	box_error_raise(box_error_code_MAX + MEMCACHED_BIN_RES_AUTH_CONTINUE, \
-		memcached_binary_res_title[MEMCACHED_BIN_RES_AUTH_CONTINUE])
+	box_error_raise(box_error_code_MAX + MEMCACHED_RES_AUTH_CONTINUE, \
+		memcached_binary_res_title[MEMCACHED_RES_AUTH_CONTINUE])
 
 #define memcached_error_UNKNOWN_COMMAND(code) do {				\
 		box_error_raise(box_error_code_MAX +				\
-				MEMCACHED_BIN_RES_UNKNOWN_COMMAND,		\
+				MEMCACHED_RES_UNKNOWN_COMMAND,		\
 				"Unknown command with opcode 0x%.2x", (code));	\
 		say_error("Unknown command with opcode 0x%.2x", (code));	\
 	} while (0)
 
 #define memcached_error_NOT_SUPPORTED(op) do {					\
 		box_error_raise(box_error_code_MAX +				\
-				MEMCACHED_BIN_RES_NOT_SUPPORTED,		\
+				MEMCACHED_RES_NOT_SUPPORTED,		\
 				"Unsupported command '%s'", (op));		\
 		say_error("Unsupported command '%s'", (op));			\
 	} while (0)
 
 #define memcached_error_SERVER_ERROR(fmtstr, ...) do {				\
 		box_error_raise(box_error_code_MAX +				\
-				MEMCACHED_BIN_RES_SERVER_ERROR,			\
+				MEMCACHED_RES_SERVER_ERROR,			\
 				(fmtstr), ##__VA_ARGS__);			\
 		say_error((fmtstr), ##__VA_ARGS__);				\
 	} while (0)
+
+
+
+int
+memcached_bin_process_set(struct memcached_connection *con);
+int
+memcached_bin_process_get(struct memcached_connection *con);
+int
+memcached_bin_process_delete(struct memcached_connection *con);
+int
+memcached_bin_process_version(struct memcached_connection *con);
+int
+memcached_bin_process_noop(struct memcached_connection *con);
+int
+memcached_bin_process_flush(struct memcached_connection *con);
+int
+memcached_bin_process_verbosity(struct memcached_connection *con);
+int
+memcached_bin_process_gat(struct memcached_connection *con);
+int
+memcached_bin_process_delta(struct memcached_connection *con);
+int
+memcached_bin_process_pend(struct memcached_connection *con);
+int
+memcached_bin_process_quit(struct memcached_connection *con);
+int
+memcached_bin_process_stat(struct memcached_connection *con);
 
 #endif /* TARANTOOL_BOX_MEMCACHED_LAYER_H_INCLUDED */

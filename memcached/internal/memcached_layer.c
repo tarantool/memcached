@@ -79,10 +79,10 @@ write_output_ok_cas(struct memcached_connection *con, uint64_t cas)
 }
 
 static inline int
-memcached_replace_tuple(struct memcached_connection *con,
-			const char *kpos, uint32_t klen, uint64_t expire,
-			const char *vpos, uint32_t vlen, uint64_t cas,
-			uint32_t flags, uint32_t space_id)
+memcached_tuple_set(struct memcached_connection *con,
+		    const char *kpos, uint32_t klen, uint64_t expire,
+		    const char *vpos, uint32_t vlen, uint64_t cas,
+		    uint32_t flags, uint32_t space_id)
 {
 	(void )con;
 	uint64_t time = fiber_time64();
@@ -95,7 +95,7 @@ memcached_replace_tuple(struct memcached_connection *con,
 		       mp_sizeof_uint (flags);
 	char *begin  = (char *)box_txn_alloc(len);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(len, "memcached_replace_tuple", "tuple");
+		memcached_error_ENOMEM(len, "memcached_tuple_set", "tuple");
 		return -1;
 	}
 	char *end = mp_encode_array(begin, 6);
@@ -107,6 +107,31 @@ memcached_replace_tuple(struct memcached_connection *con,
 	      end = mp_encode_uint (end, flags);
 	assert(end <= begin + len);
 	return box_replace(space_id, begin, end, NULL);
+}
+
+static inline int
+memcached_tuple_get(struct memcached_connection *con,
+		    const char *key, uint32_t key_len,
+		    box_tuple_t **tuple)
+{
+	/* Create key for getting previous tuple from space */
+	uint32_t len = mp_sizeof_array(1) +
+		       mp_sizeof_str  (key_len);
+	char *begin  = (char *)box_txn_alloc(len);
+	if (begin == NULL) {
+		memcached_error_ENOMEM(len, "memcached_tuple_get", "key");
+		return -1;
+	}
+	char *end = NULL;
+	end = mp_encode_array(begin, 1);
+	end = mp_encode_str  (end, key, key_len);
+	assert(end <= begin + len);
+
+	/* Get tuple from space */
+	if (box_index_get(con->cfg->space_id, 0, begin, end, tuple) == -1) {
+		return -1;
+	}
+	return 0;
 }
 
 /**
@@ -202,22 +227,8 @@ memcached_bin_process_set(struct memcached_connection *con)
 			  h->opaque, h->cas);
 	}
 
-	/* Create key for getting previous tuple from space */
-	uint32_t len = mp_sizeof_array(1) +
-		       mp_sizeof_str  (b->key_len);
-	char *begin  = (char *)box_txn_alloc(len);
-	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_set","key");
-		return -1;
-	}
-	char *end = NULL;
-	end = mp_encode_array(begin, 1);
-	end = mp_encode_str  (end, b->key, b->key_len);
-	assert(end <= begin + len);
-
-	/* Get tuple from space */
 	box_tuple_t *tuple = NULL;
-	if (box_index_get(con->cfg->space_id, 0, begin, end, &tuple) == -1) {
+	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
 		box_txn_rollback();
 		return -1;
 	}
@@ -254,9 +265,9 @@ memcached_bin_process_set(struct memcached_connection *con)
 	}
 
 	uint64_t new_cas = con->cfg->cas++;
-	if (memcached_replace_tuple(con, b->key, b->key_len, exptime, b->val,
-				    b->val_len, new_cas, ext->flags,
-				    con->cfg->space_id) == -1) {
+	if (memcached_tuple_set(con, b->key, b->key_len, exptime, b->val,
+				b->val_len, new_cas, ext->flags,
+				con->cfg->space_id) == -1) {
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply && write_output_ok_cas(con, new_cas) == -1) {
@@ -287,19 +298,8 @@ memcached_bin_process_get(struct memcached_connection *con)
 	    h->cmd == MEMCACHED_BIN_CMD_GETKQ)
 		con->noreply = true;
 
-	uint32_t len = mp_sizeof_array(1) +
-		       mp_sizeof_str  (b->key_len);
-	char *begin = (char *)box_txn_alloc(len);
-	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_get","key");
-		return -1;
-	}
-	char *end = NULL;
-	      end = mp_encode_array(begin, 1);
-	      end = mp_encode_str  (end, b->key, b->key_len);
-	assert(end <= begin + len);
 	box_tuple_t *tuple = NULL;
-	if (box_index_get(con->cfg->space_id, 0, begin, end, &tuple) == -1) {
+	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
 		box_txn_rollback();
 		return -1;
 	}
@@ -524,23 +524,12 @@ memcached_bin_process_gat(struct memcached_connection *con)
 			  mp_bswap_u32(h->opaque), exptime);
 	}
 
-	uint32_t len = mp_sizeof_array(1) +
-		       mp_sizeof_str(b->key_len);
-	char *begin  = (char *)box_txn_alloc(len);
-	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_gat","key");
-		return -1;
-	}
-	char *end = mp_encode_array(begin, 2);
-	end = mp_encode_str  (end, b->key, b->key_len);
-	assert(end <= begin + len);
-
 	box_tuple_t *tuple = NULL;
-	if (box_index_get(con->cfg->space_id, 0, begin, end, &tuple) == -1) {
+	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
 		box_txn_rollback();
 		return -1;
 	}
-	
+
 	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
@@ -569,8 +558,8 @@ memcached_bin_process_gat(struct memcached_connection *con)
 	flags            = mp_decode_uint(&pos);
 	epos             = (struct memcached_get_ext *)&flags;
 	elen             = sizeof(struct memcached_get_ext);
-	if (memcached_replace_tuple(con, kpos, klen, exptime, vpos, vlen,
-				    cas, flags, con->cfg->space_id) == -1) {
+	if (memcached_tuple_set(con, kpos, klen, exptime, vpos, vlen,
+				cas, flags, con->cfg->space_id) == -1) {
 		box_txn_rollback();
 		return -1;
 	}
@@ -622,27 +611,17 @@ memcached_bin_process_delta(struct memcached_connection *con)
 				  mp_bswap_u64(ext->initial));
 	}
 
-	/* Constructing key */
-	uint32_t len = mp_sizeof_array(1) +
-		       mp_sizeof_str  (b->key_len);
-	char *begin = (char *)box_txn_alloc(len);
-	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_delta","key");
+	box_tuple_t *tuple = NULL;
+	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
+		box_txn_rollback();
 		return -1;
 	}
-	char *end   = mp_encode_array(begin, 1);
-	      end   = mp_encode_str  (end, b->key, b->key_len);
-	assert(end <= begin + len);
-	box_tuple_t *tuple = NULL;
+
 	uint64_t val = 0;
 	uint64_t cas = con->cfg->cas++;
 	const char *vpos = NULL;
 	uint32_t    vlen = 0;
 	char        strval[22]; uint8_t strvallen = 0;
-	if (box_index_get(con->cfg->space_id, 0, begin, end, &tuple) == -1) {
-		box_txn_rollback();
-		return -1;
-	}
 
 	/* Get existence flags */
 	bool tuple_exists  = (tuple != NULL);
@@ -674,9 +653,9 @@ memcached_bin_process_delta(struct memcached_connection *con)
 
 	/* Insert value */
 	strvallen = snprintf(strval, 22, "%lu", val);
-	if (memcached_replace_tuple(con, b->key, b->key_len, expire,
-				    (const char *)strval, strvallen,
-				    cas, 0, con->cfg->space_id) == -1) {
+	if (memcached_tuple_set(con, b->key, b->key_len, expire,
+				(const char *)strval, strvallen,
+				cas, 0, con->cfg->space_id) == -1) {
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply) {
@@ -712,19 +691,9 @@ memcached_bin_process_pend(struct memcached_connection *con)
 
 	con->cfg->stat.cmd_set++;
 	uint64_t new_cas = con->cfg->cas++;
-	
-	uint32_t len  = mp_sizeof_array (1) +
-			mp_sizeof_str   (b->key_len);
-	char *begin = (char *)box_txn_alloc(len);
-	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_pend","key");
-		return -1;
-	}
-	char *end = mp_encode_array(begin, 1);
-	      end = mp_encode_str  (end, b->key, b->key_len);
 
 	box_tuple_t *tuple = NULL;
-	if (box_index_get(con->cfg->space_id, 0, begin, end, &tuple) == -1) {
+	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
 		box_txn_rollback();
 		return -1;
 	}
@@ -750,9 +719,10 @@ memcached_bin_process_pend(struct memcached_connection *con)
 	mp_next(&pos); /* skip cas */
 	flags            = mp_decode_uint(&pos);
 
-	begin = (char *)box_txn_alloc(b->val_len + vlen);
+	char *begin = (char *)box_txn_alloc(b->val_len + vlen);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_pend","value");
+		memcached_error_ENOMEM(b->val_len + vlen,
+				"memcached_bin_process_pend", "value");
 		return -1;
 	}
 	if (h->cmd == MEMCACHED_BIN_CMD_PREPEND ||
@@ -765,9 +735,9 @@ memcached_bin_process_pend(struct memcached_connection *con)
 	}
 
 	/* Tuple can't be NULL, because we already found this element */
-	if (memcached_replace_tuple(con, kpos, klen, exptime, begin,
-				    vlen + b->val_len, new_cas, flags,
-				    con->cfg->space_id) == -1) {
+	if (memcached_tuple_set(con, kpos, klen, exptime, begin,
+				vlen + b->val_len, new_cas, flags,
+				con->cfg->space_id) == -1) {
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply) {

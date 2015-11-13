@@ -1,5 +1,5 @@
-#ifndef   MEMCACHED_UTIL_H
-#define   MEMCACHED_UTIL_H
+#ifndef   UTILS_H_INCLUDED
+#define   UTILS_H_INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,4 +16,4 @@ safe_strtoull(const char *begin, const char *end, uint64_t *out);
 void
 memcached_binary_header_dump(struct memcached_hdr *hdr);
 
-#endif /* MEMCACHED_UTIL_H */
+#endif /* UTILS_H_INCLUDED */

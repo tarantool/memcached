@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_MEMCACHED_H_INCLUDED
-#define TARANTOOL_MEMCACHED_H_INCLUDED
+#ifndef   MEMCACHED_H_INCLUDED
+#define   MEMCACHED_H_INCLUDED
 
 /*
  ** Old text memcached API
@@ -174,4 +174,4 @@ void memcached_handler(struct memcached_service *p, int fd);
 }
 #endif /* defined(__cplusplus) */
 
-#endif
+#endif /* MEMCACHED_H_INCLUDED */

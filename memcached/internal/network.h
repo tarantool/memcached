@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_MEMCACHED_NETWORK_H_INCLUDED
-#define TARANTOOL_MEMCACHED_NETWORK_H_INCLUDED
+#ifndef   NETWORK_H_INCLUDED
+#define   NETWORK_H_INCLUDED
 
 #define TIMEOUT_INFINITY 365*86400*100.0
 
@@ -52,4 +52,4 @@ obuf_new();
 void
 iobuf_delete(struct ibuf *ibuf, struct obuf *obuf);
 
-#endif /* TARANTOOL_MEMCACHED_NETWORK_H_INCLUDED */
+#endif /* NETWORK_H_INCLUDED */

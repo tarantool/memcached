@@ -1,10 +1,10 @@
-#ifndef   TARANTOOL_BOX_MEMCACHED_TEXT_H_INCLUDED
-#define   TARANTOOL_BOX_MEMCACHED_TEXT_H_INCLUDED
+#ifndef   PROTO_TEXT_PARSER_H_INCLUDED
+#define   PROTO_TEXT_PARSER_H_INCLUDED
 
 struct memcached_text_request;
 
 int
-memcached_text_parse(struct memcached_text_request *req, const char **p,
-		     const char *pe);
+memcached_text_parser(struct memcached_connection *con,
+		      const char **p_ptr, const char *pe);
 
-#endif /* TARANTOOL_BOX_MEMCACHED_TEXT_H_INCLUDED */
+#endif /* PROTO_TEXT_PARSER_H_INCLUDED */

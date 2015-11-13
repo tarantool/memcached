@@ -4,9 +4,12 @@
 #include <tarantool.h>
 #include <msgpuck/msgpuck.h>
 
+#include "error.h"
 #include "memcached.h"
 #include "constants.h"
 #include "memcached_layer.h"
+
+#include "proto_binary.h"
 
 #include <small/ibuf.h>
 #include <small/obuf.h>
@@ -144,7 +147,8 @@ memcached_binary_ntxn(struct memcached_connection *con)
 };
 
 int
-memcached_binary_process(struct memcached_connection *con) {
+memcached_binary_process(struct memcached_connection *con)
+{
 	int rv = 0;
 	/* Process message */
 	con->noreply = false;
@@ -299,20 +303,20 @@ int memcached_bin_errori(struct memcached_connection *con)
 	int rv = 0;
 	switch(errcode) {
 	case ER_MEMORY_ISSUE:
-		errcode = MEMCACHED_RES_ENOMEM;
+		errcode = MEMCACHED_BIN_RES_ENOMEM;
 		errstr  = NULL;
 		rv = -1;
 		break;
 	case ER_TUPLE_NOT_FOUND:
-		errcode = MEMCACHED_RES_KEY_ENOENT;
+		errcode = MEMCACHED_BIN_RES_KEY_ENOENT;
 		errstr  = NULL;
 		break;
 	case ER_TUPLE_FOUND:
-		errcode = MEMCACHED_RES_KEY_EEXISTS;
+		errcode = MEMCACHED_BIN_RES_KEY_EEXISTS;
 		errstr  = NULL;
 		break;
 	default:
-		errcode = MEMCACHED_RES_SERVER_ERROR;
+		errcode = MEMCACHED_BIN_RES_SERVER_ERROR;
 		snprintf(errfstr, 256, "SERVER ERROR '%s'", errstr);
 		errstr = errfstr;
 		rv = -1;

@@ -1,5 +1,5 @@
-#ifndef   TARANTOOL_BOX_MEMCACHED_CONSTANTS_H_INCLUDED
-#define   TARANTOOL_BOX_MEMCACHED_CONSTANTS_H_INCLUDED
+#ifndef   CONSTANTS_H_INCLUDED
+#define   CONSTANTS_H_INCLUDED
 
 enum memcached_text_cmd {
 	MEMCACHED_TXT_CMD_SET     = 0x00,
@@ -197,4 +197,4 @@ struct memcached_body {
 	const char *val;
 };
 
-#endif /* TARANTOOL_BOX_MEMCACHED_CONSTANTS_H_INCLUDED */
+#endif /* CONSTANTS_H_INCLUDED */

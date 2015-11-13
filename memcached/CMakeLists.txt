@@ -18,10 +18,11 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate
 #     PROPERTIES HEADER_FILE_ONLY true)
 
 add_library(internalso SHARED
+        "internal/constants.c"
         "internal/utils.c"
         "internal/proto_binary.c"
         "internal/proto_text_parser.c"
-        "internal/constants.c"
+        "internal/proto_text.c"
         "internal/network.c"
         "internal/memcached_layer.c"
         "internal/memcached.c"

@@ -5,29 +5,32 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+#include <tarantool.h>
 
+#include "memcached.h"
 #include "constants.h"
-#include "proto_text_parser.h"
 #include "utils.h"
+#include "error.h"
+
+#include "proto_text_parser.h"
 
 %%{
-	machine memcached;
+	machine memcached_text_parser;
 	write data;
 }%%
 
 int
-memcached_text_parse(struct memcached_text_request *req, const char **p_ptr,
-					 const char *pe)
+memcached_text_parser(struct memcached_connection *con,
+					  const char **p_ptr, const char *pe)
 {
 	const char *p = *p_ptr;
 	int cs = 0;
 	const char *s = NULL;
 	bool done = false;
 
+	struct memcached_text_request *req = &con->request;
 	memset(req, 0, sizeof(struct memcached_text_request));
+
 	%%{
 		action key_start {
 			s = p;
@@ -47,7 +50,13 @@ memcached_text_parse(struct memcached_text_request *req, const char **p_ptr,
 
 			if (req->data + req->data_len <= pe - 2) {
 				if (strncmp(req->data + req->data_len, "\r\n", 2) != 0) {
-					return -7;
+					/**
+					 * IDK what to do - skip it or not
+					 */
+					memcached_error_EINVALS("malformed data (can't find \r\n "
+											"at the end of the query)");
+					con->close_connection = true;
+					return -1;
 				}
 				p += req->bytes + 2;
 			} else {
@@ -55,7 +64,6 @@ memcached_text_parse(struct memcached_text_request *req, const char **p_ptr,
 			}
 		}
 		action done {
-			*p_ptr = p;
 			done = true;
 		}
 		printable = [^ \t\r\n];
@@ -63,22 +71,63 @@ memcached_text_parse(struct memcached_text_request *req, const char **p_ptr,
 
 		exptime = digit+
 				>{ s = p; }
-				%{ if (memcached_strtoul(s, p, &req->exptime) == -1) return -2; };
+				%{
+					if (memcached_strtoul(s, p, &req->exptime) == -1) {
+						memcached_error_EINVALS("bad expiration time value");
+						con->close_connection = true;
+						return -1;
+					}
+				};
 		flags = digit+
 				>{ s = p; }
-				%{ if (memcached_strtoul(s, p, &req->flags) == -1) return -3; };
+				%{
+					if (memcached_strtoul(s, p, &req->flags) == -1) {
+						memcached_error_EINVALS("bad flags value");
+						con->close_connection = true;
+						return -1;
+					}
+				};
 		bytes = digit+
 				>{ s = p; }
-				%{ if (memcached_strtoul(s, p, &req->bytes) == -1) return -4; };
+				%{
+					if (memcached_strtoul(s, p, &req->bytes) == -1) {
+						memcached_error_EINVALS("bad bytes value");
+						con->close_connection = true;
+						return -1;
+					} else if (req->bytes > MEMCACHED_MAX_SIZE) {
+						memcached_error_E2BIG();
+						con->close_connection = true;
+						return -1;
+					}
+				};
 		cas_value = digit+
 				>{ s = p; }
-				%{ if (memcached_strtoul(s, p, &req->cas) == -1) return -5; };
+				%{
+					if (memcached_strtoul(s, p, &req->cas) == -1) {
+						memcached_error_EINVALS("bad cas value");
+						con->close_connection = true;
+						return -1;
+					}
+				};
 		incr_value = digit+
 				>{ s = p; }
-				%{ if (memcached_strtoul(s, p, &req->inc_val) == -1) return -6; };
+				%{
+					if (memcached_strtoul(s, p, &req->inc_val) == -1) {
+						memcached_error_DELTA_BADVAL();
+						// memcached_error_EINVALS("bad incr/decr value");
+						con->close_connection = true;
+						return -1;
+					}
+				};
 		flush_delay = digit+
 				>{ s = p; }
-				%{ if (memcached_strtoul(s, p, &req->exptime) == -1) return -7; };
+				%{
+					if (memcached_strtoul(s, p, &req->exptime) == -1) {
+						memcached_error_EINVALS("bad flush value");
+						con->close_connection = true;
+						return -1;
+					}
+				};
 
 		eol = ("\r\n" | "\n") @{ p++; };
 		spc = " "+;
@@ -120,8 +169,10 @@ memcached_text_parse(struct memcached_text_request *req, const char **p_ptr,
 	if (!done) {
 		if (p == pe)
 			return 1;
+		memcached_error_EINVALS("Invalid package structure");
 		return -1;
 	}
+	*p_ptr = p;
 	return 0;
 }
 

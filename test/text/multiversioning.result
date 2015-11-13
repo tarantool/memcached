@@ -1,0 +1,70 @@
+# Store big in lower case via first memcached client 
+set big 0 0 262144
+<big-value-lower-case>
+STORED
+
+# send command 'get big' to first memcached client 
+<<--------------------------------------------------
+get big
+# send command 'delete big' to second client 
+<<--------------------------------------------------
+delete big
+>>--------------------------------------------------
+DELETED
+# Store big in upper case via second memcached client 
+set big 0 0 262144
+<big-value-upper-case>
+STORED
+
+# recv reply 'get big' from the first memcached client 
+success: buf == reply
+<<--------------------------------------------------
+stats
+>>--------------------------------------------------
+STAT cmd_set 0
+STAT get_hits 0
+STAT expired_daemon 0
+STAT touch_misses 0
+STAT expired_runtime 0
+STAT decr_misses 0
+STAT cmd_touch 0
+STAT cmd_flush 0
+STAT touch_hits 0
+STAT delete_misses 0
+STAT decr_hits 0
+STAT cas_misses 0
+STAT delete_hits 0
+STAT cas_badval 0
+STAT incr_hits 0
+STAT cmd_get 0
+STAT cas_hits 0
+STAT incr_misses 0
+STAT get_misses 0
+END
+box.stat()
+---
+- DELETE:
+    total: 0
+    rps: 0
+  EVAL:
+    total: 0
+    rps: 0
+  SELECT:
+    total: 1
+    rps: 0
+  REPLACE:
+    total: 1
+    rps: 0
+  INSERT:
+    total: 2
+    rps: 0
+  AUTH:
+    total: 0
+    rps: 0
+  CALL:
+    total: 0
+    rps: 0
+  UPDATE:
+    total: 1
+    rps: 0
+...

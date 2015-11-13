@@ -12,6 +12,7 @@
 #include <msgpuck/msgpuck.h>
 #include <small/obuf.h>
 
+#include "error.h"
 #include "memcached.h"
 #include "memcached_layer.h"
 #include "utils.h"

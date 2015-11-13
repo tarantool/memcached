@@ -39,8 +39,10 @@
 #include "memcached.h"
 #include "memcached_layer.h"
 
+#include "error.h"
 #include "network.h"
 #include "proto_binary.h"
+#include "proto_text.h"
 
 static inline int
 memcached_skip_request(struct memcached_connection *con) {
@@ -183,7 +185,8 @@ memcached_handler(struct memcached_service *p, int fd)
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;
 	con.cfg->stat.total_conns++;
-	memcached_set_binary(&con);
+//	memcached_set_binary(&con);
+	memcached_set_text(&con);
 	memcached_loop(&con);
 	con.cfg->stat.curr_conns--;
 	close(con.fd);

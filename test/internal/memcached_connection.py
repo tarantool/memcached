@@ -705,7 +705,8 @@ class MemcachedTextConnection(TarantoolConnection):
     def recv(self, silent = False):
         self.recv_buffer = ''
         self.command_buffer = MemcachedCommandBuffer(self.commands)
-        self.reply = ''
+        self.raw_reply = ''
+        self.reply     = ''
 
         while True:
             cmd = self.command_buffer.read_line()
@@ -735,7 +736,7 @@ class MemcachedTextConnection(TarantoolConnection):
             sys.stdout.write(self.reply.strip() + '\n')
             #sys.stdout.write(self.reply)
 
-        return self.reply
+        return self.raw_reply
 
     def reply_storage(self, cmd):
         self.command_buffer.read_line()
@@ -745,6 +746,14 @@ class MemcachedTextConnection(TarantoolConnection):
         while True:
             # read reply cmd
             key = self.read_line()
+            self.raw_reply += key + MEMCACHED_SEPARATOR
+            # delete cas
+            if (re.match('VALUE', key)):
+                arr = key.split(' ')
+                if (len(arr) > 4):
+                    arr[4] = 'cas'
+                    key = ' '.join(arr)
+
             # store line in reply buffer
             self.reply += key + MEMCACHED_SEPARATOR
 
@@ -761,6 +770,7 @@ class MemcachedTextConnection(TarantoolConnection):
                     # Receive value line
                     value = self.read_line()
                     # store value line in reply buffer
+                    self.raw_reply += value + MEMCACHED_SEPARATOR
                     self.reply += value + MEMCACHED_SEPARATOR
                     # decrease value len
                     value_len -= len(value)
@@ -785,6 +795,7 @@ class MemcachedTextConnection(TarantoolConnection):
             # read reply stats
             stat = self.read_line()
             # store stat in reply buffer
+            self.raw_reply += stat + MEMCACHED_SEPARATOR
             self.reply += stat + MEMCACHED_SEPARATOR
 
             if re.match('END', stat):
@@ -805,11 +816,14 @@ class MemcachedTextConnection(TarantoolConnection):
             noreply = False
 
         if not noreply:
-            self.reply += self.read_line() + MEMCACHED_SEPARATOR
+            reply = self.read_line() + MEMCACHED_SEPARATOR
+            self.reply     += reply
+            self.raw_reply += reply
 
     def reply_unknown(self, line):
-        reply = self.read_line()
-        self.reply += reply + MEMCACHED_SEPARATOR
+        reply = self.read_line() + MEMCACHED_SEPARATOR
+        self.raw_reply += reply
+        self.reply += reply
 
     def read_line(self):
         buf = self.recv_buffer
@@ -818,7 +832,7 @@ class MemcachedTextConnection(TarantoolConnection):
             index = buf.find(MEMCACHED_SEPARATOR)
             if index > 0:
                 break
-            data = self.socket.recv(4096)
+            data = self.socket.recv(1048576)
             if not data:
                 return None
             buf += data

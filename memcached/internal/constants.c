@@ -4,10 +4,10 @@ const char *memcached_binary_res_title[] = {
 	/* 0x00 */ "Not an error",
 	/* 0x01 */ "Not found",
 	/* 0x02 */ "Data exists for key",
-	/* 0x03 */ "Too large",
+	/* 0x03 */ "object too large for cache or OOM",
 	/* 0x04 */ "Invalid arguments",
 	/* 0x05 */ "Not stored",
-	/* 0x06 */ "Non-numeric server-side value for incr/dcr",
+	/* 0x06 */ "cannot increment or decrement non-numeric value",
 	/* 0x07 */ "Bad vbucket value",
 	/* 0x08 */ NULL,
 	/* 0x09 */ NULL,
@@ -136,6 +136,26 @@ const char *memcached_binary_res_title[] = {
 	/* 0x84 */ "Server error",
 	/* 0x85 */ "Resource busy",
 	/* 0x86 */ "Temporary unavailable",
+};
+
+const char *memcached_text_cmd_name[] = {
+	/* 0x00 */ "UNKNOWN",
+	/* 0x01 */ "SET",
+	/* 0x02 */ "ADD",
+	/* 0x03 */ "REPLACE",
+	/* 0x04 */ "APPEND",
+	/* 0x05 */ "PREPEND",
+	/* 0x06 */ "CAS",
+	/* 0x07 */ "GET",
+	/* 0x08 */ "GETS",
+	/* 0x09 */ "DELETE",
+	/* 0x0a */ "INCR",
+	/* 0x0b */ "DECR",
+	/* 0x0c */ "FLUSH",
+	/* 0x0d */ "STAT",
+	/* 0x0e */ "VERSION",
+	/* 0x0f */ "GETK",
+	/* 0x10 */ "QUIT",
 };
 
 const char *memcached_binary_cmd_name[] = {

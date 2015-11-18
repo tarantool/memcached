@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <tarantool.h>
+#include <tarantool/module.h>
 #include <msgpuck/msgpuck.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>
@@ -52,7 +52,7 @@ memcached_skip_request(struct memcached_connection *con) {
 		ibuf_reset(in);
 		ssize_t read = mnet_read_ibuf(con->fd, in, 1);
 		if (read == -1)
-			memcached_error_ENOMEM(1, "mnet_read_ibuf", "ibuf");
+			memcached_error_ENOMEM(1, "ibuf");
 		if (read < 1) {
 			return -1;
 		}
@@ -80,12 +80,12 @@ static inline int
 memcached_loop_read(struct memcached_connection *con, size_t to_read)
 {
 	if (ibuf_reserve(con->in, to_read) == NULL) {
-/*		memcached_error_ENOMEM(to_read,"memcached_loop_read","ibuf");*/
+/*		memcached_error_ENOMEM(to_read, "ibuf");*/
 		return -1;
 	}
 	ssize_t read = mnet_read_ibuf(con->fd, con->in, to_read);
 	if (read == -1)
-		memcached_error_ENOMEM(to_read, "mnet_read_ibuf", "ibuf");
+		memcached_error_ENOMEM(to_read, "ibuf");
 	if (read < (ssize_t )to_read) {
 		return -1;
 	}
@@ -108,6 +108,7 @@ memcached_loop_error(struct memcached_connection *con) {
 		memcached_error_SERVER_ERROR(
 				"SERVER ERROR %d: %s", errcode, errstr);
 	}
+	box_error_clear();
 	return 0;
 }
 
@@ -115,7 +116,7 @@ static inline void
 memcached_loop(struct memcached_connection *con)
 {
 	int rc = 0;
-	size_t to_read = 24;
+	size_t to_read = 1;
 	int batch_count = 0;
 
 	for (;;) {
@@ -127,7 +128,7 @@ memcached_loop(struct memcached_connection *con)
 			 */
 			break;
 		}
-		to_read = 24;
+		to_read = 1;
 next:
 		con->noreply = false;
 		con->noprocess = false;
@@ -185,15 +186,16 @@ memcached_handler(struct memcached_service *p, int fd)
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;
 	con.cfg->stat.total_conns++;
-	memcached_set_binary(&con);
-//	memcached_set_text(&con);
+//	memcached_set_binary(&con);
+	memcached_set_text(&con);
 	memcached_loop(&con);
 	con.cfg->stat.curr_conns--;
 	close(con.fd);
 	iobuf_delete(con.in, con.out);
 	const box_error_t *err = box_error_last();
-	if (err)
+	if (err) {
 		say_error("%s", box_error_message(err));
+	}
 }
 
 int
@@ -220,9 +222,7 @@ memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
 			char *begin = (char *)box_txn_alloc(sz);
 			if (begin == NULL) {
 				box_txn_rollback();
-				memcached_error_ENOMEM(sz,
-						"memcached_expire_process",
-						"key");
+				memcached_error_ENOMEM(sz, "key");
 				return -1;
 			}
 			char *end = mp_encode_array(begin, 1);

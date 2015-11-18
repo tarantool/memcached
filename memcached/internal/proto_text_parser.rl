@@ -5,19 +5,27 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <tarantool.h>
+#include <tarantool/module.h>
 
 #include "memcached.h"
 #include "constants.h"
 #include "utils.h"
 #include "error.h"
 
+#include "proto_text.h"
 #include "proto_text_parser.h"
 
 %%{
 	machine memcached_text_parser;
 	write data;
 }%%
+
+static inline const char *
+skip_line(const char *begin, const char *end)
+{
+	for (; begin < (end - 1) &&*begin != '\r' && *(begin + 1) != '\n'; ++begin);
+	return begin;
+}
 
 int
 memcached_text_parser(struct memcached_connection *con,
@@ -112,7 +120,7 @@ memcached_text_parser(struct memcached_connection *con,
 		incr_value = digit+
 				>{ s = p; }
 				%{
-					if (memcached_strtoul(s, p, &req->inc_val) == -1) {
+					if (memcached_strtoul(s, p, &req->delta) == -1) {
 						memcached_error_DELTA_BADVAL();
 						// memcached_error_EINVALS("bad incr/decr value");
 						con->close_connection = true;
@@ -167,12 +175,52 @@ memcached_text_parser(struct memcached_connection *con,
 
 
 	if (!done) {
-		if (p == pe)
+		if (p == pe) {
 			return 1;
-		memcached_error_EINVALS("Invalid package structure");
+		}
+		
+		if (box_error_last() == NULL) {
+			if (con->request.op == MEMCACHED_TXT_CMD_UNKNOWN) {
+				memcached_error_UNKNOWN_COMMAND(con->request.op);
+			} else {
+				memcached_error_EINVALS("bad command line format");
+			}
+			if (!con->close_connection) {
+				const char *request = *p_ptr;
+/*				switch(req->op) {
+					case(MEMCACHED_TXT_CMD_SET):
+					case(MEMCACHED_TXT_CMD_ADD):
+					case(MEMCACHED_TXT_CMD_REPLACE):
+					case(MEMCACHED_TXT_CMD_APPEND):
+					case(MEMCACHED_TXT_CMD_PREPEND):
+					case(MEMCACHED_TXT_CMD_CAS):
+						request = skip_line(request, pe);
+						request = skip_line(request, pe);
+						break;
+					case(MEMCACHED_TXT_CMD_GET):
+					case(MEMCACHED_TXT_CMD_GETS):
+					case(MEMCACHED_TXT_CMD_DELETE):
+					case(MEMCACHED_TXT_CMD_INCR):
+					case(MEMCACHED_TXT_CMD_DECR):
+					case(MEMCACHED_TXT_CMD_STATS):
+					case(MEMCACHED_TXT_CMD_FLUSH):
+					case(MEMCACHED_TXT_CMD_QUIT):
+						request = skip_line(request, pe);
+						break;
+					default:
+						request = skip_line(request, pe);
+						break;
+				} */
+				request = skip_line(request, pe);
+				if ((request == pe - 2) && (*request != '\r' || *(request + 1) != '\n'))
+					return 1;
+				*p_ptr = (request + 2);
+				con->noprocess = true;
+			}
+		}
 		return -1;
 	}
-	*p_ptr = p;
+	*p_ptr = (p - 1);
 	return 0;
 }
 

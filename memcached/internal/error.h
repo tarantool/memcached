@@ -1,10 +1,10 @@
 #ifndef   ERROR_H_INCLUDED
 #define   ERROR_H_INCLUDED
 
-#define memcached_error_ENOMEM(_bytes, _place, _for) \
+#define memcached_error_ENOMEM(_bytes, _for) \
 	box_error_raise(box_error_code_MAX + MEMCACHED_RES_ENOMEM, \
 			"Failed to allocate %u bytes in '%s' for %s", \
-			(_bytes), (_place), (_for))
+			(_bytes), __func__, (_for))
 
 #define memcached_error_KEY_ENOENT() \
 	box_error_raise(box_error_code_MAX + MEMCACHED_RES_KEY_ENOENT, \

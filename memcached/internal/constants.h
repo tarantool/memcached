@@ -2,21 +2,22 @@
 #define   CONSTANTS_H_INCLUDED
 
 enum memcached_text_cmd {
-	MEMCACHED_TXT_CMD_SET     = 0x00,
-	MEMCACHED_TXT_CMD_ADD     = 0x01,
-	MEMCACHED_TXT_CMD_REPLACE = 0x02,
-	MEMCACHED_TXT_CMD_APPEND  = 0x03,
-	MEMCACHED_TXT_CMD_PREPEND = 0x04,
-	MEMCACHED_TXT_CMD_CAS     = 0x05,
-	MEMCACHED_TXT_CMD_GET     = 0x06,
-	MEMCACHED_TXT_CMD_GETS    = 0x07,
-	MEMCACHED_TXT_CMD_DELETE  = 0x08,
-	MEMCACHED_TXT_CMD_INCR    = 0x09,
-	MEMCACHED_TXT_CMD_DECR    = 0x0a,
-	MEMCACHED_TXT_CMD_FLUSH   = 0x0b,
-	MEMCACHED_TXT_CMD_STATS   = 0x0c,
-	MEMCACHED_TXT_CMD_VERSION = 0x0d,
-	MEMCACHED_TXT_CMD_QUIT    = 0x0e,
+	MEMCACHED_TXT_CMD_UNKNOWN = 0x00,
+	MEMCACHED_TXT_CMD_SET     = 0x01,
+	MEMCACHED_TXT_CMD_ADD     = 0x02,
+	MEMCACHED_TXT_CMD_REPLACE = 0x03,
+	MEMCACHED_TXT_CMD_APPEND  = 0x04,
+	MEMCACHED_TXT_CMD_PREPEND = 0x05,
+	MEMCACHED_TXT_CMD_CAS     = 0x06,
+	MEMCACHED_TXT_CMD_GET     = 0x07,
+	MEMCACHED_TXT_CMD_GETS    = 0x08,
+	MEMCACHED_TXT_CMD_DELETE  = 0x09,
+	MEMCACHED_TXT_CMD_INCR    = 0x0a,
+	MEMCACHED_TXT_CMD_DECR    = 0x0b,
+	MEMCACHED_TXT_CMD_FLUSH   = 0x0c,
+	MEMCACHED_TXT_CMD_STATS   = 0x0d,
+	MEMCACHED_TXT_CMD_VERSION = 0x0e,
+	MEMCACHED_TXT_CMD_QUIT    = 0x0f,
 	MEMCACHED_TXT_CMD_MAX
 };
 
@@ -31,7 +32,7 @@ struct memcached_text_request {
 	uint64_t    bytes;
 	uint64_t    cas;
 	uint64_t    exptime;
-	uint64_t    inc_val;
+	uint64_t    delta;
 	bool        noreply;
 };
 
@@ -132,9 +133,17 @@ enum memcached_binary_cmd {
 };
 
 extern const char *memcached_binary_cmd_name[];
+extern const char *memcached_text_cmd_name[];
 
 static inline const char *
-memcached_get_command_name(uint32_t op) {
+memcached_txt_cmdname(uint32_t op) {
+	if (op >= MEMCACHED_TXT_CMD_MAX)
+		return "UNKNOWN";
+	return memcached_text_cmd_name[op];
+}
+
+static inline const char *
+memcached_bin_cmdname(uint32_t op) {
 	if (op >= MEMCACHED_BIN_CMD_MAX)
 		return "UNKNOWN";
 	return memcached_binary_cmd_name[op];

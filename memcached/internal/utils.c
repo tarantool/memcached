@@ -7,7 +7,7 @@
 
 #include <msgpuck/msgpuck.h>
 
-#include "tarantool.h"
+#include <tarantool/module.h>
 #include "constants.h"
 #include "utils.h"
 

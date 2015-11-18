@@ -1,7 +1,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include <tarantool.h>
+#include <tarantool/module.h>
 #include <msgpuck/msgpuck.h>
 
 #include "error.h"
@@ -76,6 +76,7 @@ const mc_process_func_t memcached_bin_handler[] = {
 	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RINCRQ   , 0x3a */
 	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RDECR    , 0x3b */
 	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RDECRQ   , 0x3c */
+	NULL
 };
 
 int
@@ -102,7 +103,7 @@ memcached_binary_write(struct memcached_connection *con, uint16_t err,
 	size_t to_alloc = ext_len + key_len + val_len +
 			sizeof(struct memcached_hdr);
 	if (obuf_reserve(out, to_alloc) == NULL) {
-		memcached_error_ENOMEM(to_alloc, "write_output", "obuf");
+		memcached_error_ENOMEM(to_alloc, "obuf");
 		return -1;
 	}
 	size_t rv = 0;

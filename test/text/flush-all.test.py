@@ -10,12 +10,12 @@ sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))
 
 from internal.memcached_connection import MemcachedTextConnection
 
-port = int(iproto.uri.split(':')[1]) + 3
+port = int(iproto.uri.split(':')[1])
 mc_client = MemcachedTextConnection('localhost', port)
 
 ###################################
 def get_memcached_len(serv):
-    resp = server.admin("mc_inst.mcs:len()", silent=True)
+    resp = server.admin("box.space.__mc_memcached:len()", silent=True)
     return yaml.load(resp)[0]
 
 def wait_for_empty_space(serv = server):

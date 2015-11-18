@@ -1,6 +1,6 @@
 import os
 
-if not os.access("memcapable", os.X_OK):
+if not os.access("capable/memcapable", os.X_OK):
     self.skip = 1
 
 # vim: set ft=python :

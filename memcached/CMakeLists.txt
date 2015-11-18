@@ -1,7 +1,7 @@
 add_custom_command(
     OUTPUT ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${RAGEL} -G2 memcached/internal/proto_text_parser.rl
+    COMMAND ${RAGEL} -LCe -G2 memcached/internal/proto_text_parser.rl
                      -o memcached/internal/proto_text_parser.c
     DEPENDS ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.rl)
 

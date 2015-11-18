@@ -8,7 +8,8 @@
 #include <math.h>
 #include <unistd.h>
 
-#include <tarantool.h>
+#include <tarantool/module.h>
+
 #include <msgpuck/msgpuck.h>
 #include <small/obuf.h>
 
@@ -23,7 +24,7 @@
 #define MAX_EXPTIME (30*24*60*60LL)
 #define INF_EXPTIME UINT64_MAX
 
-static inline uint64_t
+uint64_t
 convert_exptime (uint64_t exptime)
 {
 	if (exptime == 0) return INF_EXPTIME; /* 0 means never expire */
@@ -78,11 +79,11 @@ write_output_ok_cas(struct memcached_connection *con, uint64_t cas)
 	return write_output_ok(con, cas, 0, 0, 0, NULL, NULL, NULL);
 }
 
-static inline int
+int
 memcached_tuple_set(struct memcached_connection *con,
 		    const char *kpos, uint32_t klen, uint64_t expire,
 		    const char *vpos, uint32_t vlen, uint64_t cas,
-		    uint32_t flags, uint32_t space_id)
+		    uint32_t flags)
 {
 	(void )con;
 	uint64_t time = fiber_time64();
@@ -95,7 +96,7 @@ memcached_tuple_set(struct memcached_connection *con,
 		       mp_sizeof_uint (flags);
 	char *begin  = (char *)box_txn_alloc(len);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(len, "memcached_tuple_set", "tuple");
+		memcached_error_ENOMEM(len, "tuple");
 		return -1;
 	}
 	char *end = mp_encode_array(begin, 6);
@@ -106,10 +107,10 @@ memcached_tuple_set(struct memcached_connection *con,
 	      end = mp_encode_uint (end, cas);
 	      end = mp_encode_uint (end, flags);
 	assert(end <= begin + len);
-	return box_replace(space_id, begin, end, NULL);
+	return box_replace(con->cfg->space_id, begin, end, NULL);
 }
 
-static inline int
+int
 memcached_tuple_get(struct memcached_connection *con,
 		    const char *key, uint32_t key_len,
 		    box_tuple_t **tuple)
@@ -119,7 +120,7 @@ memcached_tuple_get(struct memcached_connection *con,
 		       mp_sizeof_str  (key_len);
 	char *begin  = (char *)box_txn_alloc(len);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(len, "memcached_tuple_get", "key");
+		memcached_error_ENOMEM(len, "key");
 		return -1;
 	}
 	char *end = NULL;
@@ -169,7 +170,7 @@ memcached_package_verify(struct memcached_connection *con,
 error:
 	assert(section);
 	say_error("problem while parsing package '%s' with opaque %" PRIu32,
-		  memcached_get_command_name(h->cmd), h->opaque);
+		  memcached_bin_cmdname(h->cmd), h->opaque);
 	say_error("erroneous '%s' section", section);
 	con->close_connection = true;
 	box_error_raise(ER_INVALID_MSGPACK, "Invalid arguments");
@@ -220,7 +221,7 @@ memcached_bin_process_set(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s '%.*s' '%.*s', flags - %" PRIu32 ", expire - %"
-			  PRIu32, memcached_get_command_name(h->cmd),
+			  PRIu32, memcached_bin_cmdname(h->cmd),
 			  b->key_len, b->key, b->val_len, b->val,
 			  mp_bswap_u32(ext->flags), mp_bswap_u32(ext->expire));
 		say_debug("opaque - %" PRIu32 ", cas - %" PRIu64,
@@ -266,8 +267,7 @@ memcached_bin_process_set(struct memcached_connection *con)
 
 	uint64_t new_cas = con->cfg->cas++;
 	if (memcached_tuple_set(con, b->key, b->key_len, exptime, b->val,
-				b->val_len, new_cas, ext->flags,
-				con->cfg->space_id) == -1) {
+				b->val_len, new_cas, ext->flags) == -1) {
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply && write_output_ok_cas(con, new_cas) == -1) {
@@ -289,7 +289,7 @@ memcached_bin_process_get(struct memcached_connection *con)
 		return -1;
 
 	if (con->cfg->verbosity > 1) {
-		say_debug("%s '%.*s'", memcached_get_command_name(h->cmd),
+		say_debug("%s '%.*s'", memcached_bin_cmdname(h->cmd),
 			  b->key_len, b->key);
 		say_debug("opaque - %" PRIu32, h->opaque);
 	}
@@ -354,7 +354,7 @@ memcached_bin_process_delete(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1)
 		say_debug("%s '%.*s', opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd), b->key_len,
+			  memcached_bin_cmdname(h->cmd), b->key_len,
 			  b->key, h->opaque);
 
 	con->cfg->stat.cmd_delete++;
@@ -362,7 +362,7 @@ memcached_bin_process_delete(struct memcached_connection *con)
 		       mp_sizeof_str  (b->key_len);
 	char *begin = (char *)box_txn_alloc(len);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(len,"memcached_bin_process_delete","key");
+		memcached_error_ENOMEM(len, "key");
 		return -1;
 	}
 	char *end   = mp_encode_array(begin, 1);
@@ -403,7 +403,7 @@ memcached_bin_process_version(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s, opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd), h->opaque);
+			  memcached_bin_cmdname(h->cmd), h->opaque);
 	}
 
 	const char *vers = PACKAGE_VERSION;
@@ -425,7 +425,7 @@ memcached_bin_process_noop(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s, opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd),
+			  memcached_bin_cmdname(h->cmd),
 			  mp_bswap_u32(h->opaque));
 	}
 
@@ -450,7 +450,7 @@ memcached_bin_process_flush(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s, opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd),
+			  memcached_bin_cmdname(h->cmd),
 			  mp_bswap_u32(h->opaque));
 	}
 
@@ -479,7 +479,7 @@ memcached_bin_process_verbosity(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s, opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd),
+			  memcached_bin_cmdname(h->cmd),
 			  mp_bswap_u32(h->opaque));
 	}
 
@@ -518,7 +518,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 	uint64_t exptime = convert_exptime(mp_bswap_u32(ext->expire));
 
 	if (con->cfg->verbosity > 1) {
-		say_debug("%s '%.*s'", memcached_get_command_name(h->cmd),
+		say_debug("%s '%.*s'", memcached_bin_cmdname(h->cmd),
 			  b->key_len, b->key);
 		say_debug("opaque - %" PRIu32 ", new expire - %" PRIu64,
 			  mp_bswap_u32(h->opaque), exptime);
@@ -559,7 +559,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 	epos             = (struct memcached_get_ext *)&flags;
 	elen             = sizeof(struct memcached_get_ext);
 	if (memcached_tuple_set(con, kpos, klen, exptime, vpos, vlen,
-				cas, flags, con->cfg->space_id) == -1) {
+				cas, flags) == -1) {
 		box_txn_rollback();
 		return -1;
 	}
@@ -603,7 +603,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s '%.*s' by %" PRIu64 ", opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd),
+			  memcached_bin_cmdname(h->cmd),
 			  b->key_len, b->key, mp_bswap_u64(ext->delta),
 			  mp_bswap_u32(h->opaque));
 		if (ext->expire == 0xFFFFFFFFLL)
@@ -655,7 +655,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 	strvallen = snprintf(strval, 22, "%lu", val);
 	if (memcached_tuple_set(con, b->key, b->key_len, expire,
 				(const char *)strval, strvallen,
-				cas, 0, con->cfg->space_id) == -1) {
+				cas, 0) == -1) {
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply) {
@@ -684,13 +684,12 @@ memcached_bin_process_pend(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s to '%.*s' value '%.*s', opaque - %" PRIu32,
-			memcached_get_command_name(h->cmd),
+			memcached_bin_cmdname(h->cmd),
 			b->key_len, b->key, b->val_len, b->val,
 			mp_bswap_u32(h->opaque));
 	}
 
 	con->cfg->stat.cmd_set++;
-	uint64_t new_cas = con->cfg->cas++;
 
 	box_tuple_t *tuple = NULL;
 	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
@@ -721,10 +720,12 @@ memcached_bin_process_pend(struct memcached_connection *con)
 
 	char *begin = (char *)box_txn_alloc(b->val_len + vlen);
 	if (begin == NULL) {
-		memcached_error_ENOMEM(b->val_len + vlen,
-				"memcached_bin_process_pend", "value");
+		memcached_error_ENOMEM(b->val_len + vlen, "value");
 		return -1;
 	}
+
+	uint64_t new_cas = con->cfg->cas++;
+
 	if (h->cmd == MEMCACHED_BIN_CMD_PREPEND ||
 	    h->cmd == MEMCACHED_BIN_CMD_PREPENDQ) {
 		memcpy(begin, b->val, b->val_len);
@@ -736,8 +737,7 @@ memcached_bin_process_pend(struct memcached_connection *con)
 
 	/* Tuple can't be NULL, because we already found this element */
 	if (memcached_tuple_set(con, kpos, klen, exptime, begin,
-				vlen + b->val_len, new_cas, flags,
-				con->cfg->space_id) == -1) {
+				vlen + b->val_len, new_cas, flags) == -1) {
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply) {
@@ -762,7 +762,7 @@ memcached_bin_process_quit(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s, opaque - %" PRIu32,
-			  memcached_get_command_name(h->cmd),
+			  memcached_bin_cmdname(h->cmd),
 			  mp_bswap_u32(h->opaque));
 	}
 
@@ -777,7 +777,7 @@ memcached_bin_process_quit(struct memcached_connection *con)
 int
 memcached_process_unsupported(struct memcached_connection *con)
 {
-	memcached_error_NOT_SUPPORTED(memcached_get_command_name(con->hdr->cmd));
+	memcached_error_NOT_SUPPORTED(memcached_bin_cmdname(con->hdr->cmd));
 	return -1;
 }
 

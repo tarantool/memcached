@@ -1,5 +1,5 @@
 
-#line 1 "memcached/internal/proto_text_parser.rl"
+/* #line 1 "memcached/internal/proto_text_parser.rl" */
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -7,17 +7,18 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <tarantool.h>
+#include <tarantool/module.h>
 
 #include "memcached.h"
 #include "constants.h"
 #include "utils.h"
 #include "error.h"
 
+#include "proto_text.h"
 #include "proto_text_parser.h"
 
 
-#line 21 "memcached/internal/proto_text_parser.c"
+/* #line 22 "memcached/internal/proto_text_parser.c" */
 static const int memcached_text_parser_start = 1;
 static const int memcached_text_parser_first_final = 114;
 static const int memcached_text_parser_error = 0;
@@ -25,8 +26,15 @@ static const int memcached_text_parser_error = 0;
 static const int memcached_text_parser_en_main = 1;
 
 
-#line 20 "memcached/internal/proto_text_parser.rl"
+/* #line 21 "memcached/internal/proto_text_parser.rl" */
 
+
+static inline const char *
+skip_line(const char *begin, const char *end)
+{
+	for (; begin < (end - 1) &&*begin != '\r' && *(begin + 1) != '\n'; ++begin);
+	return begin;
+}
 
 int
 memcached_text_parser(struct memcached_connection *con,
@@ -41,12 +49,12 @@ memcached_text_parser(struct memcached_connection *con,
 	memset(req, 0, sizeof(struct memcached_text_request));
 
 	
-#line 45 "memcached/internal/proto_text_parser.c"
+/* #line 53 "memcached/internal/proto_text_parser.c" */
 	{
 	cs = memcached_text_parser_start;
 	}
 
-#line 50 "memcached/internal/proto_text_parser.c"
+/* #line 58 "memcached/internal/proto_text_parser.c" */
 	{
 	if ( p == pe )
 		goto _test_eof;
@@ -107,30 +115,30 @@ case 4:
 		goto tr14;
 	goto st0;
 tr14:
-#line 144 "memcached/internal/proto_text_parser.rl"
+/* #line 152 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_ADD;}
 	goto st5;
 tr49:
-#line 146 "memcached/internal/proto_text_parser.rl"
+/* #line 154 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_APPEND;}
 	goto st5;
 tr147:
-#line 147 "memcached/internal/proto_text_parser.rl"
+/* #line 155 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_PREPEND;}
 	goto st5;
 tr159:
-#line 145 "memcached/internal/proto_text_parser.rl"
+/* #line 153 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_REPLACE;}
 	goto st5;
 tr163:
-#line 143 "memcached/internal/proto_text_parser.rl"
+/* #line 151 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_SET;}
 	goto st5;
 st5:
 	if ( ++p == pe )
 		goto _test_eof5;
 case 5:
-#line 134 "memcached/internal/proto_text_parser.c"
+/* #line 142 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 13: goto st0;
 		case 32: goto st5;
@@ -139,7 +147,7 @@ case 5:
 		goto st0;
 	goto tr15;
 tr15:
-#line 35 "memcached/internal/proto_text_parser.rl"
+/* #line 43 "memcached/internal/proto_text_parser.rl" */
 	{
 			s = p;
 			for (; p < pe && *p != ' ' && *p != '\r' && *p != '\n'; p++);
@@ -157,7 +165,7 @@ st6:
 	if ( ++p == pe )
 		goto _test_eof6;
 case 6:
-#line 161 "memcached/internal/proto_text_parser.c"
+/* #line 169 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st7;
 	goto st0;
@@ -171,21 +179,21 @@ case 7:
 		goto tr18;
 	goto st0;
 tr18:
-#line 82 "memcached/internal/proto_text_parser.rl"
+/* #line 90 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st8;
 st8:
 	if ( ++p == pe )
 		goto _test_eof8;
 case 8:
-#line 182 "memcached/internal/proto_text_parser.c"
+/* #line 190 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto tr19;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st8;
 	goto st0;
 tr19:
-#line 83 "memcached/internal/proto_text_parser.rl"
+/* #line 91 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->flags) == -1) {
 						memcached_error_EINVALS("bad flags value");
@@ -198,28 +206,28 @@ st9:
 	if ( ++p == pe )
 		goto _test_eof9;
 case 9:
-#line 202 "memcached/internal/proto_text_parser.c"
+/* #line 210 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st9;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr22;
 	goto st0;
 tr22:
-#line 73 "memcached/internal/proto_text_parser.rl"
+/* #line 81 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st10;
 st10:
 	if ( ++p == pe )
 		goto _test_eof10;
 case 10:
-#line 216 "memcached/internal/proto_text_parser.c"
+/* #line 224 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto tr23;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st10;
 	goto st0;
 tr23:
-#line 74 "memcached/internal/proto_text_parser.rl"
+/* #line 82 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad expiration time value");
@@ -232,21 +240,21 @@ st11:
 	if ( ++p == pe )
 		goto _test_eof11;
 case 11:
-#line 236 "memcached/internal/proto_text_parser.c"
+/* #line 244 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st11;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr26;
 	goto st0;
 tr26:
-#line 91 "memcached/internal/proto_text_parser.rl"
+/* #line 99 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st12;
 st12:
 	if ( ++p == pe )
 		goto _test_eof12;
 case 12:
-#line 250 "memcached/internal/proto_text_parser.c"
+/* #line 258 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr27;
 		case 13: goto tr28;
@@ -256,7 +264,7 @@ case 12:
 		goto st12;
 	goto st0;
 tr27:
-#line 92 "memcached/internal/proto_text_parser.rl"
+/* #line 100 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->bytes) == -1) {
 						memcached_error_EINVALS("bad bytes value");
@@ -268,9 +276,9 @@ tr27:
 						return -1;
 					}
 				}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 47 "memcached/internal/proto_text_parser.rl"
+/* #line 55 "memcached/internal/proto_text_parser.rl" */
 	{
 			req->data = p;
 			req->data_len = req->bytes;
@@ -290,15 +298,15 @@ tr27:
 				return (req->data_len + 2) - (pe - req->data);
 			}
 		}
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr31:
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 47 "memcached/internal/proto_text_parser.rl"
+/* #line 55 "memcached/internal/proto_text_parser.rl" */
 	{
 			req->data = p;
 			req->data_len = req->bytes;
@@ -318,17 +326,17 @@ tr31:
 				return (req->data_len + 2) - (pe - req->data);
 			}
 		}
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr41:
-#line 134 "memcached/internal/proto_text_parser.rl"
+/* #line 142 "memcached/internal/proto_text_parser.rl" */
 	{ req->noreply = true; }
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 47 "memcached/internal/proto_text_parser.rl"
+/* #line 55 "memcached/internal/proto_text_parser.rl" */
 	{
 			req->data = p;
 			req->data_len = req->bytes;
@@ -348,13 +356,13 @@ tr41:
 				return (req->data_len + 2) - (pe - req->data);
 			}
 		}
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr69:
-#line 105 "memcached/internal/proto_text_parser.rl"
+/* #line 113 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->cas) == -1) {
 						memcached_error_EINVALS("bad cas value");
@@ -362,9 +370,9 @@ tr69:
 						return -1;
 					}
 				}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 47 "memcached/internal/proto_text_parser.rl"
+/* #line 55 "memcached/internal/proto_text_parser.rl" */
 	{
 			req->data = p;
 			req->data_len = req->bytes;
@@ -384,48 +392,48 @@ tr69:
 				return (req->data_len + 2) - (pe - req->data);
 			}
 		}
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr82:
-#line 114 "memcached/internal/proto_text_parser.rl"
+/* #line 122 "memcached/internal/proto_text_parser.rl" */
 	{
-					if (memcached_strtoul(s, p, &req->inc_val) == -1) {
+					if (memcached_strtoul(s, p, &req->delta) == -1) {
 						memcached_error_DELTA_BADVAL();
 						// memcached_error_EINVALS("bad incr/decr value");
 						con->close_connection = true;
 						return -1;
 					}
 				}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr86:
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr96:
-#line 134 "memcached/internal/proto_text_parser.rl"
+/* #line 142 "memcached/internal/proto_text_parser.rl" */
 	{ req->noreply = true; }
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr108:
-#line 74 "memcached/internal/proto_text_parser.rl"
+/* #line 82 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad expiration time value");
@@ -433,25 +441,25 @@ tr108:
 						return -1;
 					}
 				}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr120:
-#line 157 "memcached/internal/proto_text_parser.rl"
+/* #line 165 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_FLUSH;}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr125:
-#line 124 "memcached/internal/proto_text_parser.rl"
+/* #line 132 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad flush value");
@@ -459,29 +467,29 @@ tr125:
 						return -1;
 					}
 				}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr151:
-#line 158 "memcached/internal/proto_text_parser.rl"
+/* #line 166 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_QUIT;}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
 	goto st114;
 tr167:
-#line 156 "memcached/internal/proto_text_parser.rl"
+/* #line 164 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_STATS;}
-#line 132 "memcached/internal/proto_text_parser.rl"
+/* #line 140 "memcached/internal/proto_text_parser.rl" */
 	{ p++; }
-#line 66 "memcached/internal/proto_text_parser.rl"
+/* #line 74 "memcached/internal/proto_text_parser.rl" */
 	{
 			done = true;
 		}
@@ -490,10 +498,10 @@ st114:
 	if ( ++p == pe )
 		goto _test_eof114;
 case 114:
-#line 494 "memcached/internal/proto_text_parser.c"
+/* #line 502 "memcached/internal/proto_text_parser.c" */
 	goto st0;
 tr28:
-#line 92 "memcached/internal/proto_text_parser.rl"
+/* #line 100 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->bytes) == -1) {
 						memcached_error_EINVALS("bad bytes value");
@@ -507,11 +515,11 @@ tr28:
 				}
 	goto st13;
 tr42:
-#line 134 "memcached/internal/proto_text_parser.rl"
+/* #line 142 "memcached/internal/proto_text_parser.rl" */
 	{ req->noreply = true; }
 	goto st13;
 tr70:
-#line 105 "memcached/internal/proto_text_parser.rl"
+/* #line 113 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->cas) == -1) {
 						memcached_error_EINVALS("bad cas value");
@@ -524,12 +532,12 @@ st13:
 	if ( ++p == pe )
 		goto _test_eof13;
 case 13:
-#line 528 "memcached/internal/proto_text_parser.c"
+/* #line 536 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 10 )
 		goto tr31;
 	goto st0;
 tr29:
-#line 92 "memcached/internal/proto_text_parser.rl"
+/* #line 100 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->bytes) == -1) {
 						memcached_error_EINVALS("bad bytes value");
@@ -543,7 +551,7 @@ tr29:
 				}
 	goto st14;
 tr71:
-#line 105 "memcached/internal/proto_text_parser.rl"
+/* #line 113 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->cas) == -1) {
 						memcached_error_EINVALS("bad cas value");
@@ -556,7 +564,7 @@ st14:
 	if ( ++p == pe )
 		goto _test_eof14;
 case 14:
-#line 560 "memcached/internal/proto_text_parser.c"
+/* #line 568 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr31;
 		case 13: goto st13;
@@ -630,14 +638,14 @@ case 21:
 	}
 	goto st0;
 tr43:
-#line 134 "memcached/internal/proto_text_parser.rl"
+/* #line 142 "memcached/internal/proto_text_parser.rl" */
 	{ req->noreply = true; }
 	goto st22;
 st22:
 	if ( ++p == pe )
 		goto _test_eof22;
 case 22:
-#line 641 "memcached/internal/proto_text_parser.c"
+/* #line 649 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr31;
 		case 13: goto st13;
@@ -713,14 +721,14 @@ case 30:
 		goto tr52;
 	goto st0;
 tr52:
-#line 148 "memcached/internal/proto_text_parser.rl"
+/* #line 156 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_CAS;}
 	goto st31;
 st31:
 	if ( ++p == pe )
 		goto _test_eof31;
 case 31:
-#line 724 "memcached/internal/proto_text_parser.c"
+/* #line 732 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 13: goto st0;
 		case 32: goto st31;
@@ -729,7 +737,7 @@ case 31:
 		goto st0;
 	goto tr53;
 tr53:
-#line 35 "memcached/internal/proto_text_parser.rl"
+/* #line 43 "memcached/internal/proto_text_parser.rl" */
 	{
 			s = p;
 			for (; p < pe && *p != ' ' && *p != '\r' && *p != '\n'; p++);
@@ -747,7 +755,7 @@ st32:
 	if ( ++p == pe )
 		goto _test_eof32;
 case 32:
-#line 751 "memcached/internal/proto_text_parser.c"
+/* #line 759 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st33;
 	goto st0;
@@ -761,21 +769,21 @@ case 33:
 		goto tr56;
 	goto st0;
 tr56:
-#line 82 "memcached/internal/proto_text_parser.rl"
+/* #line 90 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st34;
 st34:
 	if ( ++p == pe )
 		goto _test_eof34;
 case 34:
-#line 772 "memcached/internal/proto_text_parser.c"
+/* #line 780 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto tr57;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st34;
 	goto st0;
 tr57:
-#line 83 "memcached/internal/proto_text_parser.rl"
+/* #line 91 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->flags) == -1) {
 						memcached_error_EINVALS("bad flags value");
@@ -788,28 +796,28 @@ st35:
 	if ( ++p == pe )
 		goto _test_eof35;
 case 35:
-#line 792 "memcached/internal/proto_text_parser.c"
+/* #line 800 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st35;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr60;
 	goto st0;
 tr60:
-#line 73 "memcached/internal/proto_text_parser.rl"
+/* #line 81 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st36;
 st36:
 	if ( ++p == pe )
 		goto _test_eof36;
 case 36:
-#line 806 "memcached/internal/proto_text_parser.c"
+/* #line 814 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto tr61;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st36;
 	goto st0;
 tr61:
-#line 74 "memcached/internal/proto_text_parser.rl"
+/* #line 82 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad expiration time value");
@@ -822,28 +830,28 @@ st37:
 	if ( ++p == pe )
 		goto _test_eof37;
 case 37:
-#line 826 "memcached/internal/proto_text_parser.c"
+/* #line 834 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st37;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr64;
 	goto st0;
 tr64:
-#line 91 "memcached/internal/proto_text_parser.rl"
+/* #line 99 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st38;
 st38:
 	if ( ++p == pe )
 		goto _test_eof38;
 case 38:
-#line 840 "memcached/internal/proto_text_parser.c"
+/* #line 848 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto tr65;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st38;
 	goto st0;
 tr65:
-#line 92 "memcached/internal/proto_text_parser.rl"
+/* #line 100 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->bytes) == -1) {
 						memcached_error_EINVALS("bad bytes value");
@@ -860,21 +868,21 @@ st39:
 	if ( ++p == pe )
 		goto _test_eof39;
 case 39:
-#line 864 "memcached/internal/proto_text_parser.c"
+/* #line 872 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st39;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr68;
 	goto st0;
 tr68:
-#line 104 "memcached/internal/proto_text_parser.rl"
+/* #line 112 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st40;
 st40:
 	if ( ++p == pe )
 		goto _test_eof40;
 case 40:
-#line 878 "memcached/internal/proto_text_parser.c"
+/* #line 886 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr69;
 		case 13: goto tr70;
@@ -920,18 +928,18 @@ case 44:
 		goto tr77;
 	goto st0;
 tr77:
-#line 154 "memcached/internal/proto_text_parser.rl"
+/* #line 162 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_DECR;}
 	goto st45;
 tr140:
-#line 153 "memcached/internal/proto_text_parser.rl"
+/* #line 161 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_INCR;}
 	goto st45;
 st45:
 	if ( ++p == pe )
 		goto _test_eof45;
 case 45:
-#line 935 "memcached/internal/proto_text_parser.c"
+/* #line 943 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 13: goto st0;
 		case 32: goto st45;
@@ -940,7 +948,7 @@ case 45:
 		goto st0;
 	goto tr78;
 tr78:
-#line 35 "memcached/internal/proto_text_parser.rl"
+/* #line 43 "memcached/internal/proto_text_parser.rl" */
 	{
 			s = p;
 			for (; p < pe && *p != ' ' && *p != '\r' && *p != '\n'; p++);
@@ -958,7 +966,7 @@ st46:
 	if ( ++p == pe )
 		goto _test_eof46;
 case 46:
-#line 962 "memcached/internal/proto_text_parser.c"
+/* #line 970 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 32 )
 		goto st47;
 	goto st0;
@@ -972,14 +980,14 @@ case 47:
 		goto tr81;
 	goto st0;
 tr81:
-#line 113 "memcached/internal/proto_text_parser.rl"
+/* #line 121 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st48;
 st48:
 	if ( ++p == pe )
 		goto _test_eof48;
 case 48:
-#line 983 "memcached/internal/proto_text_parser.c"
+/* #line 991 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr82;
 		case 13: goto tr83;
@@ -989,7 +997,7 @@ case 48:
 		goto st48;
 	goto st0;
 tr109:
-#line 74 "memcached/internal/proto_text_parser.rl"
+/* #line 82 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad expiration time value");
@@ -999,13 +1007,13 @@ tr109:
 				}
 	goto st49;
 tr97:
-#line 134 "memcached/internal/proto_text_parser.rl"
+/* #line 142 "memcached/internal/proto_text_parser.rl" */
 	{ req->noreply = true; }
 	goto st49;
 tr83:
-#line 114 "memcached/internal/proto_text_parser.rl"
+/* #line 122 "memcached/internal/proto_text_parser.rl" */
 	{
-					if (memcached_strtoul(s, p, &req->inc_val) == -1) {
+					if (memcached_strtoul(s, p, &req->delta) == -1) {
 						memcached_error_DELTA_BADVAL();
 						// memcached_error_EINVALS("bad incr/decr value");
 						con->close_connection = true;
@@ -1014,11 +1022,11 @@ tr83:
 				}
 	goto st49;
 tr121:
-#line 157 "memcached/internal/proto_text_parser.rl"
+/* #line 165 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_FLUSH;}
 	goto st49;
 tr126:
-#line 124 "memcached/internal/proto_text_parser.rl"
+/* #line 132 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad flush value");
@@ -1028,23 +1036,23 @@ tr126:
 				}
 	goto st49;
 tr152:
-#line 158 "memcached/internal/proto_text_parser.rl"
+/* #line 166 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_QUIT;}
 	goto st49;
 tr168:
-#line 156 "memcached/internal/proto_text_parser.rl"
+/* #line 164 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_STATS;}
 	goto st49;
 st49:
 	if ( ++p == pe )
 		goto _test_eof49;
 case 49:
-#line 1043 "memcached/internal/proto_text_parser.c"
+/* #line 1051 "memcached/internal/proto_text_parser.c" */
 	if ( (*p) == 10 )
 		goto tr86;
 	goto st0;
 tr110:
-#line 74 "memcached/internal/proto_text_parser.rl"
+/* #line 82 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad expiration time value");
@@ -1054,9 +1062,9 @@ tr110:
 				}
 	goto st50;
 tr84:
-#line 114 "memcached/internal/proto_text_parser.rl"
+/* #line 122 "memcached/internal/proto_text_parser.rl" */
 	{
-					if (memcached_strtoul(s, p, &req->inc_val) == -1) {
+					if (memcached_strtoul(s, p, &req->delta) == -1) {
 						memcached_error_DELTA_BADVAL();
 						// memcached_error_EINVALS("bad incr/decr value");
 						con->close_connection = true;
@@ -1065,7 +1073,7 @@ tr84:
 				}
 	goto st50;
 tr127:
-#line 124 "memcached/internal/proto_text_parser.rl"
+/* #line 132 "memcached/internal/proto_text_parser.rl" */
 	{
 					if (memcached_strtoul(s, p, &req->exptime) == -1) {
 						memcached_error_EINVALS("bad flush value");
@@ -1078,7 +1086,7 @@ st50:
 	if ( ++p == pe )
 		goto _test_eof50;
 case 50:
-#line 1082 "memcached/internal/proto_text_parser.c"
+/* #line 1090 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr86;
 		case 13: goto st49;
@@ -1152,14 +1160,14 @@ case 57:
 	}
 	goto st0;
 tr98:
-#line 134 "memcached/internal/proto_text_parser.rl"
+/* #line 142 "memcached/internal/proto_text_parser.rl" */
 	{ req->noreply = true; }
 	goto st58;
 st58:
 	if ( ++p == pe )
 		goto _test_eof58;
 case 58:
-#line 1163 "memcached/internal/proto_text_parser.c"
+/* #line 1171 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr86;
 		case 13: goto st49;
@@ -1201,14 +1209,14 @@ case 62:
 		goto tr103;
 	goto st0;
 tr103:
-#line 152 "memcached/internal/proto_text_parser.rl"
+/* #line 160 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_DELETE;}
 	goto st63;
 st63:
 	if ( ++p == pe )
 		goto _test_eof63;
 case 63:
-#line 1212 "memcached/internal/proto_text_parser.c"
+/* #line 1220 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 13: goto st0;
 		case 32: goto st63;
@@ -1217,7 +1225,7 @@ case 63:
 		goto st0;
 	goto tr104;
 tr104:
-#line 35 "memcached/internal/proto_text_parser.rl"
+/* #line 43 "memcached/internal/proto_text_parser.rl" */
 	{
 			s = p;
 			for (; p < pe && *p != ' ' && *p != '\r' && *p != '\n'; p++);
@@ -1235,7 +1243,7 @@ st64:
 	if ( ++p == pe )
 		goto _test_eof64;
 case 64:
-#line 1239 "memcached/internal/proto_text_parser.c"
+/* #line 1247 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr86;
 		case 13: goto st49;
@@ -1257,14 +1265,14 @@ case 65:
 		goto tr107;
 	goto st0;
 tr107:
-#line 73 "memcached/internal/proto_text_parser.rl"
+/* #line 81 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st66;
 st66:
 	if ( ++p == pe )
 		goto _test_eof66;
 case 66:
-#line 1268 "memcached/internal/proto_text_parser.c"
+/* #line 1276 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr108;
 		case 13: goto tr109;
@@ -1354,14 +1362,14 @@ case 75:
 	}
 	goto st0;
 tr122:
-#line 157 "memcached/internal/proto_text_parser.rl"
+/* #line 165 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_FLUSH;}
 	goto st76;
 st76:
 	if ( ++p == pe )
 		goto _test_eof76;
 case 76:
-#line 1365 "memcached/internal/proto_text_parser.c"
+/* #line 1373 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr86;
 		case 13: goto st49;
@@ -1373,14 +1381,14 @@ case 76:
 		goto tr124;
 	goto st0;
 tr124:
-#line 123 "memcached/internal/proto_text_parser.rl"
+/* #line 131 "memcached/internal/proto_text_parser.rl" */
 	{ s = p; }
 	goto st77;
 st77:
 	if ( ++p == pe )
 		goto _test_eof77;
 case 77:
-#line 1384 "memcached/internal/proto_text_parser.c"
+/* #line 1392 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr125;
 		case 13: goto tr126;
@@ -1418,18 +1426,18 @@ case 80:
 	}
 	goto st0;
 tr131:
-#line 150 "memcached/internal/proto_text_parser.rl"
+/* #line 158 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_GET;}
 	goto st81;
 tr136:
-#line 151 "memcached/internal/proto_text_parser.rl"
+/* #line 159 "memcached/internal/proto_text_parser.rl" */
 	{req->op = MEMCACHED_TXT_CMD_GETS;}
 	goto st81;
 st81:
 	if ( ++p == pe )
 		goto _test_eof81;
 case 81:
-#line 1433 "memcached/internal/proto_text_parser.c"
+/* #line 1441 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 13: goto st0;
 		case 32: goto st81;
@@ -1438,7 +1446,7 @@ case 81:
 		goto st0;
 	goto tr133;
 tr133:
-#line 35 "memcached/internal/proto_text_parser.rl"
+/* #line 43 "memcached/internal/proto_text_parser.rl" */
 	{
 			s = p;
 			for (; p < pe && *p != ' ' && *p != '\r' && *p != '\n'; p++);
@@ -1456,7 +1464,7 @@ st82:
 	if ( ++p == pe )
 		goto _test_eof82;
 case 82:
-#line 1460 "memcached/internal/proto_text_parser.c"
+/* #line 1468 "memcached/internal/proto_text_parser.c" */
 	switch( (*p) ) {
 		case 10: goto tr86;
 		case 13: goto st49;
@@ -1855,17 +1863,57 @@ case 113:
 	_out: {}
 	}
 
-#line 166 "memcached/internal/proto_text_parser.rl"
+/* #line 174 "memcached/internal/proto_text_parser.rl" */
 
 
 
 	if (!done) {
-		if (p == pe)
+		if (p == pe) {
 			return 1;
-		memcached_error_EINVALS("Invalid package structure");
+		}
+		
+		if (box_error_last() == NULL) {
+			if (con->request.op == MEMCACHED_TXT_CMD_UNKNOWN) {
+				memcached_error_UNKNOWN_COMMAND(con->request.op);
+			} else {
+				memcached_error_EINVALS("bad command line format");
+			}
+			if (!con->close_connection) {
+				const char *request = *p_ptr;
+/*				switch(req->op) {
+					case(MEMCACHED_TXT_CMD_SET):
+					case(MEMCACHED_TXT_CMD_ADD):
+					case(MEMCACHED_TXT_CMD_REPLACE):
+					case(MEMCACHED_TXT_CMD_APPEND):
+					case(MEMCACHED_TXT_CMD_PREPEND):
+					case(MEMCACHED_TXT_CMD_CAS):
+						request = skip_line(request, pe);
+						request = skip_line(request, pe);
+						break;
+					case(MEMCACHED_TXT_CMD_GET):
+					case(MEMCACHED_TXT_CMD_GETS):
+					case(MEMCACHED_TXT_CMD_DELETE):
+					case(MEMCACHED_TXT_CMD_INCR):
+					case(MEMCACHED_TXT_CMD_DECR):
+					case(MEMCACHED_TXT_CMD_STATS):
+					case(MEMCACHED_TXT_CMD_FLUSH):
+					case(MEMCACHED_TXT_CMD_QUIT):
+						request = skip_line(request, pe);
+						break;
+					default:
+						request = skip_line(request, pe);
+						break;
+				} */
+				request = skip_line(request, pe);
+				if ((request == pe - 2) && (*request != '\r' || *(request + 1) != '\n'))
+					return 1;
+				*p_ptr = (request + 2);
+				con->noprocess = true;
+			}
+		}
 		return -1;
 	}
-	*p_ptr = p;
+	*p_ptr = (p - 1);
 	return 0;
 }
 

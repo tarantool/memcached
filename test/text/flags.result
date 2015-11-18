@@ -6,7 +6,7 @@ STORED
 <<--------------------------------------------------
 gets foo
 >>--------------------------------------------------
-VALUE foo 0 6 22
+VALUE foo 0 6 cas
 fooval
 END
 success: flags (0x0) == ret_flags (0x0)
@@ -18,7 +18,7 @@ STORED
 <<--------------------------------------------------
 gets foo
 >>--------------------------------------------------
-VALUE foo 123 6 23
+VALUE foo 123 6 cas
 fooval
 END
 success: flags (0x7b) == ret_flags (0x7b)
@@ -30,7 +30,7 @@ STORED
 <<--------------------------------------------------
 gets foo
 >>--------------------------------------------------
-VALUE foo 65535 6 24
+VALUE foo 65535 6 cas
 fooval
 END
 success: flags (0xffff) == ret_flags (0xffff)

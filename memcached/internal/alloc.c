@@ -1,4 +1,4 @@
-#include <tarantool.h>
+#include <tarantool/module.h>
 #include <small/slab_cache.h>
 
 #include "memcached_persistent.h"

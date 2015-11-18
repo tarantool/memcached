@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))
 
 from internal.memcached_connection import MemcachedTextConnection
 
-port = int(iproto.uri.split(':')[1]) + 3
+port = int(iproto.uri.split(':')[1])
 mc_client = MemcachedTextConnection('localhost', port)
 
 blobs_list = [ "mooo\0", "mumble\0\0\0\0\r\rblarg", "\0", "\r" ]

@@ -96,6 +96,12 @@ typedef int (* memcached_stat_func_t)(struct memcached_connection *con,
 				      const char *key,
 				      const char *valfmt, ...);
 
+enum memcached_proto_type {
+	MEMCACHED_PROTO_NEGOTIATION = 0x00,
+	MEMCACHED_PROTO_BINARY      = 0x01,
+	MEMCACHED_PROTO_TEXT        = 0x02
+};
+
 /**
  * Single connection object, handles information about
  * 1) pointer to memcached stats
@@ -134,21 +140,20 @@ struct memcached_connection {
 	};
 	size_t                    len;
 	struct {
+		enum memcached_proto_type type;
 		memcached_loop_func_t     parse_request;
 		memcached_loop_func_t     process_request;
 		memcached_error_func_t    process_error;
-		memcached_write_func_t    write_answer;
-		memcached_stat_func_t     process_stat;
 	} cb;
 };
 
 enum memcached_options {
-	MEMCACHED_OPT_READAHEAD = 0,
-	MEMCACHED_OPT_EXPIRE_ENABLED,
-	MEMCACHED_OPT_EXPIRE_COUNT,
-	MEMCACHED_OPT_EXPIRE_TIME,
-	MEMCACHED_OPT_FLUSH_ENABLED,
-	MEMCACHED_OPT_VERBOSITY,
+	MEMCACHED_OPT_READAHEAD      = 0x00,
+	MEMCACHED_OPT_EXPIRE_ENABLED = 0x01,
+	MEMCACHED_OPT_EXPIRE_COUNT   = 0x02,
+	MEMCACHED_OPT_EXPIRE_TIME    = 0x03,
+	MEMCACHED_OPT_FLUSH_ENABLED  = 0x04,
+	MEMCACHED_OPT_VERBOSITY      = 0x05,
 };
 
 void memcached_set_opt(struct memcached_service *, int, ...);

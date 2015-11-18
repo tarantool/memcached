@@ -160,10 +160,10 @@ memcached_text_stat(struct memcached_connection *con, const char *key,
 void
 memcached_set_text(struct memcached_connection *con)
 {
+	con->cb.type            = MEMCACHED_PROTO_TEXT;
 	con->cb.parse_request   = memcached_text_parse;
 	con->cb.process_request = memcached_text_process;
 	con->cb.process_error   = memcached_text_error;
-	con->cb.process_stat    = memcached_text_stat;
 }
 
 static inline int

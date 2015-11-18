@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct memcached_hdr;
+
 int
 memcached_strtol(const char *start, const char *end, int64_t *num);
 

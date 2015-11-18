@@ -112,6 +112,18 @@ memcached_loop_error(struct memcached_connection *con) {
 	return 0;
 }
 
+static inline int
+memcached_loop_negotiate(struct memcached_connection *con)
+{
+	const char symbol = *(con->in->rpos);
+	if (symbol == (const char)MEMCACHED_BIN_REQUEST) {
+		memcached_set_binary(con);
+	} else {
+		memcached_set_text(con);
+	}
+	return con->cb.parse_request(con);
+}
+
 static inline void
 memcached_loop(struct memcached_connection *con)
 {
@@ -186,8 +198,10 @@ memcached_handler(struct memcached_service *p, int fd)
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;
 	con.cfg->stat.total_conns++;
+	con.cb.type = MEMCACHED_PROTO_NEGOTIATION;
+	con.cb.parse_request = memcached_loop_negotiate;
 //	memcached_set_binary(&con);
-	memcached_set_text(&con);
+//	memcached_set_text(&con);
 	memcached_loop(&con);
 	con.cfg->stat.curr_conns--;
 	close(con.fd);

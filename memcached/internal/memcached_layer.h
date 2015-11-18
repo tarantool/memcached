@@ -36,4 +36,15 @@ memcached_tuple_set(struct memcached_connection *con,
 		    const char *vpos, uint32_t vlen, uint64_t cas,
 		    uint32_t flags);
 
+
+
+typedef int (* stat_func_t)(struct memcached_connection *con, const char *key,
+			    const char *valfmt, ...);
+
+int
+memcached_stat_all(struct memcached_connection *con, stat_func_t append);
+
+int
+memcached_stat_reset(struct memcached_connection *con, stat_func_t append);
+
 #endif /* MEMCACHED_LAYER_H_INCLUDED */

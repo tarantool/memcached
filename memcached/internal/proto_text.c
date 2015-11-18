@@ -136,27 +136,6 @@ memcached_text_error(struct memcached_connection *con,
 	return 0;
 }
 
-int
-memcached_text_stat(struct memcached_connection *con, const char *key,
-		    const char *valfmt, ...)
-{
-	struct obuf *out = con->out;
-	if (!key) {
-		obuf_dup(out, "END", 3);
-	} else {
-		char val_tmp[256] = {0};
-		va_list va;
-		va_start(va, valfmt);
-		size_t val_len = vsnprintf(val_tmp, 256, valfmt, va);
-		va_end(va);
-		obuf_dup(out, "STAT ", 5);
-		obuf_dup(out, key, strlen(key));
-		obuf_dup(out, (const char *)val_tmp, val_len);
-	}
-	obuf_dup(out, "\r\n", 2);
-	return 0;
-}
-
 void
 memcached_set_text(struct memcached_connection *con)
 {
@@ -513,22 +492,92 @@ memcached_txt_process_quit(struct memcached_connection *con)
 	return 0;
 }
 
+static inline int
+stat_append(struct memcached_connection *con, const char *key,
+	    const char *valfmt, ...)
+{
+	struct obuf *out = con->out;
+	if (!key) {
+		if (obuf_reserve(out, 5) == NULL) {
+			memcached_error_ENOMEM(5, "obuf");
+			return -1;
+		}
+		assert(obuf_dup(out, "END", 3) == 3);
+	} else {
+		char val_tmp[256] = {0};
+		va_list va;
+		va_start(va, valfmt);
+		size_t val_len = vsnprintf((char *)val_tmp + 1, 255, valfmt, va);
+		val_tmp[0] = ' '; ++val_len;
+		va_end(va);
+
+		uint32_t key_len = strlen(key);
+		size_t len = 8 + key_len + val_len;
+		if (obuf_reserve(out, len) == NULL) {
+			memcached_error_ENOMEM(len, "obuf");
+			return -1;
+		}
+		assert(obuf_dup(out, "STAT ", 5) == 5);
+		assert(obuf_dup(out, key, key_len) == key_len);
+		assert(obuf_dup(out, (const char *)val_tmp, val_len) == val_len);
+	}
+	assert(obuf_dup(out, "\r\n", 2) == 2);
+	return 0;
+}
+
+int
+memcached_txt_process_stat(struct memcached_connection *con) {
+
+	/* default declarations */
+	struct memcached_text_request *req = &con->request;
+	stat_func_t append = stat_append;
+	struct obuf_svp svp = obuf_create_svp(con->out);
+
+	/* ADD errstr for TODO */
+	if (req->key_len == 0) {
+		if (memcached_stat_all(con, append) == -1)
+			goto error;
+	} else if (req->key_len == 5  && strcmp(req->key, "reset")) {
+		if (memcached_stat_reset(con, append) == -1)
+			goto error;
+	} else if (req->key_len == 6  && strcmp(req->key, "detail")) {
+		memcached_error_NOT_SUPPORTED("stat detail");
+		return -1;
+	} else if (req->key_len == 11 && strcmp(req->key, "detail dump")) {;
+		memcached_error_NOT_SUPPORTED("stat detail dump");
+		return -1;
+	} else if (req->key_len == 9  && strcmp(req->key, "detail on")) {;
+		memcached_error_NOT_SUPPORTED("stat detail on");
+		return -1;
+	} else if (req->key_len == 10 && strcmp(req->key, "detail off")) {;
+		memcached_error_NOT_SUPPORTED("stat detail off");
+		return -1;
+	} else {
+		memcached_error_NOT_SUPPORTED("stat ---");
+		return -1;
+	}
+	return 0;
+error:
+	obuf_rollback_to_svp(con->out, &svp);
+	return -1;
+}
+
 const mc_process_func_t memcached_txt_handler[] = {
-	memcached_txt_process_unknown,     /* RESERVED,                  0x00 */
-	memcached_txt_process_set,         /* MEMCACHED_TXT_CMD_SET,     0x01 */
-	memcached_txt_process_set,         /* MEMCACHED_TXT_CMD_ADD,     0x02 */
-	memcached_txt_process_set,         /* MEMCACHED_TXT_CMD_REPLACE, 0x03 */
-	memcached_txt_process_pend,        /* MEMCACHED_TXT_CMD_APPEND,  0x04 */
-	memcached_txt_process_pend,        /* MEMCACHED_TXT_CMD_PREPEND, 0x05 */
-	memcached_txt_process_set,         /* MEMCACHED_TXT_CMD_CAS,     0x06 */
-	memcached_txt_process_get,         /* MEMCACHED_TXT_CMD_GET,     0x07 */
-	memcached_txt_process_get,         /* MEMCACHED_TXT_CMD_GETS,    0x08 */
-	memcached_txt_process_delete,      /* MEMCACHED_TXT_CMD_DELETE,  0x09 */
-	memcached_txt_process_delta,       /* MEMCACHED_TXT_CMD_INCR,    0x0a */
-	memcached_txt_process_delta,       /* MEMCACHED_TXT_CMD_DECR,    0x0b */
-	memcached_txt_process_flush,       /* MEMCACHED_TXT_CMD_FLUSH,   0x0c */
-	memcached_txt_process_unsupported, /* MEMCACHED_TXT_CMD_STATS,   0x0d */
-	memcached_txt_process_version,     /* MEMCACHED_TXT_CMD_VERSION, 0x0e */
-	memcached_txt_process_quit,        /* MEMCACHED_TXT_CMD_QUIT,    0x0f */
+	memcached_txt_process_unknown, /* RESERVED,                  0x00 */
+	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_SET,     0x01 */
+	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_ADD,     0x02 */
+	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_REPLACE, 0x03 */
+	memcached_txt_process_pend,    /* MEMCACHED_TXT_CMD_APPEND,  0x04 */
+	memcached_txt_process_pend,    /* MEMCACHED_TXT_CMD_PREPEND, 0x05 */
+	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_CAS,     0x06 */
+	memcached_txt_process_get,     /* MEMCACHED_TXT_CMD_GET,     0x07 */
+	memcached_txt_process_get,     /* MEMCACHED_TXT_CMD_GETS,    0x08 */
+	memcached_txt_process_delete,  /* MEMCACHED_TXT_CMD_DELETE,  0x09 */
+	memcached_txt_process_delta,   /* MEMCACHED_TXT_CMD_INCR,    0x0a */
+	memcached_txt_process_delta,   /* MEMCACHED_TXT_CMD_DECR,    0x0b */
+	memcached_txt_process_flush,   /* MEMCACHED_TXT_CMD_FLUSH,   0x0c */
+	memcached_txt_process_stat,    /* MEMCACHED_TXT_CMD_STATS,   0x0d */
+	memcached_txt_process_version, /* MEMCACHED_TXT_CMD_VERSION, 0x0e */
+	memcached_txt_process_quit,    /* MEMCACHED_TXT_CMD_QUIT,    0x0f */
 	NULL
 };

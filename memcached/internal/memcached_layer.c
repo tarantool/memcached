@@ -111,3 +111,60 @@ memcached_tuple_get(struct memcached_connection *con,
 	}
 	return 0;
 }
+
+#define _stat_append(_con, _key, _val, ...)				\
+	if (stat_append((_con), (_key), (_val), ##__VA_ARGS__) == -1) {	\
+		return -1;						\
+	}								\
+
+int
+memcached_stat_reset(struct memcached_connection *con,
+		     stat_func_t stat_append)
+{
+	memset(&con->cfg->stat, 0, sizeof(struct memcached_stat));
+	_stat_append(con, NULL, NULL);
+	return 0;
+}
+
+int
+memcached_stat_all(struct memcached_connection *con,
+		   stat_func_t stat_append)
+{
+	/* server specific data */
+	_stat_append(con, "pid", "%d", getpid());
+/*	_stat_append(con, "uptime", "%lf", tarantool_uptime()); */
+	_stat_append(con, "time", "%lf", fiber_time());
+	_stat_append(con, "version", "Memcached (Tarantool " PACKAGE_VERSION ")");
+/*	_stat_append(con, "libev")   */
+	_stat_append(con, "pointer_size",  "%d",  (int )(8 * sizeof(void *)));
+
+	/* storage specific data */
+	_stat_append(con, "cmd_get",       "%lu", con->cfg->stat.cmd_get);
+	_stat_append(con, "get_hits",      "%lu", con->cfg->stat.get_hits);
+	_stat_append(con, "get_misses",    "%lu", con->cfg->stat.get_misses);
+	_stat_append(con, "cmd_set",       "%lu", con->cfg->stat.cmd_set);
+	_stat_append(con, "cas_hits",      "%lu", con->cfg->stat.cas_hits);
+	_stat_append(con, "cas_badval",    "%lu", con->cfg->stat.cas_badval);
+	_stat_append(con, "cas_misses",    "%lu", con->cfg->stat.cas_misses);
+	_stat_append(con, "cmd_delete",    "%lu", con->cfg->stat.cmd_delete);
+	_stat_append(con, "delete_hits",   "%lu", con->cfg->stat.delete_hits);
+	_stat_append(con, "delete_misses", "%lu", con->cfg->stat.delete_misses);
+	_stat_append(con, "cmd_incr",      "%lu", con->cfg->stat.cmd_incr);
+	_stat_append(con, "incr_hits",     "%lu", con->cfg->stat.incr_hits);
+	_stat_append(con, "incr_misses",   "%lu", con->cfg->stat.incr_misses);
+	_stat_append(con, "cmd_decr",      "%lu", con->cfg->stat.cmd_decr);
+	_stat_append(con, "decr_hits",     "%lu", con->cfg->stat.decr_hits);
+	_stat_append(con, "decr_misses",   "%lu", con->cfg->stat.decr_misses);
+	_stat_append(con, "cmd_flush",     "%lu", con->cfg->stat.cmd_flush);
+	_stat_append(con, "cmd_touch",     "%lu", con->cfg->stat.cmd_touch);
+	_stat_append(con, "touch_hits",    "%lu", con->cfg->stat.touch_hits);
+	_stat_append(con, "touch_misses",  "%lu", con->cfg->stat.touch_misses);
+	_stat_append(con, "evictions",     "%lu", con->cfg->stat.evictions);
+	_stat_append(con, "reclaimed",     "%lu", con->cfg->stat.reclaimed);
+	_stat_append(con, "auth_cmds",     "%lu", con->cfg->stat.auth_cmds);
+	_stat_append(con, "auth_errors",   "%lu", con->cfg->stat.auth_errors);
+	_stat_append(con, NULL, NULL);
+	return 0;
+}
+
+#undef _stat_append

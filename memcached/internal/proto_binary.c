@@ -762,62 +762,18 @@ stat_append(struct memcached_connection *con, const char *key,
 	return 0;
 };
 
-static inline void
-memcached_bin_process_stat_reset(struct memcached_connection *con)
-{
-	memset(&con->cfg->stat, 0, sizeof(struct memcached_stat));
-}
-
-static inline void
-memcached_bin_process_stat_all(struct memcached_connection *con)
-{
-	/* server specific data */
-	stat_append(con, "pid", "%d", getpid());
-/*	stat_append(con, "uptime", "%lf", tarantool_uptime()); */
-	stat_append(con, "time", "%lf", fiber_time());
-	stat_append(con, "version",      "Memcached (Tarantool "
-					 PACKAGE_VERSION ")");
-/*	stat_append(con, "libev")   */
-	stat_append(con, "pointer_size",  "%d",  (int )(8 * sizeof(void *)));
-
-	/* storage specific data */
-	stat_append(con, "cmd_get",       "%lu", con->cfg->stat.cmd_get);
-	stat_append(con, "get_hits",      "%lu", con->cfg->stat.get_hits);
-	stat_append(con, "get_misses",    "%lu", con->cfg->stat.get_misses);
-	stat_append(con, "cmd_set",       "%lu", con->cfg->stat.cmd_set);
-	stat_append(con, "cas_hits",      "%lu", con->cfg->stat.cas_hits);
-	stat_append(con, "cas_badval",    "%lu", con->cfg->stat.cas_badval);
-	stat_append(con, "cas_misses",    "%lu", con->cfg->stat.cas_misses);
-	stat_append(con, "cmd_delete",    "%lu", con->cfg->stat.cmd_delete);
-	stat_append(con, "delete_hits",   "%lu", con->cfg->stat.delete_hits);
-	stat_append(con, "delete_misses", "%lu", con->cfg->stat.delete_misses);
-	stat_append(con, "cmd_incr",      "%lu", con->cfg->stat.cmd_incr);
-	stat_append(con, "incr_hits",     "%lu", con->cfg->stat.incr_hits);
-	stat_append(con, "incr_misses",   "%lu", con->cfg->stat.incr_misses);
-	stat_append(con, "cmd_decr",      "%lu", con->cfg->stat.cmd_decr);
-	stat_append(con, "decr_hits",     "%lu", con->cfg->stat.decr_hits);
-	stat_append(con, "decr_misses",   "%lu", con->cfg->stat.decr_misses);
-	stat_append(con, "cmd_flush",     "%lu", con->cfg->stat.cmd_flush);
-	stat_append(con, "cmd_touch",     "%lu", con->cfg->stat.cmd_touch);
-	stat_append(con, "touch_hits",    "%lu", con->cfg->stat.touch_hits);
-	stat_append(con, "touch_misses",  "%lu", con->cfg->stat.touch_misses);
-	stat_append(con, "evictions",     "%lu", con->cfg->stat.evictions);
-	stat_append(con, "reclaimed",     "%lu", con->cfg->stat.reclaimed);
-	stat_append(con, "auth_cmds",     "%lu", con->cfg->stat.auth_cmds);
-	stat_append(con, "auth_errors",   "%lu", con->cfg->stat.auth_errors);
-}
-
 int
-memcached_bin_process_stat(struct memcached_connection *con)
-{
+memcached_bin_process_stat(struct memcached_connection *con) {
+
 	/* default declarations */
 	struct memcached_body *b = &con->body;
+	stat_func_t append = stat_append;
 
 	/* ADD errstr for TODO */
 	if (b->key_len == 0) {
-		memcached_bin_process_stat_all(con);
+		memcached_stat_all(con, append);
 	} else if (b->key_len == 5  && strcmp(b->key, "reset")) {
-		memcached_bin_process_stat_reset(con);
+		memcached_stat_reset(con, append);
 	} else if (b->key_len == 6  && strcmp(b->key, "detail")) {
 		memcached_error_NOT_SUPPORTED("stat detail");
 		return -1;
@@ -834,8 +790,6 @@ memcached_bin_process_stat(struct memcached_connection *con)
 		memcached_error_NOT_SUPPORTED("stat ---");
 		return -1;
 	}
-	/* finish */
-	stat_append(con, NULL, NULL);
 	return 0;
 }
 

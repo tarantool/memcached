@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <tarantool/module.h>
+#include <module.h>
 #include <msgpuck/msgpuck.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>
@@ -151,12 +151,15 @@ next:
 			memcached_skip_request(con);
 			if (con->close_connection) {
 				/* If magic is wrong we'll close connection */
+				say_info("Bad magic or exit. Exiting.");
 				break;
 			}
 			memcached_flush(con);
+			batch_count = 0;
 			continue;
 		} else if (rc > 0) {
 			to_read = rc;
+			batch_count = 0;
 			continue;
 		}
 		assert(!con->close_connection);
@@ -174,10 +177,11 @@ next:
 			batch_count++;
 			goto next;
 		}
-		batch_count = 0;
 		/* Write back answer */
 		if (!con->noreply)
 			memcached_flush(con);
+		fiber_sleep(0);
+		batch_count = 0;
 		continue;
 	}
 	memcached_flush(con);

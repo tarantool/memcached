@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <tarantool/module.h>
+#include <module.h>
 #include <msgpuck/msgpuck.h>
 
 #include "error.h"

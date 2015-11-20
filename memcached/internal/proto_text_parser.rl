@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <tarantool/module.h>
+#include <module.h>
 
 #include "memcached.h"
 #include "constants.h"
@@ -79,63 +79,22 @@ memcached_text_parser(struct memcached_connection *con,
 
 		exptime = digit+
 				>{ s = p; }
-				%{
-					if (memcached_strtoul(s, p, &req->exptime) == -1) {
-						memcached_error_EINVALS("bad expiration time value");
-						con->close_connection = true;
-						return -1;
-					}
-				};
+				%{ memcached_strtoul(s, p, &req->exptime); };
 		flags = digit+
 				>{ s = p; }
-				%{
-					if (memcached_strtoul(s, p, &req->flags) == -1) {
-						memcached_error_EINVALS("bad flags value");
-						con->close_connection = true;
-						return -1;
-					}
-				};
+				%{ memcached_strtoul(s, p, &req->flags); };
 		bytes = digit+
 				>{ s = p; }
-				%{
-					if (memcached_strtoul(s, p, &req->bytes) == -1) {
-						memcached_error_EINVALS("bad bytes value");
-						con->close_connection = true;
-						return -1;
-					} else if (req->bytes > MEMCACHED_MAX_SIZE) {
-						memcached_error_E2BIG();
-						con->close_connection = true;
-						return -1;
-					}
-				};
+				%{ memcached_strtoul(s, p, &req->bytes); };
 		cas_value = digit+
 				>{ s = p; }
-				%{
-					if (memcached_strtoul(s, p, &req->cas) == -1) {
-						memcached_error_EINVALS("bad cas value");
-						con->close_connection = true;
-						return -1;
-					}
-				};
+				%{ memcached_strtoul(s, p, &req->cas); };
 		incr_value = digit+
 				>{ s = p; }
-				%{
-					if (memcached_strtoul(s, p, &req->delta) == -1) {
-						memcached_error_DELTA_BADVAL();
-						// memcached_error_EINVALS("bad incr/decr value");
-						con->close_connection = true;
-						return -1;
-					}
-				};
+				%{ memcached_strtoul(s, p, &req->delta); };
 		flush_delay = digit+
 				>{ s = p; }
-				%{
-					if (memcached_strtoul(s, p, &req->exptime) == -1) {
-						memcached_error_EINVALS("bad flush value");
-						con->close_connection = true;
-						return -1;
-					}
-				};
+				%{ memcached_strtoul(s, p, &req->exptime); };
 
 		eol = ("\r\n" | "\n") @{ p++; };
 		spc = " "+;
@@ -147,41 +106,54 @@ memcached_text_parser(struct memcached_connection *con,
 		del_body   = spc key (spc exptime)?									noreply spc? eol;
 		cr_body    = spc key spc incr_value									noreply spc? eol;
 		flush_body = (spc flush_delay)?									 	noreply spc? eol;
+		verb_body  = spc flush_delay									 	noreply spc? eol;
 
-		set		= ("set"i		 %{req->op = MEMCACHED_TXT_CMD_SET;}	 store_body) @read_data @done;
-		add		= ("add"i		 %{req->op = MEMCACHED_TXT_CMD_ADD;}	 store_body) @read_data @done;
-		replace = ("replace"i	 %{req->op = MEMCACHED_TXT_CMD_REPLACE;} store_body) @read_data @done;
-		append	= ("append"i	 %{req->op = MEMCACHED_TXT_CMD_APPEND;}  store_body) @read_data @done;
-		prepend = ("prepend"i	 %{req->op = MEMCACHED_TXT_CMD_PREPEND;} store_body) @read_data @done;
-		cas		= ("cas"i		 %{req->op = MEMCACHED_TXT_CMD_CAS;}	 cas_body)	 @read_data @done;
+		set		= ("set"i		 %~{req->op = MEMCACHED_TXT_CMD_SET;}	  store_body) @read_data @done;
+		add		= ("add"i		 %~{req->op = MEMCACHED_TXT_CMD_ADD;}	  store_body) @read_data @done;
+		replace = ("replace"i	 %~{req->op = MEMCACHED_TXT_CMD_REPLACE;} store_body) @read_data @done;
+		append	= ("append"i	 %~{req->op = MEMCACHED_TXT_CMD_APPEND;}  store_body) @read_data @done;
+		prepend = ("prepend"i	 %~{req->op = MEMCACHED_TXT_CMD_PREPEND;} store_body) @read_data @done;
+		cas		= ("cas"i		 %~{req->op = MEMCACHED_TXT_CMD_CAS;}	  cas_body)   @read_data @done;
 
-		get		= ("get"i		 %{req->op = MEMCACHED_TXT_CMD_GET;}	 get_body) @done;
-		gets	= ("gets"i		 %{req->op = MEMCACHED_TXT_CMD_GETS;}	 get_body) @done;
-		delete	= ("delete"i	 %{req->op = MEMCACHED_TXT_CMD_DELETE;}	 del_body) @done;
-		incr	= ("incr"i		 %{req->op = MEMCACHED_TXT_CMD_INCR;}	 cr_body)  @done;
-		decr	= ("decr"i		 %{req->op = MEMCACHED_TXT_CMD_DECR;}	 cr_body)  @done;
+		get		= ("get"i		 %~{req->op = MEMCACHED_TXT_CMD_GET;}	 get_body) @done;
+		gets	= ("gets"i		 %~{req->op = MEMCACHED_TXT_CMD_GETS;}	 get_body) @done;
+		delete	= ("delete"i	 %~{req->op = MEMCACHED_TXT_CMD_DELETE;} del_body) @done;
+		incr	= ("incr"i		 %~{req->op = MEMCACHED_TXT_CMD_INCR;}	 cr_body)  @done;
+		decr	= ("decr"i		 %~{req->op = MEMCACHED_TXT_CMD_DECR;}	 cr_body)  @done;
 
-		stats	  = "stats"i	 %{req->op = MEMCACHED_TXT_CMD_STATS;}	 eol		@done;
-		flush_all = "flush_all"i %{req->op = MEMCACHED_TXT_CMD_FLUSH;}	 flush_body @done;
-		quit	  = "quit"i		 %{req->op = MEMCACHED_TXT_CMD_QUIT;}	 eol		@done;
+		version   = ("version"i   %~{req->op = MEMCACHED_TXT_CMD_VERSION;}	) eol		 @done;
+		verbosity = ("verbosity"i %~{req->op = MEMCACHED_TXT_CMD_VERBOSITY;}) verb_body  @done;
+		stats	  = ("stats"i	  %~{req->op = MEMCACHED_TXT_CMD_STATS;}	) eol		 @done;
+		flush_all = ("flush_all"i %~{req->op = MEMCACHED_TXT_CMD_FLUSH;}	) flush_body @done;
+		quit	  = ("quit"i	  %~{req->op = MEMCACHED_TXT_CMD_QUIT;}		) eol		 @done;
 
 		main := set | add | replace | append | prepend | cas |
 				get | gets | delete | incr | decr |
-				stats | flush_all | quit;
+				version | verbosity | stats | flush_all | quit;
 
 		write init;
 		write exec;
 	}%%
 
-
+	if (req->bytes > MEMCACHED_MAX_SIZE) {
+		memcached_error_E2BIG();
+		done = false;
+	}
 	if (!done) {
 		if (p == pe) {
 			return 1;
 		}
-		
 		if (box_error_last() == NULL) {
 			if (con->request.op == MEMCACHED_TXT_CMD_UNKNOWN) {
-				memcached_error_UNKNOWN_COMMAND(con->request.op);
+				const char *name = *p_ptr;
+				int32_t len = 0;
+				while (1) {
+					char c = *(name + len);
+					if (c == ' ' || c == '\n' || c == '\r')
+						break;
+					++len;
+				};
+				memcached_error_txt_UNKNOWN_COMMAND(*p_ptr, len);
 			} else {
 				memcached_error_EINVALS("bad command line format");
 			}
@@ -217,6 +189,9 @@ memcached_text_parser(struct memcached_connection *con,
 				*p_ptr = (request + 2);
 				con->noprocess = true;
 			}
+		} else if (box_error_code(box_error_last()) == box_error_code_MAX +
+													   MEMCACHED_RES_E2BIG) {
+			*p_ptr = (p - 1);
 		}
 		return -1;
 	}

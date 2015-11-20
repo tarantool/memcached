@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include <tarantool/module.h>
+#include <module.h>
 
 #include "memcached.h"
 #include "constants.h"
@@ -224,6 +224,7 @@ memcached_txt_process_get(struct memcached_connection *con)
 		/* skip whitespaces */
 		for (; *tmp_end == ' '; ++tmp_end);
 		if (tmp_end >= key_end) break;
+		tmp_begin = tmp_end;
 	} while (1);
 
 	if (obuf_dup(con->out, "END\r\n", 5) != 5) {
@@ -468,7 +469,7 @@ int
 memcached_txt_process_flush(struct memcached_connection *con)
 {
 	con->cfg->stat.cmd_flush++;
-	uint64_t exptime = con->request.exptime;;
+	uint64_t exptime = con->request.exptime;
 	con->cfg->flush = fiber_time64();
 	if (exptime > 0) con->cfg->flush = convert_exptime(exptime);
 	memcached_text_DUP(con, "OK\r\n", 4);
@@ -482,6 +483,20 @@ memcached_txt_process_version(struct memcached_connection *con)
 	size_t value_len = snprintf((char *)value, 256, "VERSION %s\r\n",
 				    PACKAGE_VERSION);
 	memcached_text_DUP(con, (char *)value, value_len);
+	return 0;
+}
+
+int
+memcached_txt_process_verbosity(struct memcached_connection *con)
+{
+	int verbosity = con->request.exptime;
+	if (verbosity <= 3) {
+		con->cfg->verbosity = verbosity;
+	} else {
+		memcached_error_EINVAL();
+		return -1;
+	}
+	memcached_text_DUP(con, "OK\r\n", 4);
 	return 0;
 }
 
@@ -563,21 +578,22 @@ error:
 }
 
 const mc_process_func_t memcached_txt_handler[] = {
-	memcached_txt_process_unknown, /* RESERVED,                  0x00 */
-	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_SET,     0x01 */
-	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_ADD,     0x02 */
-	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_REPLACE, 0x03 */
-	memcached_txt_process_pend,    /* MEMCACHED_TXT_CMD_APPEND,  0x04 */
-	memcached_txt_process_pend,    /* MEMCACHED_TXT_CMD_PREPEND, 0x05 */
-	memcached_txt_process_set,     /* MEMCACHED_TXT_CMD_CAS,     0x06 */
-	memcached_txt_process_get,     /* MEMCACHED_TXT_CMD_GET,     0x07 */
-	memcached_txt_process_get,     /* MEMCACHED_TXT_CMD_GETS,    0x08 */
-	memcached_txt_process_delete,  /* MEMCACHED_TXT_CMD_DELETE,  0x09 */
-	memcached_txt_process_delta,   /* MEMCACHED_TXT_CMD_INCR,    0x0a */
-	memcached_txt_process_delta,   /* MEMCACHED_TXT_CMD_DECR,    0x0b */
-	memcached_txt_process_flush,   /* MEMCACHED_TXT_CMD_FLUSH,   0x0c */
-	memcached_txt_process_stat,    /* MEMCACHED_TXT_CMD_STATS,   0x0d */
-	memcached_txt_process_version, /* MEMCACHED_TXT_CMD_VERSION, 0x0e */
-	memcached_txt_process_quit,    /* MEMCACHED_TXT_CMD_QUIT,    0x0f */
+	memcached_txt_process_unknown,   /* RESERVED,                  0x00 */
+	memcached_txt_process_set,       /* MEMCACHED_TXT_CMD_SET,     0x01 */
+	memcached_txt_process_set,       /* MEMCACHED_TXT_CMD_ADD,     0x02 */
+	memcached_txt_process_set,       /* MEMCACHED_TXT_CMD_REPLACE, 0x03 */
+	memcached_txt_process_pend,      /* MEMCACHED_TXT_CMD_APPEND,  0x04 */
+	memcached_txt_process_pend,      /* MEMCACHED_TXT_CMD_PREPEND, 0x05 */
+	memcached_txt_process_set,       /* MEMCACHED_TXT_CMD_CAS,     0x06 */
+	memcached_txt_process_get,       /* MEMCACHED_TXT_CMD_GET,     0x07 */
+	memcached_txt_process_get,       /* MEMCACHED_TXT_CMD_GETS,    0x08 */
+	memcached_txt_process_delete,    /* MEMCACHED_TXT_CMD_DELETE,  0x09 */
+	memcached_txt_process_delta,     /* MEMCACHED_TXT_CMD_INCR,    0x0a */
+	memcached_txt_process_delta,     /* MEMCACHED_TXT_CMD_DECR,    0x0b */
+	memcached_txt_process_flush,     /* MEMCACHED_TXT_CMD_FLUSH,   0x0c */
+	memcached_txt_process_stat,      /* MEMCACHED_TXT_CMD_STATS,   0x0d */
+	memcached_txt_process_version,   /* MEMCACHED_TXT_CMD_VERSION, 0x0e */
+	memcached_txt_process_quit,      /* MEMCACHED_TXT_CMD_QUIT,    0x0f */
+	memcached_txt_process_verbosity, /* MEMCACHED_TXT_CMD_VERSION, 0x0e */
 	NULL
 };

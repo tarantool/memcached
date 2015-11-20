@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 # Find Tarantool and Lua dependecies
 set(TARANTOOL_FIND_REQUIRED ON)
-include(cmake/FindTarantool.cmake)
+find_package(Tarantool)
+# include(cmake/FindTarantool.cmake)
 include_directories(${TARANTOOL_INCLUDEDIR})
 
 include(cmake/BuildLibmemcached.cmake)
@@ -18,8 +21,6 @@ project(memcached C)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_MODULE_PATH})
 
 find_program(RAGEL ragel)
 

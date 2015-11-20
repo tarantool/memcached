@@ -37,6 +37,8 @@ def check(key, flags, val, level = 0):
 
 print("""#-----------------------------# test expiration #-----------------------------#""")
 
+stat = mc.stat("reset")
+
 for i in xrange(10000):
     mc.set('key-%d' % i, 'value-%d' % i, expire=1)
 

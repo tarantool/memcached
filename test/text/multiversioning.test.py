@@ -26,6 +26,7 @@ print memcached1("set big 0 0 %d\r\n%s\r\n" % (buf_size, buf), silent = True)
 print """# send command 'get big' to first memcached client """
 memcached1.send("get big\r\n")
 
+time.sleep(0.01)
 print """# send command 'delete big' to second client """
 memcached2("delete big\r\n")
 

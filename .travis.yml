@@ -14,10 +14,11 @@ before_install:
 
 before_script:
   - travis/install-tarantool.sh
-  - pip install --user gevent python-daemon PyYAML geventconnpool
-  - pip install --user six==1.9.0 msgpack-python
+  - pip install --user python-daemon PyYAML six==1.9.0
+#  - pip install --user gevent python-daemon PyYAML geventconnpool
+#  - pip install --user six==1.9.0 msgpack-python
 
 script:
-  - TARANTOOL_DIR="$HOME/local/include/tarantool" cmake . -DCMAKE_BUILD_TYPE=Release
+  - TARANTOOL_DIR="$HOME/local/include/" cmake . -DCMAKE_BUILD_TYPE=Release
   - PATH="$HOME/local/bin/:$PATH" make test-memcached
-  - PATH="$HOME/local/bin/:$PATH" make test-memcached-capable
+#  - PATH="$HOME/local/bin/:$PATH" make test-memcached-capable

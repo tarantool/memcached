@@ -136,6 +136,7 @@ const char *memcached_binary_res_title[] = {
 	/* 0x84 */ "Server error",
 	/* 0x85 */ "Resource busy",
 	/* 0x86 */ "Temporary unavailable",
+	NULL
 };
 
 const char *memcached_text_cmd_name[] = {
@@ -154,8 +155,9 @@ const char *memcached_text_cmd_name[] = {
 	/* 0x0c */ "FLUSH",
 	/* 0x0d */ "STAT",
 	/* 0x0e */ "VERSION",
-	/* 0x0f */ "GETK",
-	/* 0x10 */ "QUIT",
+	/* 0x0f */ "QUIT",
+	/* 0x10 */ "VERBOSITY",
+	NULL
 };
 
 const char *memcached_binary_cmd_name[] = {
@@ -219,5 +221,6 @@ const char *memcached_binary_cmd_name[] = {
 	/* 0x39 */ "RINCR",
 	/* 0x3a */ "RINCRQ",
 	/* 0x3b */ "RDECR",
-	/* 0x3c */ "RDECRQ"
+	/* 0x3c */ "RDECRQ",
+	NULL
 };

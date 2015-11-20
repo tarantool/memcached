@@ -796,11 +796,15 @@ class MemcachedTextConnection(TarantoolConnection):
             stat = self.read_line()
             # store stat in reply buffer
             self.raw_reply += stat + MEMCACHED_SEPARATOR
-            self.reply += stat + MEMCACHED_SEPARATOR
+
+            a = stat.split(' ')
+            if len(a) > 2 and a[1] in ['pid', 'time', 'version', 'pointer_size']:
+                self.reply += ' '.join(a[:2]) + ' <var>' + MEMCACHED_SEPARATOR
+            else:
+                self.reply += stat + MEMCACHED_SEPARATOR
 
             if re.match('END', stat):
                 break
-
             if re.match('ERROR|CLIENT_ERROR|SERVER_ERROR', stat):
                 break
 

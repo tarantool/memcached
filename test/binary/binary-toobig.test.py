@@ -39,7 +39,7 @@ def __check(res, flags, val, level = 0):
     return iequal(res.get('flags', -1), flags, level + 1) and \
             iequal(res.get('val', val), val, level + 1)
 
-def check(key, flags, val, level = 0):
+def check(key, flags, val, level = 1):
     res = mc.get(key)
     __check(res[0], flags, val, level + 1)
 

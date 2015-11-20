@@ -12,6 +12,8 @@ from internal.memcached_connection import MemcachedTextConnection
 port = int(iproto.uri.split(':')[1])
 mc_client = MemcachedTextConnection('localhost', port)
 
+mc_client("flush_all\r\n", silent = True)
+
 print """# set foo (and should get it) """
 mc_client("set foo 0 0 6\r\nfooval\r\n")
 mc_client("get foo\r\n")

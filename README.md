@@ -16,28 +16,28 @@ Memcached protocol 'wrapper' for tarantool.
 
 Clone this repository and then build it using CMake:
 
-`` bash
+``` bash
 git clone https://github.com/tarantool/memcached.git
 cd memcached && git submodule update --init --recursive
 cd memcached && cmake . -DCMAKE_BUILD_TYPE=RelWithDebugInfo -DCMAKE_INSTALL_PREFIX=/usr
 make
 make install
-``
+```
 
 Or you can also use LuaRocks (in that case you'll need `libsmall` and `libsmall-dev` and `tarantool-dev`
 packages that are available from our repository at http://tarantool.org/dist/master):
 
-`` bash
+``` bash
 luarocks install https://raw.githubusercontent.com/tarantool/memcached/master/memcached-scm-1.rockspec --local
-``
+```
 
 ### Usage
 
-`` bash
+``` bash
 box.cfg{}
 local memcached = require('memcached')
 local instance = memcached.create('my_instance', '0.0.0.0:11211')
-``
+```
 
 Now you're set up and ready to go!
 
@@ -50,7 +50,7 @@ Paste previous example to `/etc/tarantool/instances.enabled/memcached.lua` and s
 
 Then try the following example:
 
-`` session
+``` session
 $ printf "set key 0 60 5\r\nvalue\r\n" | nc localhost 11211
 STORED
 $ printf "get key\r\n" | nc localhost 11211
@@ -65,7 +65,7 @@ value
 VALUE key2 0 6
 value2
 END
-``
+```
 
 ## API
 

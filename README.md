@@ -24,8 +24,8 @@ make
 make install
 ```
 
-Or you can also use LuaRocks (in that case you'll need `libsmall` and `libsmall-dev` and `tarantool-dev`
-packages that are available from our repository at http://tarantool.org/dist/master):
+Or use LuaRocks (in this case you'll need `libsmall`, `libsmall-dev` and `tarantool-dev`
+packages available from our binary repository at http://tarantool.org/dist/master):
 
 ``` bash
 luarocks install https://raw.githubusercontent.com/tarantool/memcached/master/memcached-scm-1.rockspec --local
@@ -45,7 +45,7 @@ Now you're set up and ready to go!
 
 Install tarantool package from repository ([described here](http://tarantool.org/download.html)).
 
-Paste previous example to `/etc/tarantool/instances.enabled/memcached.lua` and start it with
+Paste the previous example to `/etc/tarantool/instances.enabled/memcached.lua` and start it with
 `tarantoolctl start memcached`.
 
 Then try the following example:
@@ -69,38 +69,38 @@ END
 
 ## API
 
-* `local memcached = require('memcached')` - acquire library for your use
+* `local memcached = require('memcached')` - acquire a library  andle
 * `local instance = memcached.create(<name>, <uri>, <opts>)` - create a new instance, register it and run
   - `name` - a string with instance name
-  - `uri`  - a string with uri to bind to, for example: `0.0.0.0:11211` (only TCP supported, for now)
-  - `opts` - a table with options, the list of possible options is described in the configuration configuration section
-* `local instance = instance:cfg(<opts>)` - configure an existing instance.
-  `opts` - table with options that are in configuration section
+  - `uri`  - a string with uri to bind to, for example: `0.0.0.0:11211` (only TCP is supported now)
+  - `opts` - a table with options, the list of possible options is described in the configuration section
+* `local instance = instance:cfg(<opts>)` - (re)configure an existing instance.
+  `opts` - a table with options, same as in `create`
 * `local instance = instance:start()` - start an instance
 * `local instance = instance:stop()` - stop an instance
-* `local instance = instance:info()` - return executions statistics
+* `local instance = instance:info()` - return execution statistics
 
 ## Configuration
 
 * *readahead* - (default) size of readahead buffer for connection. default is `box->cfg->readahead`
 * *expire_enabled* - availability of expiration daemon. default is `true`.
-* *expire_items_per_iter* - scan count for expiration (that's processed in one transaction). default is 200.
-* *expire_full_scan_time* - time required for full index scan (in seconds). defaiult is 3600
+* *expire_items_per_iter* - scan count for expiration (tuples processed in one transaction). default is 200.
+* *expire_full_scan_time* - time required for a full index scan (in seconds). defaiult is 3600
 * *verbosity* - verbosity of memcached logging. default is 0.
 * ~~*flush_enabled* - flush command availability. default is true~~
-* *proto* - option for selecting protocol type. (may be `negotiation`, `binary` or `text`).
-  - `negotiation` - autonegotiation behaviour (default)
+* *proto* - the protocol, one of `negotiation`, `binary` or `text`).
+  - `negotiation` - detect the protocol automatically at handshake (the default)
   - `binary` - binary memcached protocol
-  - `text` - textual (ascii) memcached protocol
-* *engine* - engine for storing data
+  - `text` - text memcached protocol
+* *engine* - the engine to store data in
   - `memory` - store everything in memory. (using `memtx` engine)
-  - ~~`disk` - store everything on hdd/ssd (using `sophia` engine)~~ (currently not supported)
-* *space_name* - custom name for memcached spacei
-* *if_not_exists* - do not throw error if instance exists.
+  - ~~`disk` - store everything on hdd/ssd (using `sophia` engine)~~ (not yet supported)
+* *space_name* - custom name for a memcached space, default is `memcached`
+* *if_not_exists* - do not throw error if an instance already exists.
 
 ## What's supported, what's not and other features
 
-**Everything is supported, unless the opposite is told**
+**Everything is supported, unless the opposite is stated explicitly**
 
 * Text protocol commands:
   - `set`/`add`/`cas`/`replace`/`append`/`prepend` commands (set section)
@@ -109,7 +109,7 @@ END
   - `incr`/`decr` commands
   - `flush`/`version`/`quit` commands
   - `verbosity` - partially, logging is not very good.
-  - `stat` - `reset` is supported and all stats too, other is not.
+  - `stat` - `reset` is supported and all stats too.
 * Binary protocol's commands:
   - `get`/`getk`/`getq`/`getkq` commands (get section)
   - `add`/`addq`/`replace`/`replaceq`/`set`/`setq` commands (set section)
@@ -117,13 +117,13 @@ END
   - `gat`/`gatq`/`touch`/`gatk`/`gatkq` commands
   - `append`/`prepend`/`incr`/`decr`
   - `verbosity` - partially, logging is not very good.
-  - `stat` - `reset` is supported and all stats too, other is not.
+  - `stat` - `reset` is supported and all stats too.
   - for now **SASL** authentication is not supported
-  - **range** operations are not supported too.
+  - **range** operations are not supported as well.
 * Expiration is supported
 * Flush is supported
-* Protocol is synchronous
-* Full support of Tarantool means for consistency (write-ahead logs, snapshots, replication)
+* The protocol is synchronous
+* Full support of Tarantool means of consistency (write-ahead logs, snapshots, replication)
 * You can access data from Lua
 * for now LRU is not supported
 * TAP is not supported (for now)

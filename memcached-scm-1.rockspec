@@ -44,11 +44,15 @@ build = {
                 'small'
             },
             sources = {
-                'memcached/internal/memcached.c',
-                'memcached/internal/memcached_constants.c',
-                'memcached/internal/memcached_layer.c',
-                'memcached/internal/memcached_network.c',
-                'memcached/internal/memcached_persistent.c'
+                "memcached/internal/constants.c"
+                "memcached/internal/utils.c"
+                "memcached/internal/proto_binary.c"
+                "memcached/internal/proto_text_parser.c"
+                "memcached/internal/proto_text.c"
+                "memcached/internal/network.c"
+                "memcached/internal/memcached_layer.c"
+                "memcached/internal/expiration.c"
+                "memcached/internal/memcached.c"
             };
         }
     }

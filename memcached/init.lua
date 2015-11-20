@@ -55,13 +55,22 @@ struct memcached_stat {
 void
 memcached_set_opt (struct memcached_service *srv, int opt, ...);
 
+enum memcached_proto_type {
+    MEMCACHED_PROTO_NEGOTIATION = 0x00,
+    MEMCACHED_PROTO_BINARY      = 0x01,
+    MEMCACHED_PROTO_TEXT        = 0x02,
+    MEMCACHED_PROTO_MAX
+};
+
 enum memcached_options {
-    MEMCACHED_OPT_READAHEAD = 0,
-    MEMCACHED_OPT_EXPIRE_ENABLED,
-    MEMCACHED_OPT_EXPIRE_COUNT,
-    MEMCACHED_OPT_EXPIRE_TIME,
-    MEMCACHED_OPT_FLUSH_ENABLED,
-    MEMCACHED_OPT_VERBOSITY,
+    MEMCACHED_OPT_READAHEAD      = 0x00,
+    MEMCACHED_OPT_EXPIRE_ENABLED = 0x01,
+    MEMCACHED_OPT_EXPIRE_COUNT   = 0x02,
+    MEMCACHED_OPT_EXPIRE_TIME    = 0x03,
+    MEMCACHED_OPT_FLUSH_ENABLED  = 0x04,
+    MEMCACHED_OPT_VERBOSITY      = 0x05,
+    MEMCACHED_OPT_PROTOCOL       = 0x06,
+    MEMCACHED_OPT_MAX
 };
 
 struct memcached_stat *memcached_get_stat (struct memcached_service *);
@@ -74,6 +83,10 @@ void memcached_free (struct memcached_service *);
 void
 memcached_handler(struct memcached_service *p, int fd);
 ]]
+
+function startswith(str, start)
+       return string.sub(str, 1, string.len(start)) == start
+end
 
 local typetable = {
     name = {
@@ -130,6 +143,29 @@ local typetable = {
         function(x) return x end,
         [[custom name of space to use/create]]
     },
+    protocol = {
+        'string',
+        function() return 'negotiation' end,
+        function(x)
+            return x == 'negot' or
+                   x == 'negotiation' or
+                   x == 'bin' or
+                   x == 'binary' or
+                   x == 'ascii' or
+                   x == 'text'
+        end,
+        [[protocol type ('negotiation'/'binary'/'ascii')]]
+    },
+    storage = {
+        'string',
+        function() return 'memory' end,
+        function(x)
+            return x == 'mem' or
+                   x == 'memory' or
+                   x == 'disk'
+        end,
+        [[storage type ('memory' for RAM, 'disk' for HDD/SSD)]]
+    }
 --    flush_enabled = {
 --        'boolean',
 --        function() return true end,
@@ -198,11 +234,12 @@ local stat_table = {
 }
 
 local conf_table = {
-    verbosity            = ffi.C.MEMCACHED_OPT_VERBOSITY,
     readahead            = ffi.C.MEMCACHED_OPT_READAHEAD,
     expire_enabled       = ffi.C.MEMCACHED_OPT_EXPIRE_ENABLED,
     expire_items_per_item= ffi.C.MEMCACHED_OPT_EXPIRE_COUNT,
-    expire_full_scan_time= ffi.C.MEMCACHED_OPT_EXPIRE_TIME
+    expire_full_scan_time= ffi.C.MEMCACHED_OPT_EXPIRE_TIME,
+    verbosity            = ffi.C.MEMCACHED_OPT_VERBOSITY,
+    protocol             = ffi.C.MEMCACHED_OPT_PROTOCOL
 }
 
 local memcached_mt = {
@@ -280,10 +317,22 @@ local function memcached_init(name, uri, opts)
     instance.uri  = uri
     instance.space_name = opts.space_name or '__mc_' .. instance.name
     if box.space[instance.space_name] == nil then
-        instance.space = box.schema.create_space(instance.space_name)
+        local storage = startswith(conf.storage, 'mem') and 'memtx' or 'sophia'
+        local index   = startswith(conf.storage, 'mem') and 'hash' or nil
+        instance.space = box.schema.create_space(instance.space_name, {
+            engine = storage,
+            format = {
+                { name = 'key', type = 'str' },
+                { name = 'expire', type = 'num' },
+                { name = 'creation', type = 'num' },
+                { name = 'value', type = 'str' },
+                { name = 'cas', type = 'num' },
+                { name = 'flags', type = 'num' },
+            }
+        })
         instance.space:create_index('primary', {
             parts = {1, 'str'},
-            type = 'hash'
+            type = index
         })
     else
         instance.space = box.space[instance.space_name]

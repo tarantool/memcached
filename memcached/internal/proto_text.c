@@ -25,126 +25,6 @@
 	}									  \
 } while (0)
 
-int
-memcached_txt_process_unsupported(struct memcached_connection *con)
-{
-	memcached_error_NOT_SUPPORTED(memcached_txt_cmdname(con->request.op));
-	return -1;
-}
-
-int
-memcached_txt_process_unknown(struct memcached_connection *con)
-{
-	memcached_error_UNKNOWN_COMMAND(con->request.op);
-	return -1;
-}
-
-/**
- * Check that we need transaction for our operation.
- */
-static inline int
-memcached_text_ntxn(struct memcached_connection *con)
-{
-	uint8_t cmd = con->request.op;
-	if ((cmd <= MEMCACHED_TXT_CMD_CAS) ||
-	    (cmd >= MEMCACHED_TXT_CMD_DELETE &&
-	     cmd <= MEMCACHED_TXT_CMD_DECR))
-		return 1;
-	return 0;
-};
-
-int
-memcached_text_process(struct memcached_connection *con)
-{
-	int rv = 0;
-	/* Process message */
-	if (memcached_text_ntxn(con))
-		box_txn_begin();
-	if (con->request.op < MEMCACHED_TXT_CMD_MAX) {
-		rv = memcached_txt_handler[con->request.op](con);
-		if (box_txn()) box_txn_commit();
-	} else {
-		rv = memcached_process_unknown(con);
-	}
-	return rv;
-}
-
-int
-memcached_text_parse(struct memcached_connection *con)
-{
-	struct ibuf      *in = con->in;
-	const char *reqstart = in->rpos, *end = in->wpos;
-	int rv = memcached_text_parser(con, &reqstart, end);
-	if (reqstart > in->rpos)
-		con->len = reqstart - in->rpos;
-	if (rv == 0)
-		con->noreply = con->request.noreply;
-	return rv;
-}
-
-/**
- * Each command sent by a client may be answered with an error string
- * from the server. These error strings come in three types:
- *
- * - "ERROR\r\n"
- *
- *   means the client sent a nonexistent command name.
- *
- * - "CLIENT_ERROR <error>\r\n"
- *
- *   means some sort of client error in the input line, i.e. the input
- *   doesn't conform to the protocol in some way.
- *   <error> is a human-readable error string.
- *
- * - "SERVER_ERROR <error>\r\n"
- *
- *   means some sort of server error prevents the server from carrying
- *   out the command. In cases of severe server errors, which make it
- *   impossible to continue serving the client (this shouldn't normally
- *   happen), the server will close the connection after sending the error
- *   line. This is the only case in which the server closes a connection
- *   to a client.
- *   <error> is a human-readable error string.
- */
-
-int
-memcached_text_error(struct memcached_connection *con,
-		     uint16_t err, const char *errstr)
-{
-	struct obuf *out = con->out;
-	if (!errstr) {
-		errstr = memcached_get_result_title(err);
-		if (!errstr) {
-			say_error("Unknown errcode - 0x%.2X", err);
-			errstr = "UNKNOWN ERROR";
-		}
-	}
-	size_t len = strlen(errstr);
-	if (err == MEMCACHED_RES_NOT_SUPPORTED ||
-	    err == MEMCACHED_RES_UNKNOWN_COMMAND) {
-		obuf_dup(out, "ERROR", 5);
-	} else if (err == MEMCACHED_RES_EINVAL       ||
-		   err == MEMCACHED_RES_DELTA_BADVAL) {
-		/* TODO: add error type support */
-		obuf_dup(out, "CLIENT_ERROR ", 13);
-		obuf_dup(out, errstr, len);
-	} else {
-		obuf_dup(out, "SERVER_ERROR ", 13);
-		obuf_dup(out, errstr, len);
-	}
-	obuf_dup(out, "\r\n", 2);
-	return 0;
-}
-
-void
-memcached_set_text(struct memcached_connection *con)
-{
-	con->cb.type            = MEMCACHED_PROTO_TEXT;
-	con->cb.parse_request   = memcached_text_parse;
-	con->cb.process_request = memcached_text_process;
-	con->cb.process_error   = memcached_text_error;
-}
-
 static inline int
 txt_get_single(struct memcached_connection *con, const char *key,
 	       size_t key_len, bool get_cas)
@@ -552,28 +432,44 @@ memcached_txt_process_stat(struct memcached_connection *con) {
 	if (req->key_len == 0) {
 		if (memcached_stat_all(con, append) == -1)
 			goto error;
-	} else if (req->key_len == 5  && strcmp(req->key, "reset")) {
+	} else if (req->key_len == 5  && !strncmp(req->key, "reset", 5)) {
 		if (memcached_stat_reset(con, append) == -1)
 			goto error;
-	} else if (req->key_len == 6  && strcmp(req->key, "detail")) {
+/*	} else if (req->key_len == 6  && !strncmp(req->key, "detail", 6)) {
 		memcached_error_NOT_SUPPORTED("stat detail");
 		return -1;
-	} else if (req->key_len == 11 && strcmp(req->key, "detail dump")) {;
+	} else if (req->key_len == 11 && !strncmp(req->key, "detail dump", 11)) {
 		memcached_error_NOT_SUPPORTED("stat detail dump");
 		return -1;
-	} else if (req->key_len == 9  && strcmp(req->key, "detail on")) {;
+	} else if (req->key_len == 9  && !strncmp(req->key, "detail on", 9)) {
 		memcached_error_NOT_SUPPORTED("stat detail on");
 		return -1;
-	} else if (req->key_len == 10 && strcmp(req->key, "detail off")) {;
+	} else if (req->key_len == 10 && !strncmp(req->key, "detail off", 10)) {
 		memcached_error_NOT_SUPPORTED("stat detail off");
-		return -1;
+		return -1;*/
 	} else {
-		memcached_error_NOT_SUPPORTED("stat ---");
+		char err[256] = {0};
+		snprintf(err, 256, "stat %.*s", (int )req->key_len, req->key);
+		memcached_error_NOT_SUPPORTED(err);
 		return -1;
 	}
 	return 0;
 error:
 	obuf_rollback_to_svp(con->out, &svp);
+	return -1;
+}
+
+int
+memcached_txt_process_unsupported(struct memcached_connection *con)
+{
+	memcached_error_NOT_SUPPORTED(memcached_txt_cmdname(con->request.op));
+	return -1;
+}
+
+int
+memcached_txt_process_unknown(struct memcached_connection *con)
+{
+	memcached_error_UNKNOWN_COMMAND(con->request.op);
 	return -1;
 }
 
@@ -597,3 +493,110 @@ const mc_process_func_t memcached_txt_handler[] = {
 	memcached_txt_process_verbosity, /* MEMCACHED_TXT_CMD_VERSION, 0x0e */
 	NULL
 };
+
+/**
+ * Check that we need transaction for our operation.
+ */
+static inline int
+memcached_text_ntxn(struct memcached_connection *con)
+{
+	uint8_t cmd = con->request.op;
+	if ((cmd <= MEMCACHED_TXT_CMD_CAS) ||
+	    (cmd >= MEMCACHED_TXT_CMD_DELETE &&
+	     cmd <= MEMCACHED_TXT_CMD_DECR))
+		return 1;
+	return 0;
+};
+
+int
+memcached_text_process(struct memcached_connection *con)
+{
+	int rv = 0;
+	/* Process message */
+	if (memcached_text_ntxn(con))
+		box_txn_begin();
+	if (con->request.op < MEMCACHED_TXT_CMD_MAX) {
+		rv = memcached_txt_handler[con->request.op](con);
+		if (box_txn()) box_txn_commit();
+	} else {
+		rv = memcached_process_unknown(con);
+	}
+	return rv;
+}
+
+int
+memcached_text_parse(struct memcached_connection *con)
+{
+	struct ibuf      *in = con->in;
+	const char *reqstart = in->rpos, *end = in->wpos;
+	int rv = memcached_text_parser(con, &reqstart, end);
+	if (reqstart > in->rpos)
+		con->len = reqstart - in->rpos;
+	if (rv == 0)
+		con->noreply = con->request.noreply;
+	return rv;
+}
+
+/**
+ * Each command sent by a client may be answered with an error string
+ * from the server. These error strings come in three types:
+ *
+ * - "ERROR\r\n"
+ *
+ *   means the client sent a nonexistent command name.
+ *
+ * - "CLIENT_ERROR <error>\r\n"
+ *
+ *   means some sort of client error in the input line, i.e. the input
+ *   doesn't conform to the protocol in some way.
+ *   <error> is a human-readable error string.
+ *
+ * - "SERVER_ERROR <error>\r\n"
+ *
+ *   means some sort of server error prevents the server from carrying
+ *   out the command. In cases of severe server errors, which make it
+ *   impossible to continue serving the client (this shouldn't normally
+ *   happen), the server will close the connection after sending the error
+ *   line. This is the only case in which the server closes a connection
+ *   to a client.
+ *   <error> is a human-readable error string.
+ */
+
+int
+memcached_text_error(struct memcached_connection *con,
+		     uint16_t err, const char *errstr)
+{
+	struct obuf *out = con->out;
+	if (!errstr) {
+		errstr = memcached_get_result_title(err);
+		if (!errstr) {
+			say_error("Unknown errcode - 0x%.2X", err);
+			errstr = "UNKNOWN ERROR";
+		}
+	}
+	size_t len = strlen(errstr);
+	if (err == MEMCACHED_RES_NOT_SUPPORTED ||
+	    err == MEMCACHED_RES_UNKNOWN_COMMAND) {
+		obuf_dup(out, "ERROR", 5);
+	} else if (err == MEMCACHED_RES_EINVAL       ||
+		   err == MEMCACHED_RES_DELTA_BADVAL) {
+		/* TODO: add error type support */
+		obuf_dup(out, "CLIENT_ERROR ", 13);
+		obuf_dup(out, errstr, len);
+	} else {
+		obuf_dup(out, "SERVER_ERROR ", 13);
+		obuf_dup(out, errstr, len);
+	}
+	obuf_dup(out, "\r\n", 2);
+	return 0;
+}
+
+void
+memcached_set_text(struct memcached_connection *con)
+{
+	con->cb.parse_request   = memcached_text_parse;
+	con->cb.process_request = memcached_text_process;
+	con->cb.process_error   = memcached_text_error;
+}
+
+#undef memcached_text_DUP

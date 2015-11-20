@@ -43,6 +43,7 @@
 #include "network.h"
 #include "proto_binary.h"
 #include "proto_text.h"
+#include "expiration.h"
 
 static inline int
 memcached_skip_request(struct memcached_connection *con) {
@@ -199,128 +200,27 @@ memcached_handler(struct memcached_service *p, int fd)
 	con.write_end = obuf_create_svp(con.out);
 	con.cfg       = p;
 
+	/* prepare connection type */
+	if (p->proto == MEMCACHED_PROTO_NEGOTIATION) {
+		con.cb.parse_request = memcached_loop_negotiate;
+	} else if (p->proto == MEMCACHED_PROTO_BINARY) {
+		memcached_set_binary(&con);
+	} else if (p->proto == MEMCACHED_PROTO_TEXT) {
+		memcached_set_text(&con);
+	} else {
+		assert(0); /* unreacheable */
+	}
+
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;
 	con.cfg->stat.total_conns++;
-	con.cb.type = MEMCACHED_PROTO_NEGOTIATION;
-	con.cb.parse_request = memcached_loop_negotiate;
-//	memcached_set_binary(&con);
-//	memcached_set_text(&con);
 	memcached_loop(&con);
+	/* close connection and reflect it in stats */
 	con.cfg->stat.curr_conns--;
 	close(con.fd);
 	iobuf_delete(con.in, con.out);
 	const box_error_t *err = box_error_last();
-	if (err) {
-		say_error("%s", box_error_message(err));
-	}
-}
-
-int
-memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
-{
-	box_iterator_t *iter = *iterp;
-	box_tuple_t *tpl = NULL;
-	box_txn_begin();
-	int i = 0;
-	for (i = 0; i < p->expire_count; ++i) {
-		if (box_iterator_next(iter, &tpl) == -1) {
-			box_txn_rollback();
-			return -1;
-		} else if (tpl == NULL) {
-			box_iterator_free(iter);
-			box_txn_commit();
-			*iterp = NULL;
-			return 0;
-		} else if (is_expired_tuple(p, tpl)) {
-			uint32_t klen = 0;
-			const char *kpos = box_tuple_field(tpl, 0);
-			            kpos = mp_decode_str(&kpos, &klen);
-			size_t sz   = mp_sizeof_array(1) + mp_sizeof_str(klen);
-			char *begin = (char *)box_txn_alloc(sz);
-			if (begin == NULL) {
-				box_txn_rollback();
-				memcached_error_ENOMEM(sz, "key");
-				return -1;
-			}
-			char *end = mp_encode_array(begin, 1);
-			      end = mp_encode_str(end, kpos, klen);
-			if (box_delete(p->space_id, 0, begin, end, NULL)) {
-				box_txn_rollback();
-				return -1;
-			}
-			p->stat.evictions++;
-		}
-	}
-	box_txn_commit();
-	return 0;
-}
-
-void
-memcached_expire_loop(va_list ap)
-{
-	struct memcached_service *p = va_arg(ap, struct memcached_service *);
-	char key[2], *key_end = mp_encode_array(key, 0);
-	box_iterator_t *iter = NULL;
-	int rv = 0;
-	say_info("Memcached expire fiber started");
-restart:
-	if (iter == NULL) {
-		iter = box_index_iterator(p->space_id, 0, ITER_ALL, key, key_end);
-	}
-	if (rv == -1 || iter == NULL) {
-		const box_error_t *err = box_error_last();
-		say_error("Unexpected error %u: %s",
-				box_error_code(err),
-				box_error_message(err));
-		goto finish;
-	}
-	rv = memcached_expire_process(p, &iter);
-
-	/* This part is where we rest after all deletes */
-	double delay = ((double )p->expire_count * p->expire_time) /
-			(box_index_len(p->space_id, 0) + 1);
-	if (delay > 1) delay = 1;
-	fiber_set_cancellable(true);
-	fiber_sleep(delay);
-	if (fiber_is_cancelled())
-		goto finish;
-	fiber_set_cancellable(false);
-
-	goto restart;
-finish:
-	if (iter) box_iterator_free(iter);
-	return;
-}
-
-int
-memcached_expire_start(struct memcached_service *p)
-{
-	if (p->expire_fiber != NULL)
-		return -1;
-	struct fiber *expire_fiber = NULL;
-	char name[128];
-	snprintf(name, 128, "%s_memcached_expire", p->name);
-	expire_fiber = fiber_new(name, memcached_expire_loop);
-	const box_error_t *err = box_error_last();
-	if (err) {
-		say_error("Can't start the expire fiber");
-		say_error("%s", box_error_message(err));
-		return -1;
-	}
-	p->expire_fiber = expire_fiber;
-	fiber_set_joinable(expire_fiber, true);
-	fiber_start(expire_fiber, p);
-	return 0;
-}
-
-void
-memcached_expire_stop(struct memcached_service *p)
-{
-	if (p->expire_fiber == NULL) return;
-	fiber_cancel(p->expire_fiber);
-	fiber_join(p->expire_fiber);
-	p->expire_fiber = NULL;
+	if (err) say_error("%s", box_error_message(err));
 }
 
 struct memcached_service*
@@ -414,6 +314,18 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 		} else if (flag > 3) {
 			srv->verbosity = 0;
 		}
+		break;
+	}
+	case MEMCACHED_OPT_PROTOCOL: {
+		const char *type = va_arg(va, const char *);
+		if (strncmp(type, "bin", 3) == 0) {
+			srv->proto = MEMCACHED_PROTO_BINARY;
+		} else if (strncmp(type, "negot", 5) == 0) {
+			srv->proto = MEMCACHED_PROTO_NEGOTIATION;
+		} else {
+			srv->proto = MEMCACHED_PROTO_TEXT;
+		}
+		break;
 	}
 	default:
 		say_error("No such option %d", opt);

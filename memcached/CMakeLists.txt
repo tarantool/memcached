@@ -25,6 +25,7 @@ add_library(internalso SHARED
         "internal/proto_text.c"
         "internal/network.c"
         "internal/memcached_layer.c"
+        "internal/expiration.c"
         "internal/memcached.c"
 )
 

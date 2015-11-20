@@ -7,7 +7,7 @@ box.cfg{
 
 local inst = require('memcached').create('memcached',
     os.getenv('LISTEN'):match(':(.*)'), {
-        expire_full_scan_time = 1
+        expire_full_scan_time = 1,
 })
 
 require('log').info(os.getenv('LISTEN'):match(':(.*)'))

@@ -772,22 +772,24 @@ memcached_bin_process_stat(struct memcached_connection *con) {
 	/* ADD errstr for TODO */
 	if (b->key_len == 0) {
 		memcached_stat_all(con, append);
-	} else if (b->key_len == 5  && strcmp(b->key, "reset")) {
+	} else if (b->key_len == 5  && !strncmp(b->key, "reset", 5)) {
 		memcached_stat_reset(con, append);
-	} else if (b->key_len == 6  && strcmp(b->key, "detail")) {
+/*	} else if (b->key_len == 6  && !strncmp(b->key, "detail", 6)) {
 		memcached_error_NOT_SUPPORTED("stat detail");
 		return -1;
-	} else if (b->key_len == 11 && strcmp(b->key, "detail dump")) {;
+	} else if (b->key_len == 11 && !strncmp(b->key, "detail dump", 11)) {
 		memcached_error_NOT_SUPPORTED("stat detail dump");
 		return -1;
-	} else if (b->key_len == 9  && strcmp(b->key, "detail on")) {;
+	} else if (b->key_len == 9  && !strncmp(b->key, "detail on", 9)) {
 		memcached_error_NOT_SUPPORTED("stat detail on");
 		return -1;
-	} else if (b->key_len == 10 && strcmp(b->key, "detail off")) {;
+	} else if (b->key_len == 10 && !strncmp(b->key, "detail off", 10)) {
 		memcached_error_NOT_SUPPORTED("stat detail off");
-		return -1;
+		return -1;*/
 	} else {
-		memcached_error_NOT_SUPPORTED("stat ---");
+		char err[256] = {0};
+		snprintf(err, 256, "stat %.*s", (int )b->key_len, b->key);
+		memcached_error_NOT_SUPPORTED(err);
 		return -1;
 	}
 	return 0;
@@ -1067,7 +1069,6 @@ int memcached_bin_errori(struct memcached_connection *con)
 void
 memcached_set_binary(struct memcached_connection *con)
 {
-	con->cb.type            = MEMCACHED_PROTO_BINARY;
 	con->cb.parse_request   = memcached_binary_parse;
 	con->cb.process_request = memcached_binary_process;
 	con->cb.process_error   = memcached_binary_error;

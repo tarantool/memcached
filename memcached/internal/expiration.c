@@ -95,7 +95,7 @@ memcached_expire_start(struct memcached_service *p)
 		return -1;
 	struct fiber *expire_fiber = NULL;
 	char name[128];
-	snprintf(name, 128, "%s_memcached_expire", p->name);
+	snprintf(name, 128, "__mc_%s_expire", p->name);
 	expire_fiber = fiber_new(name, memcached_expire_loop);
 	const box_error_t *err = box_error_last();
 	if (err) {

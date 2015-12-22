@@ -22,10 +22,13 @@ dependencies = {
 
 external_dependencies = {
     TARANTOOL = {
-        header = 'tarantool/tarantool.h'
+        header = 'tarantool/module.h'
     };
     SMALL = {
         header = 'small/slab_cache.h'
+    };
+    MSGPUCK = {
+        header = 'msgpuck/msgpuck.h'
     };
 }
 
@@ -41,17 +44,18 @@ build = {
                 'third_party'
             },
             libraries = {
-                'small'
+                'small',
+                'msgpuck'
             },
             sources = {
-                "memcached/internal/constants.c"
-                "memcached/internal/utils.c"
-                "memcached/internal/proto_binary.c"
-                "memcached/internal/proto_text_parser.c"
-                "memcached/internal/proto_text.c"
-                "memcached/internal/network.c"
-                "memcached/internal/memcached_layer.c"
-                "memcached/internal/expiration.c"
+                "memcached/internal/constants.c",
+                "memcached/internal/utils.c",
+                "memcached/internal/proto_binary.c",
+                "memcached/internal/proto_text_parser.c",
+                "memcached/internal/proto_text.c",
+                "memcached/internal/network.c",
+                "memcached/internal/memcached_layer.c",
+                "memcached/internal/expiration.c",
                 "memcached/internal/memcached.c"
             };
         }

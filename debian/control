@@ -1,0 +1,19 @@
+Source: tarantool-memcached
+Priority: optional
+Section: database
+Maintainer: Eugene Blikh <bigbes@tarantool.org>
+Build-Depends: debhelper (>= 9), cdbs,
+               cmake (>= 2.8),
+               tarantool-dev (>= 1.6.8.0),
+               libsmall-dev, libmsgpuck-dev
+Standards-Version: 3.9.6
+Homepage: https://github.com/tarantool/memcached
+Vcs-Git: git://github.com/tarantool/memcached.git
+Vcs-Browser: https://github.com/tarantool/memcached
+
+Package: tarantool-memcached
+Architecture: i386 amd64 armhf arm64
+Depends: tarantool (>= 1.6.8.0), ${shlibs:Depends}, ${misc:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Description: Memcached protocol emulation for Tarantool
+ This package provides a Memcached protocol emulation for Tarantool.

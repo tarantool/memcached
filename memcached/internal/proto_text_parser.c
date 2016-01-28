@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <module.h>
+#include <tarantool/module.h>
 
 #include "memcached.h"
 #include "constants.h"
@@ -20,10 +20,9 @@
 
 /* #line 22 "memcached/internal/proto_text_parser.c" */
 static const int memcached_text_parser_start = 1;
-static const int memcached_text_parser_first_final = 128;
-static const int memcached_text_parser_error = 0;
-
-static const int memcached_text_parser_en_main = 1;
+/* static const int memcached_text_parser_first_final = 128; */
+/* static const int memcached_text_parser_error = 0;         */
+/* static const int memcached_text_parser_en_main = 1;       */
 
 
 /* #line 21 "memcached/internal/proto_text_parser.rl" */

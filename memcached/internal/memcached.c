@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <module.h>
+#include <tarantool/module.h>
 #include <msgpuck/msgpuck.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>
@@ -280,10 +280,10 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 	va_list va; va_start(va, opt);
 	switch (opt) {
 	case MEMCACHED_OPT_READAHEAD:
-		srv->readahead = va_arg(va, int);
+		srv->readahead = (int )va_arg(va, double);
 		break;
 	case MEMCACHED_OPT_EXPIRE_ENABLED: {
-		int flag = va_arg(va, int);
+		int flag = (int )va_arg(va, int);
 		if (flag == 0) {
 			srv->expire_enabled = false;
 			memcached_expire_stop(srv);
@@ -293,13 +293,13 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 		break;
 	}
 	case MEMCACHED_OPT_EXPIRE_COUNT:
-		srv->expire_count = va_arg(va, uint32_t);
+		srv->expire_count = (uint32_t )va_arg(va, double);
 		break;
 	case MEMCACHED_OPT_EXPIRE_TIME:
-		srv->expire_time = va_arg(va, uint32_t);
+		srv->expire_time = (uint32_t )va_arg(va, double);
 		break;
 	case MEMCACHED_OPT_FLUSH_ENABLED: {
-		int flag = va_arg(va, int);
+		int flag = (int )va_arg(va, int);
 		if (flag == 0) {
 			srv->flush_enabled = false;
 		} else {
@@ -308,7 +308,7 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 		break;
 	}
 	case MEMCACHED_OPT_VERBOSITY: {
-		int flag = va_arg(va, int);
+		int flag = (int )va_arg(va, double);
 		if (flag > 0) {
 			srv->verbosity = (flag < 4 ? flag : 3);
 		} else if (flag > 3) {

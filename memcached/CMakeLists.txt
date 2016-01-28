@@ -33,10 +33,14 @@ set_property(DIRECTORY PROPERTY CLEAN_NO_CUSTOM true)
 
 add_dependencies(internalso generate_proto_text_parser_c)
 
+if(NOT SMALL_FOUND)
+    add_dependencies(internalso small)
+endif()
+
 target_link_libraries(internalso small)
 
 set_target_properties(internalso PROPERTIES PREFIX "" OUTPUT_NAME "internal")
 
 # Install module
-install(FILES   init.lua   DESTINATION ${TARANTOOL_LUADIR}/${PROJECT_NAME}/)
-install(TARGETS internalso LIBRARY DESTINATION ${TARANTOOL_LIBDIR}/${PROJECT_NAME}/)
+install(FILES   init.lua   DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}/)
+install(TARGETS internalso LIBRARY DESTINATION ${TARANTOOL_INSTALL_LIBDIR}/${PROJECT_NAME}/)

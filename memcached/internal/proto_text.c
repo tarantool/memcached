@@ -2,7 +2,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include <module.h>
+#include <tarantool/module.h>
+#include <msgpuck/msgpuck.h>
+#include <small/ibuf.h>
+#include <small/obuf.h>
 
 #include "memcached.h"
 #include "constants.h"
@@ -11,11 +14,6 @@
 #include "utils.h"
 #include "proto_text.h"
 #include "proto_text_parser.h"
-
-#include <msgpuck/msgpuck.h>
-
-#include <small/ibuf.h>
-#include <small/obuf.h>
 
 #define memcached_text_DUP(_con, _msg, _len) do {				  \
 	if (!(_con)->noreply && obuf_dup((_con)->out, (_msg), (_len)) != (_len)) {\
@@ -231,7 +229,7 @@ memcached_txt_process_delta(struct memcached_connection *con)
 	}
 
 	/* Insert value */
-	strvallen = snprintf(strval, 22, "%lu", val);
+	strvallen = snprintf(strval, 22, "%" PRIu64, val);
 	if (memcached_tuple_set(con, key, key_len, expire, (const char *)strval,
 				strvallen, new_cas, flags) == -1) {
 		box_txn_rollback();

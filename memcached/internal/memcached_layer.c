@@ -8,7 +8,7 @@
 #include <math.h>
 #include <unistd.h>
 
-#include <module.h>
+#include <tarantool/module.h>
 
 #include <msgpuck/msgpuck.h>
 #include <small/obuf.h>

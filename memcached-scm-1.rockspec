@@ -44,8 +44,7 @@ build = {
                 'third_party'
             },
             libraries = {
-                'small',
-                'msgpuck'
+                'small'
             },
             sources = {
                 "memcached/internal/constants.c",
@@ -56,7 +55,8 @@ build = {
                 "memcached/internal/network.c",
                 "memcached/internal/memcached_layer.c",
                 "memcached/internal/expiration.c",
-                "memcached/internal/memcached.c"
+                "memcached/internal/memcached.c",
+                "memcached/internal/msgpuck.c"
             };
         }
     }

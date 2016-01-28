@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <module.h>
+#include <tarantool/module.h>
 
 #include "memcached.h"
 #include "constants.h"

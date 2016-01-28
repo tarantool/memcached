@@ -1,0 +1,5 @@
+tarantool-memcached (0.1.0-1) unstable; urgency=medium
+
+  * Initial release.
+
+ -- Eugene Blikh <bigbes@tarantool.org>  Thu, 24 Feb 2016 11:19:56 +0300

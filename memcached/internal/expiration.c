@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <module.h>
+#include <tarantool/module.h>
 #include <msgpuck/msgpuck.h>
 
 #include "memcached.h"
@@ -51,7 +51,7 @@ memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
 	return 0;
 }
 
-void
+int
 memcached_expire_loop(va_list ap)
 {
 	struct memcached_service *p = va_arg(ap, struct memcached_service *);
@@ -85,7 +85,7 @@ restart:
 	goto restart;
 finish:
 	if (iter) box_iterator_free(iter);
-	return;
+	return 0;
 }
 
 int

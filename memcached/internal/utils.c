@@ -5,9 +5,9 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <tarantool/module.h>
 #include <msgpuck/msgpuck.h>
 
-#include <module.h>
 #include "constants.h"
 #include "utils.h"
 

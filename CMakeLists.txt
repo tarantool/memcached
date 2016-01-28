@@ -1,20 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
-
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-
-# Find Tarantool and Lua dependecies
-set(TARANTOOL_FIND_REQUIRED ON)
-find_package(Tarantool)
-# include(cmake/FindTarantool.cmake)
-include_directories(${TARANTOOL_INCLUDEDIR})
-
-include(cmake/BuildLibmemcached.cmake)
-include(cmake/BuildMemtier.cmake)
-
-include_directories(${CMAKE_SOURCE_DIR}/third_party)
-
-libmemcached_build()
-     memtier_build()
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 project(memcached C)
 
@@ -22,11 +6,43 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-find_program(RAGEL ragel)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
+# Find Tarantool and Lua dependecies
+set(TARANTOOL_FIND_REQUIRED ON)
+find_package(Tarantool)
+# include(cmake/FindTarantool.cmake)
+include_directories(${TARANTOOL_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small EXCLUDE_FROM_ALL)
+# Find MsgPuck library
+find_package(MsgPuck)
+if(NOT MSGPUCK_FOUND)
+#    add_library(msgpuck STATIC third_party/msgpuck/msgpuck.c)
+#    set(MSGPUCK_LIBRARIES msgpuck)
+    set(MSGPUCK_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third_party/msgpuck)
+    find_package_message(MsgPuck "Using bundled MsgPuck" "${MSGPUCK_INCLUDE_DIRS}")
+endif()
+include_directories(${MSGPUCK_INCLUDE_DIRS})
+
+# Find small library
+find_package(Small)
+if(NOT SMALL_FOUND)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small EXCLUDE_FROM_ALL)
+    set(SMALL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third_party/small)
+    find_package_message(Small "Using bundled Small" "${SMALL_INCLUDE_DIRS}")
+endif()
+include_directories(${SMALL_INCLUDE_DIRS})
+
+include(cmake/BuildLibmemcached.cmake)
+include(cmake/BuildMemtier.cmake)
+libmemcached_build()
+     memtier_build()
+
+include_directories(${CMAKE_SOURCE_DIR}/third_party)
+
+find_program(RAGEL ragel)
 
 # Find other dependecies
 
@@ -37,6 +53,10 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -O0 -Werror")
 
 # Enable GNU glibc extentions.
 add_definitions("-D_GNU_SOURCE")
+
+if (APPLE)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined suppress -flat_namespace")
+endif(APPLE)
 
 # Build module
 add_subdirectory(memcached)

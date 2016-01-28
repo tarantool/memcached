@@ -8,7 +8,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 
-#include <module.h>
+#include <tarantool/module.h>
 #include <small/mempool.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>

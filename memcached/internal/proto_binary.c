@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <module.h>
+#include <tarantool/module.h>
 #include <msgpuck/msgpuck.h>
 
 #include "error.h"
@@ -602,7 +602,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 	}
 
 	/* Insert value */
-	strvallen = snprintf(strval, 22, "%lu", val);
+	strvallen = snprintf(strval, 22, "%" PRIu64, val);
 	if (memcached_tuple_set(con, b->key, b->key_len, expire,
 				(const char *)strval, strvallen,
 				cas, 0) == -1) {

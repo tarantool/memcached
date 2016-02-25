@@ -39,7 +39,11 @@ endif()
 
 target_link_libraries(internalso small)
 
-set_target_properties(internalso PROPERTIES PREFIX "" OUTPUT_NAME "internal")
+set_target_properties(internalso
+        PROPERTIES
+            PREFIX ""
+            SUFFIX ".so"
+            OUTPUT_NAME "internal")
 
 # Install module
 install(FILES   init.lua   DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}/)

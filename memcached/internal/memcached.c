@@ -28,16 +28,17 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdbool.h>
+
 #include <tarantool/module.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>
 
 #include "memcached.h"
 #include "memcached_layer.h"
-
 #include "error.h"
 #include "network.h"
 #include "proto_binary.h"

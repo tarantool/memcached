@@ -9,7 +9,8 @@ compiler: gcc
 #   - gcc
 
 env:
-  - PROJECT=tarantool-memcached
+  global:
+    - PROJECT=tarantool-memcached
   matrix:
     - PACK=none
     - OS=el DIST=6 PACK=rpm

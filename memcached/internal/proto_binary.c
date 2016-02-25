@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include <tarantool/module.h>
-#include <msgpuck/msgpuck.h>
+#include <msgpuck.h>
 
 #include "error.h"
 #include "utils.h"

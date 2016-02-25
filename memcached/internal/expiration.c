@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include <tarantool/module.h>
-#include <msgpuck/msgpuck.h>
+#include <msgpuck.h>
 
 #include "memcached.h"
 #include "memcached_layer.h"

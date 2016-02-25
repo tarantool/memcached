@@ -1,4 +1,4 @@
-package = 'memcached'
+package = 'tarantool-memcached'
 version = 'scm-1'
 
 source  = {

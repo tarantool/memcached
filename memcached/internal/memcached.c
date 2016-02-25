@@ -32,7 +32,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <tarantool/module.h>
-#include <msgpuck/msgpuck.h>
 #include <small/ibuf.h>
 #include <small/obuf.h>
 

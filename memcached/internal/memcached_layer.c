@@ -10,7 +10,7 @@
 
 #include <tarantool/module.h>
 
-#include <msgpuck/msgpuck.h>
+#include <msgpuck.h>
 #include <small/obuf.h>
 
 #include "error.h"

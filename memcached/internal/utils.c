@@ -6,7 +6,7 @@
 #include <inttypes.h>
 
 #include <tarantool/module.h>
-#include <msgpuck/msgpuck.h>
+#include <msgpuck.h>
 
 #include "constants.h"
 #include "utils.h"

@@ -92,4 +92,6 @@ mc_client("CAS moo 0 0 6 0\r\nMOOVAL\r\n")
 mc_client("GET moo\r\n")
 mc_client("GETS moo\r\n")
 
+mc_client("flush_all\r\n")
+
 sys.path = saved_path

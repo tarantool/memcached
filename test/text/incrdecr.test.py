@@ -46,4 +46,6 @@ print """# incr text value error """
 mc_client("set text 0 0 2\r\nhi\r\n")
 mc_client("incr text 1\r\n")
 
+mc_client("flush_all\r\n")
+
 sys.path = saved_path

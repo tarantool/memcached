@@ -37,13 +37,15 @@ def check(key, flags, val, level = 0):
 
 print("""#-----------------------------# test expiration #-----------------------------#""")
 
+server.admin("box.space.__mc_memcached:truncate()", silent=True)
+
 stat = mc.stat("reset")
 
 for i in xrange(10000):
     mc.set('key-%d' % i, 'value-%d' % i, expire=1)
 
 stat = mc.stat()
-while 'evictions' not in stat or int(stat['evictions']) < 10000:
+while int(stat.get('evictions', '0')) < 10000:
     time.sleep(0.01)
     stat = mc.stat()
 

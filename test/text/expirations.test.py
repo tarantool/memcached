@@ -14,65 +14,90 @@ mc_client = MemcachedTextConnection('localhost', port)
 
 master_id = server.get_param('server')['id']
 
-def wait():
-    lsn = server.get_lsn(master_id)
-    return server.wait_lsn(master_id, lsn+1)
-
 print """# expire: after 1 second"""
 
-print """# set foo"""
-mc_client("set foo 0 1 6\r\nfooval\r\n")
+server.admin("box.space.__mc_memcached:truncate()", silent=True)
 
-print """# foo shoud be exists"""
-mc_client("get foo\r\n")
+lsn = server.get_lsn(master_id)
 
-wait()
-print """# foo shoud expired"""
-mc_client("get foo\r\n")
+while True:
+    print """# set foo"""
+    mc_client("set foo 0 1 6\r\nfooval\r\n")
 
+    print """# foo shoud exists"""
+    mc_client("get foo\r\n")
+    break
 
-print """# expire: time - 1 second"""
-expire = time.time() - 1
-
-print """# set foo"""
-mc_client("set foo 0 %d 6\r\nfooval\r\n" % expire, silent = True)
+server.wait_lsn(master_id, lsn + 2)
 
 print """# foo shoud expired"""
 mc_client("get foo\r\n")
 
+lsn = server.get_lsn(master_id)
 
-print """# expire: time + 1 second"""
-expire = time.time() + 1
+while True:
+    print """# expire: time - 1 second"""
+    expire = time.time() - 1
 
-print """# set foo"""
-mc_client("set foo 0 %d 6\r\nfooval\r\n" % expire, silent = True)
+    print """# set foo"""
+    mc_client("set foo 0 %d 6\r\nfooval\r\n" % expire, silent = True)
 
-print """# foo shoud be exists"""
+    print """# foo shoud be expired"""
+    mc_client("get foo\r\n")
+    break
+
+server.wait_lsn(master_id, lsn + 2)
+
+lsn = server.get_lsn(master_id)
+
+while True:
+    print """# expire: time + 1 second"""
+    expire = time.time() + 1
+
+    print """# set foo"""
+    mc_client("set foo 0 %d 6\r\nfooval\r\n" % expire, silent = True)
+
+    print """# foo shoud exists"""
+    mc_client("get foo\r\n")
+    break
+
+server.wait_lsn(master_id, lsn + 2)
+
+print """# foo shoud be expired"""
 mc_client("get foo\r\n")
 
-wait()
-print """# foo shoud expired"""
-mc_client("get foo\r\n")
+lsn = server.get_lsn(master_id)
 
-print """# expire: time - 20 second"""
-expire = time.time() - 20
+while True:
+    print """# expire: time - 20 second"""
+    expire = time.time() - 20
 
-print """# set boo"""
-mc_client("set boo 0 %d 6\r\nbooval\r\n" % expire, silent = True)
+    print """# set boo"""
+    mc_client("set boo 0 %d 6\r\nbooval\r\n" % expire, silent = True)
 
-print """# foo shoud expired"""
-mc_client("get boo\r\n")
+    print """# foo shoud expired"""
+    mc_client("get boo\r\n")
+    break
+
+server.wait_lsn(master_id, lsn + 2)
 
 print """# expire: after 2 second"""
 
-print """# add add"""
-mc_client("add add 0 1 6\r\naddval\r\n")
+lsn = server.get_lsn(master_id)
 
-print """# readd add - shoud be fail"""
-mc_client("add add 0 1 7\r\naddval1\r\n")
+while True:
+    print """# add add"""
+    mc_client("add add 0 1 6\r\naddval\r\n")
 
-wait()
+    print """# readd add - shoud be fail"""
+    mc_client("add add 0 1 7\r\naddval1\r\n")
+    break
+
+server.wait_lsn(master_id, lsn + 2)
+
 print """# readd add - shoud be success"""
 mc_client("add add 0 1 7\r\naddval2\r\n")
+
+mc_client("flush_all\r\n")
 
 sys.path = saved_path

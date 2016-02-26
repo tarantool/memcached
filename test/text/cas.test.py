@@ -123,4 +123,6 @@ if bug15_cas != next_bug15_cas:
 else:
     print "fail: bug15_cas == next_bug15_cas"
 
+mc_client("flush_all\r\n")
+
 sys.path = saved_path

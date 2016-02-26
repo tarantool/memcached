@@ -22,4 +22,6 @@ for i in range(len(blobs_list)):
     mc_client("set %s 0 0 %d\r\n%s\r\n" % (key, blob_len, blob))
     mc_client("get %s\r\n" % key)
 
+mc_client("flush_all\r\n")
+
 sys.path = saved_path

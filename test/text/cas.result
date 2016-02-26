@@ -107,3 +107,7 @@ incr bug15 1
 # Validate a changed CAS. 
 # validate bug15_cas != next_bug15_cas 
 pass: bug15_cas != next_bug15_cas
+<<--------------------------------------------------
+flush_all
+>>--------------------------------------------------
+OK

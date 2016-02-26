@@ -49,4 +49,6 @@ mc_client("get noreply:foo\r\n")
 mc_client("delete noreply:foo noreply\r\n")
 mc_client("get noreply:foo\r\n")
 
+mc_client("flush_all\r\n")
+
 sys.path = saved_path

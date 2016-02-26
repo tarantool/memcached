@@ -23,4 +23,6 @@ for flags in flags_list:
     else:
         print "fail: flags (0x%x) != ret_flags (0x%x)" % (flags, ret_flags)
 
+mc_client("flush_all\r\n")
+
 sys.path = saved_path

@@ -80,5 +80,5 @@ memcached_binary_header_dump(struct memcached_hdr *hdr)
 		say_debug("ext_len:   %" PRIu8,  hdr->ext_len);
 	say_debug("tot_len:   %" PRIu32,         mp_bswap_u32(hdr->tot_len));
 	say_debug("opaque:    0x%" PRIX32,       mp_bswap_u32(hdr->opaque));
-	say_debug("cas:       %" PRIu64,         mp_bswap_u64(hdr->cas));
+	say_debug("cas:       %" PRIu64,         (uint64_t )mp_bswap_u64(hdr->cas));
 }

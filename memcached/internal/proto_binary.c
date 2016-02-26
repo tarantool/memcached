@@ -554,11 +554,11 @@ memcached_bin_process_delta(struct memcached_connection *con)
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s '%.*s' by %" PRIu64 ", opaque - %" PRIu32,
 			  memcached_bin_cmdname(h->cmd),
-			  b->key_len, b->key, mp_bswap_u64(ext->delta),
+			  b->key_len, b->key, (uint64_t )mp_bswap_u64(ext->delta),
 			  mp_bswap_u32(h->opaque));
 		if (ext->expire == 0xFFFFFFFFLL)
 			say_debug("default value is '%" PRIu64 "'",
-				  mp_bswap_u64(ext->initial));
+				  (uint64_t )mp_bswap_u64(ext->initial));
 	}
 
 	box_tuple_t *tuple = NULL;

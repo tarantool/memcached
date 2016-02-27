@@ -2,7 +2,7 @@
   <img src="https://avatars2.githubusercontent.com/u/2344919?v=2&s=250" align="right">
 </a>
 <a href="https://travis-ci.org/tarantool/tarantool-php">
-  <img src="https://travis-ci.org/tarantool/tarantool-php.png?branch=master" align="right">
+  <img src="https://travis-ci.org/tarantool/memcached.png?branch=master" align="right">
 </a>
 
 # memcached

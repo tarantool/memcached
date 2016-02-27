@@ -1,4 +1,11 @@
-# memcached [![Build Status](https://travis-ci.org/tarantool/memcached.png?branch=master)](https://travis-ci.org/tarantool/memcached)
+<a href="http://tarantool.org">
+  <img src="https://avatars2.githubusercontent.com/u/2344919?v=2&s=250" align="right">
+</a>
+<a href="https://travis-ci.org/tarantool/tarantool-php">
+  <img src="https://travis-ci.org/tarantool/tarantool-php.png?branch=master" align="right">
+</a>
+
+# memcached
 
 Memcached protocol 'wrapper' for tarantool.
 

@@ -29,6 +29,7 @@ include_directories(${MSGPUCK_INCLUDE_DIRS})
 # Find small library
 find_package(Small)
 if(NOT SMALL_FOUND)
+    set(SMALL_EMBEDDED ON)
     add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/small EXCLUDE_FROM_ALL)
     set(SMALL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third_party/small)
     find_package_message(Small "Using bundled Small" "${SMALL_INCLUDE_DIRS}")

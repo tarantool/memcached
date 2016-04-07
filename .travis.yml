@@ -4,9 +4,6 @@ services:
 
 language: c
 compiler: gcc
-# compiler:
-#   - clang
-#   - gcc
 
 env:
   global:
@@ -26,7 +23,6 @@ env:
     - OS=debian DIST=stretch PACK=deb
 
 matrix:
-  fast_finish: true
   allow_failures:
     - env: OS=el DIST=6 PACK=rpm
     - env: OS=el DIST=7 PACK=rpm
@@ -41,33 +37,6 @@ matrix:
     - env: OS=debian DIST=wheezy PACK=deb
     - env: OS=debian DIST=stretch PACK=deb
     - env: OS=debian DIST=sid PACK=deb
-#   exclude:
-#     - env: OS=el DIST=6 PACK=rpm
-#       compiler: clang
-#     - env: OS=el DIST=7 PACK=rpm
-#       compiler: clang
-#     - env: OS=fedora DIST=22 PACK=rpm
-#       compiler: clang
-#     - env: OS=fedora DIST=23 PACK=rpm
-#       compiler: clang
-#     - env: OS=fedora DIST=rawhide PACK=rpm
-#       compiler: clang
-#     - env: OS=ubuntu DIST=precise PACK=deb
-#       compiler: clang
-#     - env: OS=ubuntu DIST=trusty PACK=deb
-#       compiler: clang
-#     - env: OS=ubuntu DIST=wily PACK=deb
-#       compiler: clang
-#     - env: OS=ubuntu DIST=xenial PACK=deb
-#       compiler: clang
-#     - env: OS=debian DIST=wheezy PACK=deb
-#       compiler: clang
-#     - env: OS=debian DIST=jessie PACK=deb
-#       compiler: clang
-#     - env: OS=debian DIST=stretch PACK=deb
-#       compiler: clang
-#     - env: OS=debian DIST=sid PACK=deb
-#       compiler: clang
 
 script:
   - git clone https://github.com/tarantool/build.git

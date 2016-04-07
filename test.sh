@@ -2,4 +2,5 @@ curl -s https://packagecloud.io/install/repositories/tarantool/1_6/script.deb.sh
 sudo apt-get install -y tarantool tarantool-dev --force-yes
 pip install --user python-daemon PyYAML six==1.9.0
 TARANTOOL_DIR=/usr/include cmake . -DCMAKE_BUILD_TYPE=Release
-make test-memcached
+make internalso libmemcached
+make test-memcached test-memcached-capable

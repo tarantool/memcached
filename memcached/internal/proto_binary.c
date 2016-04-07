@@ -44,20 +44,13 @@ memcached_binary_write(struct memcached_connection *con, uint16_t err,
 		memcached_error_ENOMEM(to_alloc, "obuf");
 		return -1;
 	}
-	size_t rv = 0;
-	rv = obuf_dup(out, &hdro, sizeof(struct memcached_hdr));
-	assert(rv == sizeof(struct memcached_hdr));
-	if (ext) {
-		rv = obuf_dup(out, ext, ext_len);
-		assert(rv == ext_len);
-	}
-	if (key) {
-		rv = obuf_dup(out, key, key_len);
-		assert(rv == key_len);
-	}
-	if (val) {
-		rv = obuf_dup(out, val, val_len);
-		assert(rv == val_len);
+	size_t rv = obuf_dup(out, &hdro, sizeof(struct memcached_hdr));;
+	if (ext) rv += obuf_dup(out, ext, ext_len);
+	if (key) rv += obuf_dup(out, key, key_len);
+	if (val) rv += obuf_dup(out, val, val_len);
+	if (rv != to_alloc) {
+		/* unreachable*/
+		assert(0);
 	}
 	return 0;
 }

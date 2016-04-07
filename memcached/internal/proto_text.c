@@ -71,11 +71,14 @@ txt_get_single(struct memcached_connection *con, const char *key,
 		return -1;
 	}
 
-	assert(obuf_dup(con->out, "VALUE ", 6) == 6);
-	assert(obuf_dup(con->out, kpos,  klen) == klen);
-	assert(obuf_dup(con->out, end,   elen) == elen);
-	assert(obuf_dup(con->out, vpos,  vlen) == vlen);
-	assert(obuf_dup(con->out, "\r\n",   2) == 2);
+	if (obuf_dup(con->out, "VALUE ", 6) != 6 ||
+	    obuf_dup(con->out, kpos,  klen) != klen ||
+	    obuf_dup(con->out, end,   elen) != elen ||
+	    obuf_dup(con->out, vpos,  vlen) != vlen ||
+	    obuf_dup(con->out, "\r\n",   2) != 2) {
+		/* unreachable */
+		assert(0);
+	}
 
 	con->cfg->stat.get_hits++;
 	return 0;
@@ -395,7 +398,10 @@ stat_append(struct memcached_connection *con, const char *key,
 			memcached_error_ENOMEM(5, "obuf");
 			return -1;
 		}
-		assert(obuf_dup(out, "END", 3) == 3);
+		if (obuf_dup(out, "END", 3) != 3) {
+			/* unreachable */
+			assert(0);
+		}
 	} else {
 		char val_tmp[256] = {0};
 		va_list va;
@@ -410,11 +416,17 @@ stat_append(struct memcached_connection *con, const char *key,
 			memcached_error_ENOMEM(len, "obuf");
 			return -1;
 		}
-		assert(obuf_dup(out, "STAT ", 5) == 5);
-		assert(obuf_dup(out, key, key_len) == key_len);
-		assert(obuf_dup(out, (const char *)val_tmp, val_len) == val_len);
+		if (obuf_dup(out, "STAT ", 5) != 5 ||
+		    obuf_dup(out, key, key_len) != key_len ||
+		    obuf_dup(out, (const char *)val_tmp, val_len) != val_len) {
+			/* unreachable */
+			assert(0);
+		}
 	}
-	assert(obuf_dup(out, "\r\n", 2) == 2);
+	if (obuf_dup(out, "\r\n", 2) != 2) {
+		/* unreachable */
+		assert(0);
+	}
 	return 0;
 }
 

@@ -217,8 +217,8 @@ memcached_txt_process_delta(struct memcached_connection *con)
 	uint64_t delta = con->request.delta;
 
 	if (memcached_strtoul(vpos, vpos + vlen, &val) == -1) {
-		say_error("value: \"%.*s\"", vlen, vpos);
-		memcached_error_DELTA_BADVAL();
+		say_error("Bad value for delta operation: \"%.*s\"", vlen, vpos);
+		memcached_error(MEMCACHED_RES_DELTA_BADVAL);
 		return -1;
 	}
 	if (con->request.op == MEMCACHED_TXT_CMD_INCR) {
@@ -374,7 +374,7 @@ memcached_txt_process_verbosity(struct memcached_connection *con)
 	if (verbosity <= 3) {
 		con->cfg->verbosity = verbosity;
 	} else {
-		memcached_error_EINVAL();
+		memcached_error(MEMCACHED_RES_EINVAL);
 		return -1;
 	}
 	memcached_text_DUP(con, "OK\r\n", 4);
@@ -578,7 +578,8 @@ memcached_text_error(struct memcached_connection *con,
 {
 	struct obuf *out = con->out;
 	if (!errstr) {
-		errstr = memcached_get_result_title(err);
+		say_info("0x%x", err);
+		errstr = memcached_get_result_description(err);
 		if (!errstr) {
 			say_error("Unknown errcode - 0x%.2X", err);
 			errstr = "UNKNOWN ERROR";

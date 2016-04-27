@@ -146,7 +146,7 @@ END
 set foo_1049600 0 0 1049600
 <big-data>
 
-SERVER_ERROR object too large for cache or OOM
+SERVER_ERROR Object too large for cache or OOM
 
 #
 # A test for Bug#898198 memcached protocol isn't case-insensitive"

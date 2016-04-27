@@ -90,7 +90,7 @@ STORED
 <<--------------------------------------------------
 incr text 1
 >>--------------------------------------------------
-CLIENT_ERROR cannot increment or decrement non-numeric value
+CLIENT_ERROR Can't increment or decrement non-numeric value
 <<--------------------------------------------------
 flush_all
 >>--------------------------------------------------

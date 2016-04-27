@@ -96,20 +96,29 @@ memcached_loop_read(struct memcached_connection *con, size_t to_read)
 
 static inline int
 memcached_loop_error(struct memcached_connection *con) {
-	box_error_t *error = box_error_last();
-	if (!error) return 0;
-	int errcode = box_error_code(error);
-	const char *errstr = box_error_message(error);
+	int errcode = 0;
+	const char *errstr = NULL;
+	if (con->errcode == 0) {
+		box_error_t *error = box_error_last();
+		if (!error)
+			return 0;
+		errcode = box_error_code(error);
+		errstr = box_error_message(error);
+	} else {
+		errcode = con->errcode;
+		errstr = NULL;
+	}
 	if (errcode > box_error_code_MAX) {
 		errcode -= box_error_code_MAX;
-		/* TODO proper retval checking */
-		con->cb.process_error(con, errcode, errstr);
 	} else {
-		/* TODO proper retval checking */
-		memcached_error_SERVER_ERROR(
-				"SERVER ERROR %d: %s", errcode, errstr);
+		memcached_error_SERVER_ERROR("Server error %d: %s", errcode, errstr);
 	}
+	if (errstr == NULL) {
+		errstr = memcached_get_result_description(errcode);
+	}
+	con->cb.process_error(con, errcode, errstr);
 	box_error_clear();
+	con->errcode = 0;
 	return 0;
 }
 
@@ -220,7 +229,8 @@ memcached_handler(struct memcached_service *p, int fd)
 	close(con.fd);
 	iobuf_delete(con.in, con.out);
 	const box_error_t *err = box_error_last();
-	if (err) say_error("%s", box_error_message(err));
+	if (err)
+		say_error("%s", box_error_message(err));
 }
 
 struct memcached_service*

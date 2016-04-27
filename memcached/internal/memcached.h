@@ -129,8 +129,11 @@ struct memcached_connection {
 		};
 		/* request data (text) */
 		struct memcached_text_request  request;
-	};
-	size_t len; /* length of package */
+	}
+	/* enum memcached_response */;
+	int                       errcode;
+	/* length of package */
+	size_t                    len;
 	struct {
 		memcached_loop_func_t     parse_request;
 		memcached_loop_func_t     process_request;

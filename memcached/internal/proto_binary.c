@@ -987,7 +987,8 @@ memcached_binary_error(struct memcached_connection *con,
 			errstr = "UNKNOWN ERROR";
 		}
 	}
-	say_error("memcached error %" PRIu16 ": %s", err, errstr);
+	if (con->cfg->verbosity >= memcached_get_result_verbosity(err))
+		say_error("memcached error %" PRIu16 ": %s", err, errstr);
 	size_t len = 0;
 	if (errstr) len = strlen(errstr);
 	if (memcached_binary_write(con, err, 0, 0, 0, len,

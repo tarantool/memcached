@@ -82,3 +82,22 @@ memcached_binary_header_dump(struct memcached_hdr *hdr)
 	say_debug("opaque:    0x%" PRIX32,       mp_bswap_u32(hdr->opaque));
 	say_debug("cas:       %" PRIu64,         (uint64_t )mp_bswap_u64(hdr->cas));
 }
+
+/** Find a string in an array of strings.
+ *
+ * @param haystack  Array of strings. Either NULL
+ *                  pointer terminated (for arrays of
+ *                  unknown size) or of size hmax.
+ * @param needle    string to look for
+ * @param hmax      the index to use if nothing is found
+ *                  also limits the size of the array
+ * @return  string index or hmax if the string is not found.
+ */
+uint32_t
+strindex(const char **haystack, const char *needle, uint32_t hmax)
+{
+	for (unsigned index = 0; index != hmax && haystack[index]; index++)
+		if (strcasecmp(haystack[index], needle) == 0)
+			return index;
+	return hmax;
+}

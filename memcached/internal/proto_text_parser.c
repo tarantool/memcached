@@ -1821,7 +1821,7 @@ case 127:
 
 
 	if (req->bytes > MEMCACHED_MAX_SIZE) {
-		memcached_error_E2BIG();
+		memcached_error(MEMCACHED_RES_E2BIG);
 		done = false;
 	}
 	if (!done) {

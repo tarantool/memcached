@@ -183,18 +183,18 @@ memcached_bin_process_set(struct memcached_connection *con)
 
 	/* Check for key (non)existence for different commands */
 	if (cmd == MEMCACHED_SET_REPLACE && (!tuple_exists || tuple_expired)) {
-		memcached_error_KEY_ENOENT();
+		con->errcode = MEMCACHED_RES_KEY_ENOENT;
 		return -1;
 	} else if (cmd == MEMCACHED_SET_ADD && tuple_exists) {
 		if (!tuple_expired) {
-			memcached_error_KEY_EEXISTS();
+			con->errcode = MEMCACHED_RES_KEY_EEXISTS;
 			return -1;
 		}
 		con->cfg->stat.reclaimed++;
 	} else if (cmd == MEMCACHED_SET_CAS) {
 		if (!tuple_exists || tuple_expired) {
 			con->cfg->stat.cas_misses++;
-			memcached_error_KEY_ENOENT();
+			con->errcode = MEMCACHED_RES_KEY_ENOENT;
 			return -1;
 		}
 		const char *pos   = box_tuple_field(tuple, 4);
@@ -202,7 +202,7 @@ memcached_bin_process_set(struct memcached_connection *con)
 		uint64_t cas_prev = mp_decode_uint(&pos);
 		if (cas_prev != h->cas) {
 			con->cfg->stat.cas_badval++;
-			memcached_error_KEY_EEXISTS();
+			con->errcode = MEMCACHED_RES_KEY_EEXISTS;
 			return -1;
 		}
 		con->cfg->stat.cas_hits++;
@@ -254,7 +254,7 @@ memcached_bin_process_get(struct memcached_connection *con)
 	if (!tuple_exists || tuple_expired) {
 		con->cfg->stat.get_misses++;
 		if (!con->noreply) {
-			memcached_error_KEY_ENOENT();
+			con->errcode = MEMCACHED_RES_KEY_ENOENT;
 			return -1;
 		}
 		return 0;
@@ -325,7 +325,7 @@ memcached_bin_process_delete(struct memcached_connection *con)
 	if (!tuple_exists || tuple_expired) {
 		if (tuple_expired) con->cfg->stat.evictions++;
 		con->cfg->stat.delete_misses++;
-		memcached_error_KEY_ENOENT();
+		con->errcode = MEMCACHED_RES_KEY_ENOENT;
 		return -1;
 	}
 	con->cfg->stat.delete_hits++;
@@ -435,7 +435,7 @@ memcached_bin_process_verbosity(struct memcached_connection *con)
 				return -1;
 		}
 	} else {
-		memcached_error_EINVAL();
+		memcached_error(MEMCACHED_RES_EINVAL);
 		return -1;
 	}
 	return 0;
@@ -480,7 +480,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 	if (!tuple_exists || tuple_expired) {
 		con->cfg->stat.touch_misses++;
 		if (!con->noreply) {
-			memcached_error_KEY_ENOENT();
+			con->errcode = MEMCACHED_RES_KEY_ENOENT;
 			return -1;
 		}
 		return 0;
@@ -572,7 +572,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 
 	if (!tuple_exists || tuple_expired) {
 		if (expire == 0xFFFFFFFFLL) {
-			memcached_error_KEY_ENOENT();
+			con->errcode = MEMCACHED_RES_KEY_ENOENT;
 			return -1;
 		}
 		if (!tuple_exists) con->cfg->stat.reclaimed++;
@@ -581,7 +581,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 		const char *pos = box_tuple_field(tuple, 3);
 		vpos = mp_decode_str(&pos, &vlen);
 		if (!safe_strtoull(vpos, vpos + vlen, &val)) {
-			memcached_error_DELTA_BADVAL();
+			memcached_error(MEMCACHED_RES_DELTA_BADVAL);
 			return -1;
 		}
 		if (h->cmd == MEMCACHED_BIN_CMD_INCR ||
@@ -645,7 +645,7 @@ memcached_bin_process_pend(struct memcached_connection *con)
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
 	if (!tuple_exists || tuple_expired) {
-		memcached_error_KEY_ENOENT();
+		con->errcode = MEMCACHED_RES_KEY_ENOENT;
 		return -1;
 	}
 
@@ -767,7 +767,8 @@ memcached_bin_process_stat(struct memcached_connection *con) {
 		memcached_stat_all(con, append);
 	} else if (b->key_len == 5  && !strncmp(b->key, "reset", 5)) {
 		memcached_stat_reset(con, append);
-/*	} else if (b->key_len == 6  && !strncmp(b->key, "detail", 6)) {
+/*
+	} else if (b->key_len == 6  && !strncmp(b->key, "detail", 6)) {
 		memcached_error_NOT_SUPPORTED("stat detail");
 		return -1;
 	} else if (b->key_len == 11 && !strncmp(b->key, "detail dump", 11)) {
@@ -778,7 +779,8 @@ memcached_bin_process_stat(struct memcached_connection *con) {
 		return -1;
 	} else if (b->key_len == 10 && !strncmp(b->key, "detail off", 10)) {
 		memcached_error_NOT_SUPPORTED("stat detail off");
-		return -1;*/
+		return -1;
+*/
 	} else {
 		char err[256] = {0};
 		snprintf(err, 256, "stat %.*s", (int )b->key_len, b->key);
@@ -915,12 +917,12 @@ memcached_binary_parse(struct memcached_connection *con)
 	con->hdr = hdr;
 	/* error while parsing */
 	if (hdr->magic != MEMCACHED_BIN_REQUEST) {
-		memcached_error_EINVAL();
+		memcached_error(MEMCACHED_RES_EINVAL);
 		say_error("Wrong magic, closing connection");
 		con->close_connection = true;
 		return -1;
 	} else if (mp_bswap_u16(hdr->key_len) + hdr->ext_len > tot_len) {
-		memcached_error_EINVAL();
+		memcached_error(MEMCACHED_RES_EINVAL);
 		con->noprocess = true;
 		say_error("Object sizes are not consistent, skipping package");
 		return -1;
@@ -939,7 +941,7 @@ memcached_binary_parse(struct memcached_connection *con)
 	con->body.key_len = hdr->key_len;
 	con->body.val_len = hdr->tot_len - (hdr->ext_len + hdr->key_len);
 	if (tot_len > MEMCACHED_MAX_SIZE) {
-		memcached_error_E2BIG();
+		memcached_error(MEMCACHED_RES_E2BIG);
 		say_error("Object is too big for cache, skipping package");
 		con->noprocess = true;
 		return -1;
@@ -979,7 +981,7 @@ memcached_binary_error(struct memcached_connection *con,
 		       uint16_t err, const char *errstr)
 {
 	if (!errstr) {
-		errstr = memcached_get_result_title(err);
+		errstr = memcached_get_result_description(err);
 		if (!errstr) {
 			say_error("Unknown errcode - 0x%.2X", err);
 			errstr = "UNKNOWN ERROR";

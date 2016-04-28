@@ -41,8 +41,8 @@
 #include "memcached_layer.h"
 #include "error.h"
 #include "network.h"
-#include "proto_binary.h"
-#include "proto_text.h"
+#include "proto_bin.h"
+#include "proto_txt.h"
 #include "expiration.h"
 
 static inline int
@@ -127,9 +127,9 @@ memcached_loop_negotiate(struct memcached_connection *con)
 {
 	const char symbol = *(con->in->rpos);
 	if (symbol == (const char)MEMCACHED_BIN_REQUEST) {
-		memcached_set_binary(con);
+		memcached_set_bin(con);
 	} else {
-		memcached_set_text(con);
+		memcached_set_txt(con);
 	}
 	return con->cb.parse_request(con);
 }
@@ -213,9 +213,9 @@ memcached_handler(struct memcached_service *p, int fd)
 	if (p->proto == MEMCACHED_PROTO_NEGOTIATION) {
 		con.cb.parse_request = memcached_loop_negotiate;
 	} else if (p->proto == MEMCACHED_PROTO_BINARY) {
-		memcached_set_binary(&con);
+		memcached_set_bin(&con);
 	} else if (p->proto == MEMCACHED_PROTO_TEXT) {
-		memcached_set_text(&con);
+		memcached_set_txt(&con);
 	} else {
 		assert(0); /* unreacheable */
 	}

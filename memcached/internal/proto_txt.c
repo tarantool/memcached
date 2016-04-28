@@ -12,10 +12,10 @@
 #include "memcached_layer.h"
 #include "error.h"
 #include "utils.h"
-#include "proto_text.h"
-#include "proto_text_parser.h"
+#include "proto_txt.h"
+#include "proto_txt_parser.h"
 
-#define memcached_text_DUP(_con, _msg, _len) do {				  \
+#define memcached_txt_DUP(_con, _msg, _len) do {				  \
 	if (!(_con)->noreply && obuf_dup((_con)->out, (_msg), (_len)) != (_len)) {\
 		/* if ((_svp)) obuf_rollback_to_svp(con->out, (_svp)); */	  \
 		memcached_error_ENOMEM((_len), "obuf_dup");			  \
@@ -140,18 +140,18 @@ memcached_txt_process_set(struct memcached_connection *con)
 
 	/* Check for key (non)existence for different commands */
 	if (cmd == MEMCACHED_TXT_CMD_REPLACE && (!tuple_exists || tuple_expired)) {
-		memcached_text_DUP(con, "NOT_STORED\r\n", 12);
+		memcached_txt_DUP(con, "NOT_STORED\r\n", 12);
 		return 0;
 	} else if (cmd == MEMCACHED_TXT_CMD_ADD && tuple_exists) {
 		if (!tuple_expired) {
-			memcached_text_DUP(con, "NOT_STORED\r\n", 12);
+			memcached_txt_DUP(con, "NOT_STORED\r\n", 12);
 			return 0;
 		}
 		con->cfg->stat.reclaimed++;
 	} else if (cmd == MEMCACHED_TXT_CMD_CAS) {
 		if (!tuple_exists || tuple_expired) {
 			con->cfg->stat.cas_misses++;
-			memcached_text_DUP(con, "NOT_FOUND\r\n", 11);
+			memcached_txt_DUP(con, "NOT_FOUND\r\n", 11);
 			return 0;
 		}
 		const char *pos   = box_tuple_field(tuple, 4);
@@ -159,7 +159,7 @@ memcached_txt_process_set(struct memcached_connection *con)
 		uint64_t cas_prev = mp_decode_uint(&pos);
 		if (cas_prev != cas_expected) {
 			con->cfg->stat.cas_badval++;
-			memcached_text_DUP(con, "EXISTS\r\n", 8);
+			memcached_txt_DUP(con, "EXISTS\r\n", 8);
 			return 0;
 		}
 		con->cfg->stat.cas_hits++;
@@ -175,7 +175,7 @@ memcached_txt_process_set(struct memcached_connection *con)
 		box_txn_rollback();
 		return -1;
 	}
-	memcached_text_DUP(con, "STORED\r\n", 8);
+	memcached_txt_DUP(con, "STORED\r\n", 8);
 	return 0;
 }
 
@@ -200,7 +200,7 @@ memcached_txt_process_delta(struct memcached_connection *con)
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
 	if (!tuple_exists || tuple_expired) {
-		memcached_text_DUP(con, "NOT_FOUND\r\n", 11);
+		memcached_txt_DUP(con, "NOT_FOUND\r\n", 11);
 		return 0;
 	}
 
@@ -240,7 +240,7 @@ memcached_txt_process_delta(struct memcached_connection *con)
 	}
 	strval[strvallen++] = '\r';
 	strval[strvallen++] = '\n';
-	memcached_text_DUP(con, strval, strvallen);
+	memcached_txt_DUP(con, strval, strvallen);
 
 	return 0;
 }
@@ -267,7 +267,7 @@ memcached_txt_process_pend(struct memcached_connection *con)
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
 	if (!tuple_exists || tuple_expired) {
-		memcached_text_DUP(con, "NOT_STORED\r\n", 12);
+		memcached_txt_DUP(con, "NOT_STORED\r\n", 12);
 		return 0;
 	}
 
@@ -303,7 +303,7 @@ memcached_txt_process_pend(struct memcached_connection *con)
 		box_txn_rollback();
 		return -1;
 	}
-	memcached_text_DUP(con, "STORED\r\n", 8);
+	memcached_txt_DUP(con, "STORED\r\n", 8);
 	return 0;
 }
 
@@ -338,10 +338,10 @@ memcached_txt_process_delete(struct memcached_connection *con)
 	if (!tuple_exists || tuple_expired) {
 		if (tuple_expired) con->cfg->stat.evictions++;
 		con->cfg->stat.delete_misses++;
-		memcached_text_DUP(con, "NOT_FOUND\r\n", 11);
+		memcached_txt_DUP(con, "NOT_FOUND\r\n", 11);
 	} else {
 		con->cfg->stat.delete_hits++;
-		memcached_text_DUP(con, "DELETED\r\n", 9);
+		memcached_txt_DUP(con, "DELETED\r\n", 9);
 	}
 	return 0;
 }
@@ -353,7 +353,7 @@ memcached_txt_process_flush(struct memcached_connection *con)
 	uint64_t exptime = con->request.exptime;
 	con->cfg->flush = fiber_time64();
 	if (exptime > 0) con->cfg->flush = convert_exptime(exptime);
-	memcached_text_DUP(con, "OK\r\n", 4);
+	memcached_txt_DUP(con, "OK\r\n", 4);
 	return 0;
 }
 
@@ -363,7 +363,7 @@ memcached_txt_process_version(struct memcached_connection *con)
 	char value[256] = {0};
 	size_t value_len = snprintf((char *)value, 256, "VERSION %s\r\n",
 				    PACKAGE_VERSION);
-	memcached_text_DUP(con, (char *)value, value_len);
+	memcached_txt_DUP(con, (char *)value, value_len);
 	return 0;
 }
 
@@ -377,7 +377,7 @@ memcached_txt_process_verbosity(struct memcached_connection *con)
 		memcached_error(MEMCACHED_RES_EINVAL);
 		return -1;
 	}
-	memcached_text_DUP(con, "OK\r\n", 4);
+	memcached_txt_DUP(con, "OK\r\n", 4);
 	return 0;
 }
 
@@ -434,7 +434,7 @@ int
 memcached_txt_process_stat(struct memcached_connection *con) {
 
 	/* default declarations */
-	struct memcached_text_request *req = &con->request;
+	struct memcached_txt_request *req = &con->request;
 	stat_func_t append = stat_append;
 	struct obuf_svp svp = obuf_create_svp(con->out);
 
@@ -508,7 +508,7 @@ const mc_process_func_t memcached_txt_handler[] = {
  * Check that we need transaction for our operation.
  */
 static inline int
-memcached_text_ntxn(struct memcached_connection *con)
+memcached_txt_ntxn(struct memcached_connection *con)
 {
 	uint8_t cmd = con->request.op;
 	if ((cmd <= MEMCACHED_TXT_CMD_CAS) ||
@@ -519,13 +519,13 @@ memcached_text_ntxn(struct memcached_connection *con)
 };
 
 int
-memcached_text_process(struct memcached_connection *con)
+memcached_txt_process(struct memcached_connection *con)
 {
 	int rv = 0;
 	/* Process message */
-	if (memcached_text_ntxn(con))
+	if (memcached_txt_ntxn(con))
 		box_txn_begin();
-	if (con->request.op < MEMCACHED_TXT_CMD_MAX) {
+	if (con->request.op < memcached_txt_cmd_MAX) {
 		rv = memcached_txt_handler[con->request.op](con);
 		if (box_txn()) box_txn_commit();
 	} else {
@@ -535,11 +535,11 @@ memcached_text_process(struct memcached_connection *con)
 }
 
 int
-memcached_text_parse(struct memcached_connection *con)
+memcached_txt_parse(struct memcached_connection *con)
 {
 	struct ibuf      *in = con->in;
 	const char *reqstart = in->rpos, *end = in->wpos;
-	int rv = memcached_text_parser(con, &reqstart, end);
+	int rv = memcached_txt_parser(con, &reqstart, end);
 	if (reqstart > in->rpos)
 		con->len = reqstart - in->rpos;
 	if (rv == 0)
@@ -573,7 +573,7 @@ memcached_text_parse(struct memcached_connection *con)
  */
 
 int
-memcached_text_error(struct memcached_connection *con,
+memcached_txt_error(struct memcached_connection *con,
 		     uint16_t err, const char *errstr)
 {
 	struct obuf *out = con->out;
@@ -603,11 +603,11 @@ memcached_text_error(struct memcached_connection *con,
 }
 
 void
-memcached_set_text(struct memcached_connection *con)
+memcached_set_txt(struct memcached_connection *con)
 {
-	con->cb.parse_request   = memcached_text_parse;
-	con->cb.process_request = memcached_text_process;
-	con->cb.process_error   = memcached_text_error;
+	con->cb.parse_request   = memcached_txt_parse;
+	con->cb.process_request = memcached_txt_process;
+	con->cb.process_error   = memcached_txt_error;
 }
 
-#undef memcached_text_DUP
+#undef memcached_txt_DUP

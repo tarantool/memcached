@@ -7,53 +7,102 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum memcached_text_cmd {
-	MEMCACHED_TXT_CMD_UNKNOWN   = 0x00,
-	MEMCACHED_TXT_CMD_SET       = 0x01,
-	MEMCACHED_TXT_CMD_ADD       = 0x02,
-	MEMCACHED_TXT_CMD_REPLACE   = 0x03,
-	MEMCACHED_TXT_CMD_APPEND    = 0x04,
-	MEMCACHED_TXT_CMD_PREPEND   = 0x05,
-	MEMCACHED_TXT_CMD_CAS       = 0x06,
-	MEMCACHED_TXT_CMD_GET       = 0x07,
-	MEMCACHED_TXT_CMD_GETS      = 0x08,
-	MEMCACHED_TXT_CMD_DELETE    = 0x09,
-	MEMCACHED_TXT_CMD_INCR      = 0x0a,
-	MEMCACHED_TXT_CMD_DECR      = 0x0b,
-	MEMCACHED_TXT_CMD_FLUSH     = 0x0c,
-	MEMCACHED_TXT_CMD_STATS     = 0x0d,
-	MEMCACHED_TXT_CMD_VERSION   = 0x0e,
-	MEMCACHED_TXT_CMD_QUIT      = 0x0f,
-	MEMCACHED_TXT_CMD_VERBOSITY = 0x10,
-	MEMCACHED_TXT_CMD_MAX
-};
+#define ENUM0_MEMBER_TXT(s, ...) MEMCACHED_TXT_CMD_##s,
+#define ENUM0_MEMBER_BIN(s, ...) MEMCACHED_BIN_CMD_##s,
 
-struct memcached_text_request {
-	enum memcached_text_cmd op;
-	const char *key;
-	size_t      key_len;
-	uint32_t    key_count;
-	const char *data;
-	size_t      data_len;
-	uint64_t    flags;
-	uint64_t    bytes;
-	uint64_t    cas;
-	uint64_t    exptime;
-	uint64_t    delta;
-	bool        noreply;
-};
-
-
-enum memcached_binary_type {
-	MEMCACHED_BIN_REQUEST  = 0x80,
-	MEMCACHED_BIN_RESPONSE = 0x81
-};
+#define ENUM0_TXT(enum_name, enum_members) enum enum_name { enum_members(ENUM0_MEMBER_TXT) enum_name##_MAX }
+#define ENUM0_BIN(enum_name, enum_members) enum enum_name { enum_members(ENUM0_MEMBER_BIN) enum_name##_MAX }
 
 struct memcached_response_record {
 	const char *name;
 	const char *description;
 	uint8_t     verbosity;
 };
+
+#define TEXT_COMMANDS(_)		\
+		/* 0X00 */ _(UNKNOWN)	\
+		/* 0X01 */ _(SET)	\
+		/* 0X02 */ _(ADD)	\
+		/* 0X03 */ _(REPLACE)	\
+		/* 0X04 */ _(APPEND)	\
+		/* 0X05 */ _(PREPEND)	\
+		/* 0X06 */ _(CAS)	\
+		/* 0X07 */ _(GET)	\
+		/* 0X08 */ _(GETS)	\
+		/* 0X09 */ _(DELETE)	\
+		/* 0X0a */ _(INCR)	\
+		/* 0X0b */ _(DECR)	\
+		/* 0X0c */ _(FLUSH)	\
+		/* 0X0d */ _(STATS)	\
+		/* 0X0e */ _(VERSION)	\
+		/* 0X0f */ _(QUIT)	\
+		/* 0X10 */ _(VERBOSITY)
+
+#define BINARY_COMMANDS(_)				\
+		/* 0x00 */ _(GET)			\
+		/* 0x01 */ _(SET)			\
+		/* 0x02 */ _(ADD)			\
+		/* 0x03 */ _(REPLACE)			\
+		/* 0x04 */ _(DELETE)			\
+		/* 0x05 */ _(INCR)			\
+		/* 0x06 */ _(DECR)			\
+		/* 0x07 */ _(QUIT)			\
+		/* 0x08 */ _(FLUSH)			\
+		/* 0x09 */ _(GETQ)			\
+		/* 0x0a */ _(NOOP)			\
+		/* 0x0b */ _(VERSION)			\
+		/* 0x0c */ _(GETK)			\
+		/* 0x0d */ _(GETKQ)			\
+		/* 0x0e */ _(APPEND)			\
+		/* 0x0f */ _(PREPEND)			\
+		/* 0x10 */ _(STAT)			\
+		/* 0x11 */ _(SETQ)			\
+		/* 0x12 */ _(ADDQ)			\
+		/* 0x13 */ _(REPLACEQ)			\
+		/* 0x14 */ _(DELETEQ)			\
+		/* 0x15 */ _(INCRQ)			\
+		/* 0x16 */ _(DECRQ)			\
+		/* 0x17 */ _(QUITQ)			\
+		/* 0x18 */ _(FLUSHQ)			\
+		/* 0x19 */ _(APPENDQ)			\
+		/* 0x1a */ _(PREPENDQ)			\
+		/* 0x1b */ _(VERBOSITY)			\
+		/* 0x1c */ _(TOUCH)			\
+		/* 0x1d */ _(GAT)			\
+		/* 0x1e */ _(GATQ)			\
+		/*<< 0x1f */ _(RESERVED_1f)		\
+		/* 0x20 */ _(SASL_LIST_MECHS)		\
+		/* 0x21 */ _(SASL_AUTH)			\
+		/* 0x22 */ _(SASL_STEP)			\
+		/* 0x23 */ _(GATK)			\
+		/* 0x24 */ _(GATKQ)			\
+		/*<< Reserved from 0x24 to 0x2f >>*/	\
+		/*<< 0x24 */ _(RESERVED_24)		\
+		/*<< 0x25 */ _(RESERVED_25)		\
+		/*<< 0x26 */ _(RESERVED_26)		\
+		/*<< 0x27 */ _(RESERVED_27)		\
+		/*<< 0x28 */ _(RESERVED_28)		\
+		/*<< 0x29 */ _(RESERVED_29)		\
+		/*<< 0x2a */ _(RESERVED_2a)		\
+		/*<< 0x2b */ _(RESERVED_2b)		\
+		/*<< 0x2c */ _(RESERVED_2c)		\
+		/*<< 0x2d */ _(RESERVED_2d)		\
+		/*<< 0x2e */ _(RESERVED_2e)		\
+		/*<< 0x2f */ _(RESERVED_2f)		\
+		/*<< Reserved from 0x24 to 0x2f >>*/	\
+		/* 0x30 */ _(RGET)			\
+		/* 0x31 */ _(RSET)			\
+		/* 0x32 */ _(RSETQ)			\
+		/* 0x33 */ _(RAPPEND)			\
+		/* 0x34 */ _(RAPPENDQ)			\
+		/* 0x35 */ _(RPREPEND)			\
+		/* 0x36 */ _(RPREPENDQ)			\
+		/* 0x37 */ _(RDELETE)			\
+		/* 0x38 */ _(RDELETEQ)			\
+		/* 0x39 */ _(RINCR)			\
+		/* 0x3a */ _(RINCRQ)			\
+		/* 0x3b */ _(RDECR)			\
+		/* 0x3c */ _(RDECRQ)
 
 #define RESPONSE_CODES(_)										\
 		/* 0x00 */ _(MEMCACHED_RES_OK,			0, "Not an error")			\
@@ -204,7 +253,14 @@ struct memcached_response_record {
 		/* 0x86 */ _(MEMCACHED_RES_EAGAIN,		2, "Temporary unavailable")
 
 ENUM0(memcached_response, RESPONSE_CODES);
+
+ENUM0_TXT(memcached_txt_cmd, TEXT_COMMANDS);
+
+ENUM0_BIN(memcached_bin_cmd, BINARY_COMMANDS);
+
 extern struct memcached_response_record memcached_response_record_table[];
+extern const char *memcached_bin_cmd_name[];
+extern const char *memcached_txt_cmd_name[];
 
 static inline const char *
 memcached_get_result_name(uint32_t res) {
@@ -227,79 +283,26 @@ memcached_get_result_description(uint32_t res) {
 	return memcached_response_record_table[res].description;
 }
 
-enum memcached_binary_cmd {
-	MEMCACHED_BIN_CMD_GET      = 0x00,
-	MEMCACHED_BIN_CMD_SET      = 0x01,
-	MEMCACHED_BIN_CMD_ADD      = 0x02,
-	MEMCACHED_BIN_CMD_REPLACE  = 0x03,
-	MEMCACHED_BIN_CMD_DELETE   = 0x04,
-	MEMCACHED_BIN_CMD_INCR     = 0x05,
-	MEMCACHED_BIN_CMD_DECR     = 0x06,
-	MEMCACHED_BIN_CMD_QUIT     = 0x07,
-	MEMCACHED_BIN_CMD_FLUSH    = 0x08,
-	MEMCACHED_BIN_CMD_GETQ     = 0x09,
-	MEMCACHED_BIN_CMD_NOOP     = 0x0a,
-	MEMCACHED_BIN_CMD_VERSION  = 0x0b,
-	MEMCACHED_BIN_CMD_GETK     = 0x0c,
-	MEMCACHED_BIN_CMD_GETKQ    = 0x0d,
-	MEMCACHED_BIN_CMD_APPEND   = 0x0e,
-	MEMCACHED_BIN_CMD_PREPEND  = 0x0f,
-	MEMCACHED_BIN_CMD_STAT     = 0x10,
-	MEMCACHED_BIN_CMD_SETQ     = 0x11,
-	MEMCACHED_BIN_CMD_ADDQ     = 0x12,
-	MEMCACHED_BIN_CMD_REPLACEQ = 0x13,
-	MEMCACHED_BIN_CMD_DELETEQ  = 0x14,
-	MEMCACHED_BIN_CMD_INCRQ    = 0x15,
-	MEMCACHED_BIN_CMD_DECRQ    = 0x16,
-	MEMCACHED_BIN_CMD_QUITQ    = 0x17,
-	MEMCACHED_BIN_CMD_FLUSHQ   = 0x18,
-	MEMCACHED_BIN_CMD_APPENDQ  = 0x19,
-	MEMCACHED_BIN_CMD_PREPENDQ = 0x1a,
-	MEMCACHED_BIN_CMD_VERBOSITY= 0x1b,
-	MEMCACHED_BIN_CMD_TOUCH    = 0x1c,
-	MEMCACHED_BIN_CMD_GAT      = 0x1d,
-	MEMCACHED_BIN_CMD_GATQ     = 0x1e,
-
-	MEMCACHED_BIN_CMD_SASL_LIST_MECHS = 0x20,
-	MEMCACHED_BIN_CMD_SASL_AUTH       = 0x21,
-	MEMCACHED_BIN_CMD_SASL_STEP       = 0x22,
-
-	MEMCACHED_BIN_CMD_GATK     = 0x23,
-	MEMCACHED_BIN_CMD_GATKQ    = 0x24,
-
-	MEMCACHED_BIN_CMD_RGET      = 0x30,
-	MEMCACHED_BIN_CMD_RSET      = 0x31,
-	MEMCACHED_BIN_CMD_RSETQ     = 0x32,
-	MEMCACHED_BIN_CMD_RAPPEND   = 0x33,
-	MEMCACHED_BIN_CMD_RAPPENDQ  = 0x34,
-	MEMCACHED_BIN_CMD_RPREPEND  = 0x35,
-	MEMCACHED_BIN_CMD_RPREPENDQ = 0x36,
-	MEMCACHED_BIN_CMD_RDELETE   = 0x37,
-	MEMCACHED_BIN_CMD_RDELETEQ  = 0x38,
-	MEMCACHED_BIN_CMD_RINCR     = 0x39,
-	MEMCACHED_BIN_CMD_RINCRQ    = 0x3a,
-	MEMCACHED_BIN_CMD_RDECR     = 0x3b,
-	MEMCACHED_BIN_CMD_RDECRQ    = 0x3c,
-
-	MEMCACHED_BIN_CMD_MAX
-};
-
-extern const char *memcached_binary_cmd_name[];
-extern const char *memcached_text_cmd_name[];
-
 static inline const char *
 memcached_txt_cmdname(uint32_t op) {
-	if (op >= MEMCACHED_TXT_CMD_MAX)
+	if (op >= memcached_txt_cmd_MAX)
 		return "UNKNOWN";
-	return memcached_text_cmd_name[op];
+	return memcached_txt_cmd_name[op];
 }
 
 static inline const char *
 memcached_bin_cmdname(uint32_t op) {
-	if (op >= MEMCACHED_BIN_CMD_MAX)
+	if (op >= memcached_bin_cmd_MAX)
 		return "UNKNOWN";
-	return memcached_binary_cmd_name[op];
+	return memcached_bin_cmd_name[op];
 }
+
+/* BINARY STRUCTURES */
+
+enum memcached_binary_type {
+	MEMCACHED_BIN_REQUEST  = 0x80,
+	MEMCACHED_BIN_RESPONSE = 0x81
+};
 
 enum memcached_binary_datatypes {
 	MEMCACHED_BIN_RAW_BYTES = 0x00
@@ -356,6 +359,23 @@ struct memcached_body {
 	const void *ext;
 	const char *key;
 	const char *val;
+};
+
+/* TEXT STRUCTURES */
+
+struct memcached_txt_request {
+	enum memcached_txt_cmd op;
+	const char *key;
+	size_t      key_len;
+	uint32_t    key_count;
+	const char *data;
+	size_t      data_len;
+	uint64_t    flags;
+	uint64_t    bytes;
+	uint64_t    cas;
+	uint64_t    exptime;
+	uint64_t    delta;
+	bool        noreply;
 };
 
 #endif /* CONSTANTS_H_INCLUDED */

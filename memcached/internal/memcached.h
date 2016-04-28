@@ -128,7 +128,7 @@ struct memcached_connection {
 			struct memcached_body  body;
 		};
 		/* request data (text) */
-		struct memcached_text_request  request;
+		struct memcached_txt_request   request;
 	}
 	/* enum memcached_response */;
 	int                       errcode;

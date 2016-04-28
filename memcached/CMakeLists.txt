@@ -1,28 +1,28 @@
 add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c
+    OUTPUT ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.c
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${RAGEL} -LCe -G2 memcached/internal/proto_text_parser.rl
-                     -o memcached/internal/proto_text_parser.c
-    DEPENDS ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.rl)
+    COMMAND ${RAGEL} -LCe -G2 memcached/internal/proto_txt_parser.rl
+                     -o memcached/internal/proto_txt_parser.c
+    DEPENDS ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.rl)
 
-add_custom_target(generate_proto_text_parser_c DEPENDS
-    ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c)
+add_custom_target(generate_proto_txt_parser_c DEPENDS
+    ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.c)
 
-# do not randomly try to re-generate proto_text_parser.c
+# do not randomly try to re-generate proto_txt_parser.c
 # after a fresh checkout/branch switch.
 execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate
-    ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c)
+    ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.c)
 
 # set_source_files_properties(
-#     ${CMAKE_SOURCE_DIR}/memcached/internal/proto_text_parser.c
+#     ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.c
 #     PROPERTIES HEADER_FILE_ONLY true)
 
 add_library(internalso SHARED
         "internal/constants.c"
         "internal/utils.c"
-        "internal/proto_binary.c"
-        "internal/proto_text_parser.c"
-        "internal/proto_text.c"
+        "internal/proto_bin.c"
+        "internal/proto_txt_parser.c"
+        "internal/proto_txt.c"
         "internal/network.c"
         "internal/memcached_layer.c"
         "internal/expiration.c"
@@ -31,7 +31,7 @@ add_library(internalso SHARED
 
 set_property(DIRECTORY PROPERTY CLEAN_NO_CUSTOM true)
 
-add_dependencies(internalso generate_proto_text_parser_c)
+add_dependencies(internalso generate_proto_txt_parser_c)
 
 if(NOT SMALL_FOUND)
     add_dependencies(internalso small)

@@ -12,11 +12,11 @@
 #include "utils.h"
 #include "error.h"
 
-#include "proto_text.h"
-#include "proto_text_parser.h"
+#include "proto_txt.h"
+#include "proto_txt_parser.h"
 
 %%{
-	machine memcached_text_parser;
+	machine memcached_txt_parser;
 	write data;
 }%%
 
@@ -28,7 +28,7 @@ skip_line(const char *begin, const char *end)
 }
 
 int
-memcached_text_parser(struct memcached_connection *con,
+memcached_txt_parser(struct memcached_connection *con,
 					  const char **p_ptr, const char *pe)
 {
 	const char *p = *p_ptr;
@@ -36,8 +36,8 @@ memcached_text_parser(struct memcached_connection *con,
 	const char *s = NULL;
 	bool done = false;
 
-	struct memcached_text_request *req = &con->request;
-	memset(req, 0, sizeof(struct memcached_text_request));
+	struct memcached_txt_request *req = &con->request;
+	memset(req, 0, sizeof(struct memcached_txt_request));
 
 	%%{
 		action key_start {
@@ -136,7 +136,7 @@ memcached_text_parser(struct memcached_connection *con,
 	}%%
 
 	if (req->bytes > MEMCACHED_MAX_SIZE) {
-		memcached_error_E2BIG();
+		memcached_error(MEMCACHED_RES_E2BIG);
 		done = false;
 	}
 	if (!done) {

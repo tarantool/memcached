@@ -12,16 +12,16 @@
 #include "constants.h"
 #include "memcached_layer.h"
 
-#include "proto_binary.h"
+#include "proto_bin.h"
 
 #include <small/ibuf.h>
 #include <small/obuf.h>
 
 static inline int
-memcached_binary_write(struct memcached_connection *con, uint16_t err,
-		       uint64_t cas, uint8_t ext_len, uint16_t key_len,
-		       uint32_t val_len, const char *ext,
-		       const char *key, const char *val)
+memcached_bin_write(struct memcached_connection *con, uint16_t err,
+		    uint64_t cas, uint8_t ext_len, uint16_t key_len,
+		    uint32_t val_len, const char *ext,
+		    const char *key, const char *val)
 {
 	assert((ext && ext_len > 0) || (!ext && ext_len == 0));
 	assert((key && key_len > 0) || (!key && key_len == 0));
@@ -61,9 +61,9 @@ write_output_ok(struct memcached_connection *con, uint64_t cas,
 		const char *ext, const char *key, const char *val
 		)
 {
-	return memcached_binary_write(con, MEMCACHED_RES_OK,
-				      cas, ext_len, key_len,
-				      val_len, ext, key, val);
+	return memcached_bin_write(con, MEMCACHED_RES_OK,
+				   cas, ext_len, key_len,
+				   val_len, ext, key, val);
 }
 
 static inline int
@@ -275,9 +275,9 @@ memcached_bin_process_get(struct memcached_connection *con)
 		klen = 0;
 	}
 	ext.flags = mp_bswap_u32(flags);
-	if (memcached_binary_write(con, MEMCACHED_RES_OK, cas,
-				   sizeof(struct memcached_get_ext), klen, vlen,
-				   (const char *)&ext, kpos, vpos) == -1)
+	if (memcached_bin_write(con, MEMCACHED_RES_OK, cas,
+				sizeof(struct memcached_get_ext), klen, vlen,
+				(const char *)&ext, kpos, vpos) == -1)
 		return -1;
 	return 0;
 }
@@ -351,8 +351,8 @@ memcached_bin_process_version(struct memcached_connection *con)
 
 	const char *vers = PACKAGE_VERSION;
 	int vlen = strlen(vers);
-	if (memcached_binary_write(con, MEMCACHED_RES_OK, 0, 0, 0, vlen,
-				   NULL, NULL, vers))
+	if (memcached_bin_write(con, MEMCACHED_RES_OK, 0, 0, 0, vlen,
+				NULL, NULL, vers))
 		return -1;
 	return 0;
 }
@@ -518,8 +518,8 @@ memcached_bin_process_gat(struct memcached_connection *con)
 			klen = 0;
 		}
 	}
-	if (memcached_binary_write(con, MEMCACHED_RES_OK, cas, elen, klen,
-				   vlen, (const char *)epos, kpos, vpos) == -1)
+	if (memcached_bin_write(con, MEMCACHED_RES_OK, cas, elen, klen,
+				vlen, (const char *)epos, kpos, vpos) == -1)
 		return -1;
 	return 0;
 }
@@ -603,7 +603,7 @@ memcached_bin_process_delta(struct memcached_connection *con)
 		return -1;
 	} else if (!con->noreply) {
 		val = mp_bswap_u64(val);
-		if (memcached_binary_write(con, MEMCACHED_RES_OK, cas, 0, 0,
+		if (memcached_bin_write(con, MEMCACHED_RES_OK, cas, 0, 0,
 					   sizeof(val), NULL, NULL,
 					   (const char *)&val) == -1)
 			return -1;
@@ -627,9 +627,9 @@ memcached_bin_process_pend(struct memcached_connection *con)
 
 	if (con->cfg->verbosity > 1) {
 		say_debug("%s to '%.*s' value '%.*s', opaque - %" PRIu32,
-			memcached_bin_cmdname(h->cmd),
-			b->key_len, b->key, b->val_len, b->val,
-			mp_bswap_u32(h->opaque));
+			  memcached_bin_cmdname(h->cmd),
+			  b->key_len, b->key, b->val_len, b->val,
+			  mp_bswap_u32(h->opaque));
 	}
 
 	con->cfg->stat.cmd_set++;
@@ -684,8 +684,8 @@ memcached_bin_process_pend(struct memcached_connection *con)
 		box_txn_rollback();
 		return -1;
 	} else if (!con->noreply) {
-		if (memcached_binary_write(con, MEMCACHED_RES_OK, new_cas,
-					   0, 0, 0, NULL, NULL, NULL) == -1)
+		if (memcached_bin_write(con, MEMCACHED_RES_OK, new_cas,
+					0, 0, 0, NULL, NULL, NULL) == -1)
 			return -1;
 	}
 	return 0;
@@ -749,8 +749,8 @@ stat_append(struct memcached_connection *con, const char *key,
 	} else {
 		val = NULL;
 	}
-	if (memcached_binary_write(con, 0, 0, 0, key_len, val_len, NULL,
-				   key, val) == -1)
+	if (memcached_bin_write(con, 0, 0, 0, key_len, val_len, NULL,
+				key, val) == -1)
 		return -1;
 	return 0;
 };
@@ -859,7 +859,7 @@ const mc_process_func_t memcached_bin_handler[] = {
  * Check that we need transaction for our operation.
  */
 static inline int
-memcached_binary_ntxn(struct memcached_connection *con)
+memcached_bin_ntxn(struct memcached_connection *con)
 {
 	uint8_t cmd = con->hdr->cmd;
 	if ((cmd >= MEMCACHED_BIN_CMD_SET &&
@@ -879,15 +879,15 @@ memcached_binary_ntxn(struct memcached_connection *con)
 };
 
 int
-memcached_binary_process(struct memcached_connection *con)
+memcached_bin_process(struct memcached_connection *con)
 {
 	int rv = 0;
 	/* Process message */
 	con->noreply = false;
-	if (memcached_binary_ntxn(con)) {
+	if (memcached_bin_ntxn(con)) {
 		box_txn_begin();
 	}
-	if (con->hdr->cmd < MEMCACHED_BIN_CMD_MAX) {
+	if (con->hdr->cmd < memcached_bin_cmd_MAX) {
 		rv = memcached_bin_handler[con->hdr->cmd](con);
 		if (box_txn()) box_txn_commit();
 	} else {
@@ -903,7 +903,7 @@ memcached_binary_process(struct memcached_connection *con)
  * return >1 if we need more data
  */
 int
-memcached_binary_parse(struct memcached_connection *con)
+memcached_bin_parse(struct memcached_connection *con)
 {
 	struct ibuf      *in = con->in;
 	const char *reqstart = in->rpos;
@@ -977,7 +977,7 @@ memcached_binary_parse(struct memcached_connection *con)
  *
  */
 int
-memcached_binary_error(struct memcached_connection *con,
+memcached_bin_error(struct memcached_connection *con,
 		       uint16_t err, const char *errstr)
 {
 	if (!errstr) {
@@ -991,14 +991,14 @@ memcached_binary_error(struct memcached_connection *con,
 		say_error("memcached error %" PRIu16 ": %s", err, errstr);
 	size_t len = 0;
 	if (errstr) len = strlen(errstr);
-	if (memcached_binary_write(con, err, 0, 0, 0, len,
-				   NULL, NULL, errstr) == -1)
+	if (memcached_bin_write(con, err, 0, 0, 0, len,
+				NULL, NULL, errstr) == -1)
 		return -1;
 	return 0;
 }
 
 int
-memcached_binary_stat(struct memcached_connection *con, const char *key,
+memcached_bin_stat(struct memcached_connection *con, const char *key,
 		      const char *valfmt, ...)
 {
 	size_t key_len = 0;
@@ -1015,16 +1015,16 @@ memcached_binary_stat(struct memcached_connection *con, const char *key,
 	} else {
 		val = NULL;
 	}
-	if (memcached_binary_write(con, 0, 0, 0, key_len,
-				   val_len, NULL, key, val) == -1)
+	if (memcached_bin_write(con, 0, 0, 0, key_len,
+				val_len, NULL, key, val) == -1)
 		return -1;
 	return 0;
 };
 
 void
-memcached_set_binary(struct memcached_connection *con)
+memcached_set_bin(struct memcached_connection *con)
 {
-	con->cb.parse_request   = memcached_binary_parse;
-	con->cb.process_request = memcached_binary_process;
-	con->cb.process_error   = memcached_binary_error;
+	con->cb.parse_request   = memcached_bin_parse;
+	con->cb.process_request = memcached_bin_process;
+	con->cb.process_error   = memcached_bin_error;
 }

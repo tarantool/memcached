@@ -16,6 +16,17 @@ include_directories(${TARANTOOL_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 
+find_program(GIT git)
+if (EXISTS "${CMAKE_SOURCE_DIR}/.git" AND GIT)
+    execute_process (COMMAND ${GIT} describe --long HEAD
+        OUTPUT_VARIABLE TARANTOOL_GIT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+    message(STATUS "Updating submodules")
+    execute_process(COMMAND ${GIT} submodule update --init --recursive)
+endif()
+
 # Find MsgPuck library
 find_package(MsgPuck)
 if(NOT MSGPUCK_FOUND)

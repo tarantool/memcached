@@ -1,14 +1,20 @@
 -- Options for test-run tarantoolctl
 
 local workdir = os.getenv('TEST_WORKDIR')
+
 default_cfg = {
     pid_file   = workdir,
     wal_dir    = workdir,
     snap_dir   = workdir,
-    sophia_dir = workdir,
     logger     = workdir,
     background = false,
 }
+
+if _TARANTOOL:match("1.6") ~= nil then
+    default_cfg.sophia_dir = workdir
+else
+    default_cfg.vinyl_dir = workdir
+end
 
 instance_dir = workdir
 

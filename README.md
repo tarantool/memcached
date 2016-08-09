@@ -13,7 +13,8 @@ Memcached protocol 'wrapper' for tarantool.
 
 ### Prerequisites
 
- * Tarantol 1.6.7+ with header files (tarantool && tarantool-dev packages).
+ * Tarantol 1.6.8+ with header files (tarantool && tarantool-dev packages).
+ * Cyrus SASL library (with header files)
  * Python >= 2.7, <3 with next packages (for testing only):
    - PyYAML
    - msgpack-python
@@ -31,8 +32,9 @@ make
 make install
 ```
 
-Or use LuaRocks (in this case you'll need `libsmall`, `libsmall-dev` and `tarantool-dev`
-packages available from our binary repository at http://tarantool.org/dist/master):
+Or use LuaRocks (in this case you'll need `libsmall`, `libsmall-dev`, `tarantool-dev`
+packages available from our binary repository at http://tarantool.org/dist/master, and
+system package `libsasl2-dev`):
 
 ``` bash
 luarocks install https://raw.githubusercontent.com/tarantool/memcached/master/memcached-scm-1.rockspec --local
@@ -104,6 +106,53 @@ END
   - ~~`disk` - store everything on hdd/ssd (using `sophia` engine)~~ (not yet supported)
 * *space_name* - custom name for a memcached space, default is `__mc_<instance name>`
 * *if_not_exists* - do not throw error if an instance already exists.
+* *sasl* - enable or disable SASL support (disabled by default)
+
+## SASL support
+
+Usual rules for memcached are aplicable for this plugin:
+
+1. Create user (NOTE: it'll use custom folder):
+
+	 ``` bash
+	 echo testpass | saslpasswd2 -p -c testuser -f /tmp/test-tarantool-memcached.sasldb
+	 ```
+
+2. Place configuration file `/etc/sasl2/tarantool-memcached.conf`. For example:
+
+	 ```
+	 mech_list: plain cram-md5
+	 log_level: 7
+	 sasldb_path: /tmp/test-tarantool-memcached.sasldb
+	 ```
+	
+	 NOTE: This will disable 'ANONYMOUS' (and other, that aren't listed)
+	 authentication plugins.
+
+	 NOTE: This will set logging level to the highest possible
+
+	 NOTE: This will set custom path for database path
+
+3. Run tarantool with memcached plugin with SASL enabled
+
+	 ```
+	 local memcached = require('memcached')
+	 local instance = memcached.create('my_instance', '0.0.0.0:11211', {
+	   sasl = true
+	 })
+	```
+
+4. Use your favorite binary(!!) memcached client, that supports(!!) SASL:
+
+	 Example using Python's ['python-binary-memcached' library](https://github.com/jaysonsantos/python-binary-memcached)
+	 ```
+	 import bmemcached
+	 client = bmemcached.Client(('127.0.0.1:11211', ), 'testuser', 'testpasswd')
+	 client.set('key', 'value')
+	 print client.get('key')
+	 ```
+
+For custom configuration file path, please, use `SASL_CONF_PATH` environment variable.
 
 ## What's supported, what's not and other features
 
@@ -125,7 +174,7 @@ END
   - `append`/`prepend`/`incr`/`decr`
   - `verbosity` - partially, logging is not very good.
   - `stat` - `reset` is supported and all stats too.
-  - for now **SASL** authentication is not supported
+  - **SASL** authentication is supported
   - **range** operations are not supported as well.
 * Expiration is supported
 * Flush is supported

@@ -81,6 +81,7 @@ struct memcached_service {
 	const char   *uri;
 	const char   *name;
 	uint32_t      space_id;
+	bool          sasl;
 	/* properties */
 	uint64_t      cas;
 	uint64_t      flush;
@@ -121,6 +122,8 @@ struct memcached_connection {
 //	};
 //	socklen_t addr_len;
 //	struct session           *session;
+	struct sasl_ctx          *sasl_ctx;
+	int                       authentication_step;
 	union {
 		/* request data (binary) */
 		struct {
@@ -147,7 +150,7 @@ memcached_get_stat(struct memcached_service *);
 struct memcached_service *
 memcached_create(const char *, uint32_t);
 
-int memcached_start(struct memcached_service *);
+int  memcached_start(struct memcached_service *);
 void memcached_stop(struct memcached_service *);
 void memcached_free(struct memcached_service *);
 
@@ -163,6 +166,7 @@ enum memcached_options {
 	MEMCACHED_OPT_FLUSH_ENABLED  = 0x04,
 	MEMCACHED_OPT_VERBOSITY      = 0x05,
 	MEMCACHED_OPT_PROTOCOL       = 0x06,
+	MEMCACHED_OPT_SASL           = 0x07,
 	MEMCACHED_OPT_MAX
 };
 

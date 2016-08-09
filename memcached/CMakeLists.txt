@@ -17,6 +17,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate
 #     ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.c
 #     PROPERTIES HEADER_FILE_ONLY true)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+
 add_library(internalso SHARED
         "internal/constants.c"
         "internal/utils.c"
@@ -27,6 +30,7 @@ add_library(internalso SHARED
         "internal/memcached_layer.c"
         "internal/expiration.c"
         "internal/memcached.c"
+        "internal/mc_sasl.c"
 )
 
 set_property(DIRECTORY PROPERTY CLEAN_NO_CUSTOM true)
@@ -38,6 +42,7 @@ if(NOT SMALL_FOUND)
 endif()
 
 target_link_libraries(internalso small)
+target_link_libraries(internalso sasl2)
 
 set_target_properties(internalso
         PROPERTIES

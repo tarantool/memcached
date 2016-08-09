@@ -20,39 +20,44 @@ MAGIC = {
     'response': 0x81
 }
 
+# Operation: ID, header type, extension length, key length, val length
+# key/val length: 0 means nothing must be. 'None' means should be presented
 COMMANDS = {
-    'get'     : [0x00, Struct(HEADER + ''),    0,  None, 0],
-    'set'     : [0x01, Struct(HEADER + 'LL'),  8,  None, None],
-    'add'     : [0x02, Struct(HEADER + 'LL'),  8,  None, None],
-    'replace' : [0x03, Struct(HEADER + 'LL'),  8,  None, None],
-    'delete'  : [0x04, Struct(HEADER + ''),    0,  None, 0],
-    'incr'    : [0x05, Struct(HEADER + 'QQL'), 20, None, 0],
-    'decr'    : [0x06, Struct(HEADER + 'QQL'), 20, None, 0],
-    'quit'    : [0x07, Struct(HEADER + ''),    0,  0,    0],
-    'flush'   : [0x08, Struct(HEADER + 'I'),   4,  0,    0],
-    'getq'    : [0x09, Struct(HEADER + ''),    0,  None, 0],
-    'noop'    : [0x0a, Struct(HEADER + ''),    0,  0,    0],
-    'version' : [0x0b, Struct(HEADER + ''),    0,  0,    0],
-    'getk'    : [0x0c, Struct(HEADER + ''),    0,  None, 0],
-    'getkq'   : [0x0d, Struct(HEADER + ''),    0,  None, 0],
-    'append'  : [0x0e, Struct(HEADER + ''),    0,  None, None],
-    'prepend' : [0x0f, Struct(HEADER + ''),    0,  None, None],
-    'stat'    : [0x10, Struct(HEADER + ''),    0,  None, 0],
-    'setq'    : [0x11, Struct(HEADER + 'LL'),  8,  None, None],
-    'addq'    : [0x12, Struct(HEADER + 'LL'),  8,  None, None],
-    'replaceq': [0x13, Struct(HEADER + 'LL'),  8,  None, None],
-    'deleteq' : [0x14, Struct(HEADER + ''),    0,  None, 0],
-    'incrq'   : [0x15, Struct(HEADER + 'QQL'), 20, None, 0],
-    'decrq'   : [0x16, Struct(HEADER + 'QQL'), 20, None, 0],
-    'quitq'   : [0x17, Struct(HEADER + ''),    0,  0,    0],
-    'flushq'  : [0x18, Struct(HEADER + 'I'),   4,  0,    0],
-    'appendq' : [0x19, Struct(HEADER + ''),    0,  None, None],
-    'prependq': [0x1A, Struct(HEADER + ''),    0,  None, None],
-    'touch'   : [0x1C, Struct(HEADER + 'L'),   4,  None, 0],
-    'gat'     : [0x1D, Struct(HEADER + 'L'),   4,  None, 0],
-    'gatq'    : [0x1E, Struct(HEADER + 'L'),   4,  None, 0],
-    'gatk'    : [0x23, Struct(HEADER + 'L'),   4,  None, 0],
-    'gatkq'   : [0x24, Struct(HEADER + 'L'),   4,  None, 0],
+    'get'        : [0x00, Struct(HEADER + ''),    0,  None, 0   ],
+    'set'        : [0x01, Struct(HEADER + 'LL'),  8,  None, None],
+    'add'        : [0x02, Struct(HEADER + 'LL'),  8,  None, None],
+    'replace'    : [0x03, Struct(HEADER + 'LL'),  8,  None, None],
+    'delete'     : [0x04, Struct(HEADER + ''),    0,  None, 0   ],
+    'incr'       : [0x05, Struct(HEADER + 'QQL'), 20, None, 0   ],
+    'decr'       : [0x06, Struct(HEADER + 'QQL'), 20, None, 0   ],
+    'quit'       : [0x07, Struct(HEADER + ''),    0,  0,    0   ],
+    'flush'      : [0x08, Struct(HEADER + 'I'),   4,  0,    0   ],
+    'getq'       : [0x09, Struct(HEADER + ''),    0,  None, 0   ],
+    'noop'       : [0x0a, Struct(HEADER + ''),    0,  0,    0   ],
+    'version'    : [0x0b, Struct(HEADER + ''),    0,  0,    0   ],
+    'getk'       : [0x0c, Struct(HEADER + ''),    0,  None, 0   ],
+    'getkq'      : [0x0d, Struct(HEADER + ''),    0,  None, 0   ],
+    'append'     : [0x0e, Struct(HEADER + ''),    0,  None, None],
+    'prepend'    : [0x0f, Struct(HEADER + ''),    0,  None, None],
+    'stat'       : [0x10, Struct(HEADER + ''),    0,  None, 0   ],
+    'setq'       : [0x11, Struct(HEADER + 'LL'),  8,  None, None],
+    'addq'       : [0x12, Struct(HEADER + 'LL'),  8,  None, None],
+    'replaceq'   : [0x13, Struct(HEADER + 'LL'),  8,  None, None],
+    'deleteq'    : [0x14, Struct(HEADER + ''),    0,  None, 0   ],
+    'incrq'      : [0x15, Struct(HEADER + 'QQL'), 20, None, 0   ],
+    'decrq'      : [0x16, Struct(HEADER + 'QQL'), 20, None, 0   ],
+    'quitq'      : [0x17, Struct(HEADER + ''),    0,  0,    0   ],
+    'flushq'     : [0x18, Struct(HEADER + 'I'),   4,  0,    0   ],
+    'appendq'    : [0x19, Struct(HEADER + ''),    0,  None, None],
+    'prependq'   : [0x1A, Struct(HEADER + ''),    0,  None, None],
+    'touch'      : [0x1C, Struct(HEADER + 'L'),   4,  None, 0   ],
+    'gat'        : [0x1D, Struct(HEADER + 'L'),   4,  None, 0   ],
+    'gatq'       : [0x1E, Struct(HEADER + 'L'),   4,  None, 0   ],
+    'gatk'       : [0x23, Struct(HEADER + 'L'),   4,  None, 0   ],
+    'gatkq'      : [0x24, Struct(HEADER + 'L'),   4,  None, 0   ],
+    'sasl_list'  : [0x20, Struct(HEADER + ''),    0,  0,    0   ],
+    'sasl_start' : [0x21, Struct(HEADER + ''),    0,  None, None],
+    'sasl_step'  : [0x22, Struct(HEADER + ''),    0,  None, 0   ],
 }
 
 def is_indecrq(cmd):
@@ -61,37 +66,43 @@ def is_indecrq(cmd):
         return True
     return False
 
+
+# ID: extension type, extension length, key length, val length
+# key/val length: 0 means nothing must be. 'None' means should be presented
 ANSWERS = {
     0x00: [Struct('!L'), 4, 0,    None], # get
-    0x01: [None,         0, 0,    0],    # set
-    0x02: [None,         0, 0,    0],    # add
-    0x03: [None,         0, 0,    0],    # replace
-    0x04: [None,         0, 0,    0],    # delete
-    0x05: [None,         0, 0,    8],    # incr
-    0x06: [None,         0, 0,    8],    # decr
-    0x07: [None,         0, 0,    0],    # quit
-    0x08: [None,         0, 0,    0],    # flush
+    0x01: [None,         0, 0,    0   ], # set
+    0x02: [None,         0, 0,    0   ], # add
+    0x03: [None,         0, 0,    0   ], # replace
+    0x04: [None,         0, 0,    0   ], # delete
+    0x05: [None,         0, 0,    8   ], # incr
+    0x06: [None,         0, 0,    8   ], # decr
+    0x07: [None,         0, 0,    0   ], # quit
+    0x08: [None,         0, 0,    0   ], # flush
     0x09: [Struct('!L'), 4, 0,    None], # getq
-    0x0a: [None,         0, 0,    0],    # noop
+    0x0a: [None,         0, 0,    0   ], # noop
     0x0b: [None,         0, 0,    None], # version
     0x0c: [Struct('!L'), 4, None, None], # getk
     0x0d: [Struct('!L'), 4, None, None], # getkq
-    0x0e: [None,         0, 0,    0],    # append
-    0x0f: [None,         0, 0,    0],    # prepend
+    0x0e: [None,         0, 0,    0   ], # append
+    0x0f: [None,         0, 0,    0   ], # prepend
     0x10: [None,         0, None, None], # stat
-    0x11: [None,         0, 0,    0],    # setq
-    0x12: [None,         0, 0,    0],    # addq
-    0x13: [None,         0, 0,    0],    # replaceq
-    0x14: [None,         0, 0,    0],    # deleteq
-    0x15: [None,         0, 0,    8],    # incrq
-    0x16: [None,         0, 0,    8],    # decrq
-    0x17: [None,         0, 0,    0],    # quitq
-    0x18: [None,         0, 0,    0],    # flushq
-    0x19: [None,         0, 0,    0],    # appendq
-    0x1A: [None,         0, 0,    0],    # prependq
-    0x1C: [None,         0, 0,    0],    # touch
+    0x11: [None,         0, 0,    0   ], # setq
+    0x12: [None,         0, 0,    0   ], # addq
+    0x13: [None,         0, 0,    0   ], # replaceq
+    0x14: [None,         0, 0,    0   ], # deleteq
+    0x15: [None,         0, 0,    8   ], # incrq
+    0x16: [None,         0, 0,    8   ], # decrq
+    0x17: [None,         0, 0,    0   ], # quitq
+    0x18: [None,         0, 0,    0   ], # flushq
+    0x19: [None,         0, 0,    0   ], # appendq
+    0x1A: [None,         0, 0,    0   ], # prependq
+    0x1C: [None,         0, 0,    0   ], # touch
     0x1D: [Struct('!L'), 4, 0,    None], # gat
     0x1E: [Struct('!L'), 4, 0,    None], # gatq
+    0x20: [None,         0, 0,    None], # sasl_list
+    0x21: [None,         0, None, None], # sasl_start
+    0x22: [None,         0, None, None], # sasl_step
     0x23: [Struct('!L'), 4, None, None], # gatk
     0x24: [Struct('!L'), 4, None, None], # gatkq
 }
@@ -119,88 +130,29 @@ TYPE = {
     'raw' : 0x00,
 }
 
+
 class MemcachedException(Exception):
     def __init__(self, msg, size):
         self.msg  = msg
         self.size = size
 
-def construct_query(cmd, args):
-    assert(cmd in COMMANDS)
-    op, struct, ext_len, key_len, val_len = COMMANDS[cmd]
-    key     = args.get('key', '')
-    val     = args.get('val', '')
-    key_len = 0 if key_len is not None else len(key)
-    val_len = 0 if val_len is not None else len(val)
-    tot_len = val_len + key_len + ext_len
-    dtype   = args.get('type', TYPE['raw'])
-    opaque  = args.get('opaque', 0)
-    cas     = args.get('cas', 0)
-    extra   = args.get('extra', [])
-    retval = [
-        struct.pack(MAGIC['request'], op, key_len,
-                    ext_len, dtype, 0, tot_len,
-                    opaque, cas, *extra),
-        key, val
-    ]
-    return ''.join(retval)
 
-def parse_query(cmd):
-    to_read = HEADER_SIZE
-    if len(cmd) < to_read:
-        raise MemcachedException("Need more bytes", to_read - len(cmd))
+def binary_decorator(fn):
+    def decor(self, *args, **kwargs):
+        nosend = kwargs.pop('nosend', False)
+        result = fn(self, *args, **kwargs)
+        self.opaque += 1
+        rv = None
+        if not (result is None):
+            rv = result
+        else:
+            self.latest = self.opaque - 1
+            if nosend is False:
+                self.send()
+                rv = self.read_responses()
+        return rv
+    return decor
 
-    a = (magic, op, key_len, ext_len, dtype,
-     status, tot_len, opaque, cas) = HEADER_STRUCT.unpack_from(cmd)
-    to_read += tot_len
-    val_len = tot_len - key_len - ext_len
-
-    if len(cmd) < to_read:
-        raise MemcachedException("Need more bytes", to_read - len(cmd))
-    struct, ext_lenv, key_lenv, val_lenv = ANSWERS[op]
-
-    # Multiple checks to be confident in server responses
-    assert(magic == MAGIC['response'])
-    if status == STATUS['OK']:
-        assert(ext_len == ext_lenv)
-        assert(((key_lenv > 0 or key_lenv is None) and key_len > 0) or key_len == 0)
-        assert(((val_lenv > 0 or val_lenv is None) and val_len > 0) or val_len == 0)
-    else:
-        assert(val_len > 0)
-
-    retval = {
-        'magic'  : magic,
-        'op'     : op,
-        'dtype'  : dtype,
-        'status' : status,
-        'opaque' : opaque,
-        'cas'    : cas,
-    }
-    extra = None
-    if struct is not None and status == STATUS['OK']:
-        extra = struct.unpack_from(cmd, HEADER_SIZE)
-    if extra is not None:
-        retval['flags'] = extra[0]
-
-    key = None
-    if key_lenv is None:
-        begin = HEADER_SIZE + ext_len
-        end   = begin + key_len
-        key   = cmd[begin:end]
-    if key is not None:
-        retval['key'] = key
-
-    val = None
-    if val_lenv is None or val_len > 0:
-        begin = HEADER_SIZE + ext_len + key_len
-        end   = HEADER_SIZE + tot_len
-        val   = cmd[begin:end]
-        # decode result of (incr/decr)(q)
-        if is_indecrq(op):
-            val = INDECR_STRUCT.unpack_from(val)[0]
-    if val is not None:
-        retval['val'] = val
-
-    return retval
 
 class MemcachedBinaryConnection(TarantoolConnection):
     def __init__(self, host, port):
@@ -231,7 +183,64 @@ class MemcachedBinaryConnection(TarantoolConnection):
         return sz
 
     def _read_and_parse_response(self):
-        return parse_query(self._read_response())
+        cmd = self._read_response()
+
+        to_read = HEADER_SIZE
+        if len(cmd) < to_read:
+            raise MemcachedException("Need more bytes", to_read - len(cmd))
+
+        a = (magic, op, key_len, ext_len, dtype,
+            status, tot_len, opaque, cas) = HEADER_STRUCT.unpack_from(cmd)
+        to_read += tot_len
+        val_len = tot_len - key_len - ext_len
+
+        if len(cmd) < to_read:
+            raise MemcachedException("Need more bytes", to_read - len(cmd))
+        struct, ext_lenv, key_lenv, val_lenv = ANSWERS[op]
+
+        # Multiple checks to be confident in server responses
+        assert(magic == MAGIC['response'])
+        if status == STATUS['OK']:
+            assert(ext_len == ext_lenv)
+            assert(((key_lenv > 0 or key_lenv is None) and key_len > 0) or key_len == 0)
+            assert(((val_lenv > 0 or val_lenv is None) and val_len > 0) or val_len == 0)
+        else:
+            assert(val_len > 0)
+
+        retval = {
+            'magic'  : magic,
+            'op'     : op,
+            'dtype'  : dtype,
+            'status' : status,
+            'opaque' : opaque,
+            'cas'    : cas,
+        }
+        extra = None
+        if struct is not None and status == STATUS['OK']:
+            extra = struct.unpack_from(cmd, HEADER_SIZE)
+        if extra is not None:
+            retval['flags'] = extra[0]
+
+        key = None
+        if key_lenv is None:
+            begin = HEADER_SIZE + ext_len
+            end   = begin + key_len
+            key   = cmd[begin:end]
+        if key is not None:
+            retval['key'] = key
+
+        val = None
+        if val_lenv is None or val_len > 0:
+            begin = HEADER_SIZE + ext_len + key_len
+            end   = HEADER_SIZE + tot_len
+            val   = cmd[begin:end]
+            # decode result of (incr/decr)(q)
+            if is_indecrq(op):
+                val = INDECR_STRUCT.unpack_from(val)[0]
+        if val is not None:
+            retval['val'] = val
+
+        return retval
 
     def read_responses(self):
         resp = []
@@ -244,430 +253,284 @@ class MemcachedBinaryConnection(TarantoolConnection):
                  break
         return resp
 
-    def get(self, key, nosend=False):
-        self.commands.append(construct_query('get', {
-            'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+    def append_query(self, cmd, args):
+        assert(cmd in COMMANDS)
+        op, struct, ext_len, key_len, val_len = COMMANDS[cmd]
+        key     = args.get('key', '')
+        val     = args.get('val', '')
+        key_len = 0 if key_len is not None else len(key)
+        val_len = 0 if val_len is not None else len(val)
+        tot_len = val_len + key_len + ext_len
+        dtype   = args.get('type', TYPE['raw'])
+        opaque  = self.opaque
+        cas     = args.get('cas', 0)
+        extra   = args.get('extra', [])
+        retval = [
+            struct.pack(MAGIC['request'], op, key_len, ext_len, dtype, 0,
+                        tot_len, opaque, cas, *extra),
+            key, val
+        ]
+        cmd = ''.join(retval)
+        self.commands.append(cmd)
 
+    @binary_decorator
+    def get(self, key):
+        self.append_query('get', {
+            'key': key,
+        })
+
+    @binary_decorator
     def getq(self, key, nosend=False):
-        self.commands.append(construct_query('getq', {
+        self.append_query('getq', {
             'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def getk(self, key, nosend=False):
-        self.commands.append(construct_query('getk', {
+        self.append_query('getk', {
             'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def getkq(self, key, nosend=False):
-        self.commands.append(construct_query('getkq', {
+        self.append_query('getkq', {
             'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def set(self, key, value, expire=0, flags=0, nosend=False, cas=-1):
         if (cas == -1):
             cas = self.cas.get(key, 0)
-        self.commands.append(construct_query('set', {
+        self.append_query('set', {
             'key': key,
             'cas': cas,
             'val': value,
-            'opaque': self.opaque,
             'extra': [flags, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def setq(self, key, value, expire=0, flags=0, nosend=False, cas=-1):
         if (cas == -1):
             cas = self.cas.get(key, 0)
-        self.commands.append(construct_query('setq', {
+        self.append_query('setq', {
             'key': key,
             'cas': cas,
             'val': value,
-            'opaque': self.opaque,
             'extra': [flags, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def add(self, key, value, expire=0, flags=0, nosend=False, cas=-1):
         if (cas == -1):
             cas = self.cas.get(key, 0)
-        self.commands.append(construct_query('add', {
+        self.append_query('add', {
             'key': key,
             'cas': cas,
             'val': value,
-            'opaque': self.opaque,
             'extra': [flags, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def addq(self, key, value, expire=0, flags=0, nosend=False, cas=-1):
         if (cas == -1):
             cas = self.cas.get(key, 0)
-        self.commands.append(construct_query('addq', {
+        self.append_query('addq', {
             'key': key,
             'cas': cas,
             'val': value,
-            'opaque': self.opaque,
             'extra': [flags, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def replace(self, key, value, expire=0, flags=0, nosend=False, cas=-1):
         if (cas == -1):
             cas = self.cas.get(key, 0)
-        self.commands.append(construct_query('replace', {
+        self.append_query('replace', {
             'key': key,
             'cas': cas,
             'val': value,
-            'opaque': self.opaque,
             'extra': [flags, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def replaceq(self, key, value, expire=0, flags=0, nosend=False, cas=-1):
         if (cas == -1):
             cas = self.cas.get(key, 0)
-        self.commands.append(construct_query('replaceq', {
+        self.append_query('replaceq', {
             'key': key,
             'cas': cas,
             'val': value,
-            'opaque': self.opaque,
             'extra': [flags, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def delete(self, key, nosend=False):
-        self.commands.append(construct_query('delete', {
+        self.append_query('delete', {
             'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def deleteq(self, key, nosend=False):
-        self.commands.append(construct_query('deleteq', {
+        self.append_query('deleteq', {
             'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def incr(self, key, delta=1, expire=0xFFFFFFFF, initial=0, nosend=False):
-        self.commands.append(construct_query('incr', {
+        self.append_query('incr', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [delta, initial, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def decr(self, key, delta=1, expire=0xFFFFFFFF, initial=0, nosend=False):
-        self.commands.append(construct_query('decr', {
+        self.append_query('decr', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [delta, initial, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def incrq(self, key, delta=1, expire=0xFFFFFFFF, initial=0, nosend=False):
-        self.commands.append(construct_query('incrq', {
+        self.append_query('incrq', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [delta, initial, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def decrq(self, key, delta=1, expire=0xFFFFFFFF, initial=0, nosend=False):
-        self.commands.append(construct_query('decrq', {
+        self.append_query('decrq', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [delta, initial, expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def quit(self, nosend=False):
-        self.commands.append(construct_query('quit', {
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        self.append_query('quit', {})
 
+    @binary_decorator
     def quitq(self, nosend=False):
-        self.commands.append(construct_query('quitq', {
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        self.append_query('quitq', {})
 
+    @binary_decorator
     def flush(self, expire=0, nosend=False):
-        self.commands.append(construct_query('flush', {
-            'opaque': self.opaque,
+        self.append_query('flush', {
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def flushq(self, expire=0, nosend=False):
-        self.commands.append(construct_query('flushq', {
-            'opaque': self.opaque,
+        self.append_query('flushq', {
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def noop(self):
-        self.commands.append(construct_query('noop', {
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
+        self.append_query('noop', {})
+        self.latest = self.opaque
         self.send()
         return self.read_responses()
 
+    @binary_decorator
     def version(self, nosend=False):
-        self.commands.append(construct_query('version', {
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        self.append_query('version', {})
 
+    @binary_decorator
     def append(self, key, value, nosend=False):
-        self.commands.append(construct_query('append', {
+        self.append_query('append', {
             'key': key,
             'val': value,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def prepend(self, key, value, nosend=False):
-        self.commands.append(construct_query('prepend', {
+        self.append_query('prepend', {
             'key': key,
             'val': value,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def appendq(self, key, value, nosend=False):
-        self.commands.append(construct_query('appendq', {
+        self.append_query('appendq', {
             'key': key,
             'val': value,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def prependq(self, key, value, nosend=False):
-        self.commands.append(construct_query('prependq', {
+        self.append_query('prependq', {
             'key': key,
             'val': value,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+
+    @binary_decorator
     def stat(self, key=''):
-        self.commands.append(construct_query('stat', {
+        # nosend flag is ignored
+        self.append_query('stat', {
             'key': key,
-            'opaque': self.opaque,
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        ans = {}
+        })
+        self.latest = self.opaque
         self.send()
+        ans = {}
         while True:
             rv = self._read_and_parse_response()
             if 'key' in rv and not rv['key'] and \
                'val' in rv and not rv['val']:
                 return ans
             ans[rv['key']] = rv['val']
+        return ans
 
+    @binary_decorator
     def touch(self, key, expire, nosend=False):
-        self.commands.append(construct_query('touch', {
+        self.append_query('touch', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def gat(self, key, expire, nosend=False):
-        self.commands.append(construct_query('gat', {
+        self.append_query('gat', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def gatk(self, key, expire, nosend=False):
-        self.commands.append(construct_query('gatk', {
+        self.append_query('gatk', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def gatq(self, key, expire, nosend=False):
-        self.commands.append(construct_query('gat', {
+        self.append_query('gat', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
 
+    @binary_decorator
     def gatkq(self, key, expire, nosend=False):
-        self.commands.append(construct_query('gatk', {
+        self.append_query('gatk', {
             'key': key,
-            'opaque': self.opaque,
             'extra': [expire]
-        }))
-        self.latest  = self.opaque
-        self.opaque += 1
-        if not nosend:
-            self.send()
-            return self.read_responses()
-        return None
+        })
+
+    @binary_decorator
+    def sasl_list(self):
+        self.append_query('sasl_list', {})
+
+    @binary_decorator
+    def sasl_start(self, mech, value):
+        self.append_query('sasl_start', {
+            'key': mech,
+            'val': value
+        })
+
+    @binary_decorator
+    def sasl_step(self, value):
+        self.append_query('sasl_step', {
+            'val': value
+        })
 
 MEMCACHED_SEPARATOR = '\r\n'
 

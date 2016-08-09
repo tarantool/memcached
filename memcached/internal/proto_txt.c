@@ -138,6 +138,8 @@ memcached_txt_process_set(struct memcached_connection *con)
 	bool tuple_exists  = (tuple != NULL);
 	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
+	con->cfg->stat.cmd_set++;
+
 	/* Check for key (non)existence for different commands */
 	if (cmd == MEMCACHED_TXT_CMD_REPLACE && (!tuple_exists || tuple_expired)) {
 		memcached_txt_DUP(con, "NOT_STORED\r\n", 12);

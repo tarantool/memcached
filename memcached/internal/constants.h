@@ -252,6 +252,12 @@ struct memcached_response_record {
 		/* Not presented in vanilla memcached */						\
 		/* 0x86 */ _(MEMCACHED_RES_EAGAIN,		2, "Temporary unavailable")
 
+enum memcached_authentication_state {
+	MEMCACHED_AUTH_NOT  = 0x00,
+	MEMCACHED_AUTH_STEP = 0x01,
+	MEMCACHED_AUTH_OK   = 0x02
+};
+
 ENUM0(memcached_response, RESPONSE_CODES);
 
 ENUM0_TXT(memcached_txt_cmd, TEXT_COMMANDS);

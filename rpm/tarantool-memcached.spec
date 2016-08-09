@@ -12,6 +12,7 @@ BuildRequires: tarantool-devel >= 1.6.8.0
 BuildRequires: small-devel
 BuildRequires: msgpuck-devel
 BuildRequires: /usr/bin/prove
+BuildRequires: cyrus-sasl-devel
 Requires: tarantool >= 1.6.8.0
 
 %description

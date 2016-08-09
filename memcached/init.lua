@@ -70,18 +70,21 @@ enum memcached_options {
     MEMCACHED_OPT_FLUSH_ENABLED  = 0x04,
     MEMCACHED_OPT_VERBOSITY      = 0x05,
     MEMCACHED_OPT_PROTOCOL       = 0x06,
+    MEMCACHED_OPT_SASL           = 0x07,
     MEMCACHED_OPT_MAX
 };
 
-struct memcached_stat *memcached_get_stat (struct memcached_service *);
+struct memcached_stat *
+memcached_get_stat (struct memcached_service *);
 
-struct memcached_service *memcached_create(const char *, uint32_t);
-int memcached_start (struct memcached_service *);
-void memcached_stop (struct memcached_service *);
-void memcached_free (struct memcached_service *);
+struct memcached_service *
+memcached_create(const char *, uint32_t);
 
-void
-memcached_handler(struct memcached_service *p, int fd);
+int    memcached_start (struct memcached_service *);
+void   memcached_stop (struct memcached_service *);
+void   memcached_free (struct memcached_service *);
+
+void   memcached_handler(struct memcached_service *p, int fd);
 ]]
 
 function startswith(str, start)
@@ -155,6 +158,12 @@ local typetable = {
                    x == 'text'
         end,
         [[protocol type ('negotiation'/'binary'/'ascii')]]
+    },
+    sasl = {
+        'boolean',
+        function() return false end,
+        function(x) return x end,
+        [[enable SASL authorization]]
     },
     storage = {
         'string',
@@ -239,10 +248,11 @@ local conf_table = {
     expire_items_per_iter = ffi.C.MEMCACHED_OPT_EXPIRE_COUNT,
     expire_full_scan_time = ffi.C.MEMCACHED_OPT_EXPIRE_TIME,
     verbosity             = ffi.C.MEMCACHED_OPT_VERBOSITY,
-    protocol              = ffi.C.MEMCACHED_OPT_PROTOCOL
+    protocol              = ffi.C.MEMCACHED_OPT_PROTOCOL,
+    sasl                  = ffi.C.MEMCACHED_OPT_SASL
 }
 
-local memcached_mt = {
+local memcached_methods = {
     cfg = function (self, opts)
         if type(opts) ~= 'table' then
             error(err_bad_args)
@@ -270,10 +280,8 @@ local memcached_mt = {
         end
         ffi.C.memcached_start(self.service)
         local parsed = uri.parse(self.uri)
-        self.listener = socket.tcp_server(
-            parsed.host,
-            parsed.service, {
-                handler = memcached_handler
+        self.listener = socket.tcp_server(parsed.host, parsed.service, {
+            handler = memcached_handler
         })
         if self.listener == nil then
             self.status = ERRORED
@@ -291,6 +299,7 @@ local memcached_mt = {
         end
         local rc = ffi.C.memcached_stop(self.service)
         self.status = STOPPED
+        return self
     end,
     info = function (self)
         stats = ffi.C.memcached_get_stat(self.service)
@@ -299,6 +308,10 @@ local memcached_mt = {
             retval[v] = stats[0][v]
         end
         return retval
+    end,
+    grant = function (self, username)
+        box.schema.user.grant(username, 'read,write', 'space', self.space_name)
+        return self
     end
 }
 
@@ -322,12 +335,12 @@ local function memcached_init(name, uri, opts)
         instance.space = box.schema.create_space(instance.space_name, {
             engine = storage,
             format = {
-                { name = 'key', type = 'str' },
-                { name = 'expire', type = 'num' },
+                { name = 'key',      type = 'str' },
+                { name = 'expire',   type = 'num' },
                 { name = 'creation', type = 'num' },
-                { name = 'value', type = 'str' },
-                { name = 'cas', type = 'num' },
-                { name = 'flags', type = 'num' },
+                { name = 'value',    type = 'str' },
+                { name = 'cas',      type = 'num' },
+                { name = 'flags',    type = 'num' },
             }
         })
         instance.space:create_index('primary', {
@@ -342,14 +355,20 @@ local function memcached_init(name, uri, opts)
         error(fmt(err_enomem, "memcached service"))
     end
     instance.service = ffi.gc(service, ffi.C.memcached_free)
-    memcached_services[instance.name] = setmetatable(instance,
-        { __index = memcached_mt }
-    )
+    memcached_services[instance.name] = setmetatable(instance, {
+        __index = memcached_methods
+    })
     return instance:cfg(opts):start()
 end
 
+local function memcached_get(name)
+    return memcached_services[name]
+end
+
 return {
-    create = memcached_init;
-    get    = function (name) return memcached_services[name] end;
-    debug  = memcached_services;
+    create = memcached_init,
+    get    = memcached_get,
+    server = setmetatable({}, {
+        __index = memcached_services
+    })
 }

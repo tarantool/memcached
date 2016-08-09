@@ -6,13 +6,14 @@
 #include <tarantool/module.h>
 #include <msgpuck.h>
 
+#include "memcached.h"
+#include "proto_bin.h"
+
 #include "error.h"
 #include "utils.h"
-#include "memcached.h"
 #include "constants.h"
 #include "memcached_layer.h"
-
-#include "proto_bin.h"
+#include "mc_sasl.h"
 
 #include <small/ibuf.h>
 #include <small/obuf.h>
@@ -76,6 +77,24 @@ static inline int
 write_output_ok_cas(struct memcached_connection *con, uint64_t cas)
 {
 	return write_output_ok(con, cas, 0, 0, 0, NULL, NULL, NULL);
+}
+
+static inline bool
+is_authenticated(struct memcached_connection *con)
+{
+	/* default declarations */
+	struct memcached_hdr  *h = con->hdr;
+	bool rv = (con->authentication_step == MEMCACHED_AUTH_OK);
+
+	if (con->cfg->sasl == false                     ||
+	    h->cmd == MEMCACHED_BIN_CMD_SASL_LIST_MECHS ||
+	    h->cmd == MEMCACHED_BIN_CMD_SASL_AUTH       ||
+	    h->cmd == MEMCACHED_BIN_CMD_SASL_STEP       ||
+	    h->cmd == MEMCACHED_BIN_CMD_VERSION) {
+		rv = true;
+	}
+
+	return rv;
 }
 
 /**
@@ -790,68 +809,157 @@ memcached_bin_process_stat(struct memcached_connection *con) {
 	return 0;
 }
 
+int
+memcached_bin_process_sasl_list_mech(struct memcached_connection *con) {
+
+	/* default declarations */
+	if (con->cfg->sasl == false) {
+		return memcached_process_unknown(con);
+	}
+
+	const char *mechs = NULL;
+	size_t      mechs_len = 0;
+
+	int rv = memcached_sasl_list_mechs(con, &mechs, &mechs_len);
+
+	if (rv < 0) {
+		memcached_error(MEMCACHED_RES_AUTH_ERROR);
+		return -1;
+	}
+
+	memcached_bin_write(con, MEMCACHED_RES_OK, 0,
+			    0, 0, mechs_len,
+			    NULL, NULL, mechs);
+	return 0;
+}
+
+int
+memcached_bin_process_sasl_auth(struct memcached_connection *con) {
+
+	/* default declarations */
+	struct memcached_hdr  *h = con->hdr;
+	struct memcached_body *b = &con->body;
+
+	if (con->cfg->sasl == false) {
+		return memcached_process_unknown(con);
+	}
+
+	int rv = 0;
+
+	char mech[257] = {'\0'};
+	memcpy(mech, b->key, b->key_len);
+	mech[b->key_len] = '\0';
+
+	const char *challenge = b->val;
+	size_t challenge_len = b->val_len;
+
+	const char *out = NULL;
+	size_t  out_len = 0;
+
+	switch (h->cmd) {
+	case MEMCACHED_BIN_CMD_SASL_AUTH:
+		rv = memcached_sasl_auth(con, mech, challenge, challenge_len,
+					 &out, &out_len);
+		con->authentication_step = MEMCACHED_AUTH_STEP;
+		break;
+	case MEMCACHED_BIN_CMD_SASL_STEP:
+		if (con->authentication_step != MEMCACHED_AUTH_STEP) {
+			memcached_error(MEMCACHED_RES_AUTH_ERROR);
+			return -1;
+		}
+		rv = memcached_sasl_step(con, challenge, challenge_len,
+					 &out, &out_len);
+		break;
+	default:
+		/* unreacheable */
+		assert(0);
+	}
+
+	con->cfg->stat.auth_cmds   += 1;
+	switch (rv) {
+	case -1:
+		con->cfg->stat.auth_errors += 1;
+		memcached_error(MEMCACHED_RES_AUTH_ERROR);
+		/* con->close_connection = true; */
+		return -1;
+	case  0:
+		con->authentication_step = MEMCACHED_AUTH_OK;
+		/* FALLTHROUGH */
+	case  1:
+		memcached_bin_write(con, MEMCACHED_RES_OK, 0,
+				    0, 0, out_len,
+				    NULL, NULL, out);
+		break;
+	default:
+		/* unreachable */
+		assert(0);
+	}
+
+	return 0;
+}
+
 const mc_process_func_t memcached_bin_handler[] = {
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GET      , 0x00 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_SET      , 0x01 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_ADD      , 0x02 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_REPLACE  , 0x03 */
-	memcached_bin_process_delete,      /* MEMCACHED_BIN_CMD_DELETE   , 0x04 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_INCR     , 0x05 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_DECR     , 0x06 */
-	memcached_bin_process_quit,        /* MEMCACHED_BIN_CMD_QUIT     , 0x07 */
-	memcached_bin_process_flush,       /* MEMCACHED_BIN_CMD_FLUSH    , 0x08 */
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GETQ     , 0x09 */
-	memcached_bin_process_noop,        /* MEMCACHED_BIN_CMD_NOOP     , 0x0a */
-	memcached_bin_process_version,     /* MEMCACHED_BIN_CMD_VERSION  , 0x0b */
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GETK     , 0x0c */
-	memcached_bin_process_get,         /* MEMCACHED_BIN_CMD_GETKQ    , 0x0d */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_APPEND   , 0x0e */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_PREPEND  , 0x0f */
-	memcached_bin_process_stat,        /* MEMCACHED_BIN_CMD_STAT     , 0x10 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_SETQ     , 0x11 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_ADDQ     , 0x12 */
-	memcached_bin_process_set,         /* MEMCACHED_BIN_CMD_REPLACEQ , 0x13 */
-	memcached_bin_process_delete,      /* MEMCACHED_BIN_CMD_DELETEQ  , 0x14 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_INCRQ    , 0x15 */
-	memcached_bin_process_delta,       /* MEMCACHED_BIN_CMD_DECRQ    , 0x16 */
-	memcached_bin_process_quit,        /* MEMCACHED_BIN_CMD_QUITQ    , 0x17 */
-	memcached_bin_process_flush,       /* MEMCACHED_BIN_CMD_FLUSHQ   , 0x18 */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_APPENDQ  , 0x19 */
-	memcached_bin_process_pend,        /* MEMCACHED_BIN_CMD_PREPENDQ , 0x1a */
-	memcached_bin_process_verbosity,   /* MEMCACHED_BIN_CMD_VERBOSITY, 0x1b */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_TOUCH    , 0x1c */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GAT      , 0x1d */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GATQ     , 0x1e */
-	memcached_process_unknown,         /* RESERVED                   , 0x1f */
-	memcached_process_unsupported,     /* MEMCACHED_._SASL_LIST_MECHS, 0x20 */
-	memcached_process_unsupported,     /* MEMCACHED_._SASL_AUTH      , 0x21 */
-	memcached_process_unsupported,     /* MEMCACHED_._SASL_STEP      , 0x22 */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GATK     , 0x23 */
-	memcached_bin_process_gat,         /* MEMCACHED_BIN_CMD_GATKQ    , 0x24 */
-	memcached_process_unknown,         /* RESERVED                   , 0x25 */
-	memcached_process_unknown,         /* RESERVED                   , 0x26 */
-	memcached_process_unknown,         /* RESERVED                   , 0x27 */
-	memcached_process_unknown,         /* RESERVED                   , 0x28 */
-	memcached_process_unknown,         /* RESERVED                   , 0x29 */
-	memcached_process_unknown,         /* RESERVED                   , 0x2a */
-	memcached_process_unknown,         /* RESERVED                   , 0x2b */
-	memcached_process_unknown,         /* RESERVED                   , 0x2c */
-	memcached_process_unknown,         /* RESERVED                   , 0x2d */
-	memcached_process_unknown,         /* RESERVED                   , 0x2e */
-	memcached_process_unknown,         /* RESERVED                   , 0x2f */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RGET     , 0x30 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RSET     , 0x31 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RSETQ    , 0x32 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RAPPEND  , 0x33 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RAPPENDQ , 0x34 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RPREPEND , 0x35 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RPREPENDQ, 0x36 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RDELETE  , 0x37 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RDELETEQ , 0x38 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RINCR    , 0x39 */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RINCRQ   , 0x3a */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RDECR    , 0x3b */
-	memcached_process_unsupported,     /* MEMCACHED_BIN_CMD_RDECRQ   , 0x3c */
+	memcached_bin_process_get,            /* MEMCACHED_BIN_CMD_GET      , 0x00 */
+	memcached_bin_process_set,            /* MEMCACHED_BIN_CMD_SET      , 0x01 */
+	memcached_bin_process_set,            /* MEMCACHED_BIN_CMD_ADD      , 0x02 */
+	memcached_bin_process_set,            /* MEMCACHED_BIN_CMD_REPLACE  , 0x03 */
+	memcached_bin_process_delete,         /* MEMCACHED_BIN_CMD_DELETE   , 0x04 */
+	memcached_bin_process_delta,          /* MEMCACHED_BIN_CMD_INCR     , 0x05 */
+	memcached_bin_process_delta,          /* MEMCACHED_BIN_CMD_DECR     , 0x06 */
+	memcached_bin_process_quit,           /* MEMCACHED_BIN_CMD_QUIT     , 0x07 */
+	memcached_bin_process_flush,          /* MEMCACHED_BIN_CMD_FLUSH    , 0x08 */
+	memcached_bin_process_get,            /* MEMCACHED_BIN_CMD_GETQ     , 0x09 */
+	memcached_bin_process_noop,           /* MEMCACHED_BIN_CMD_NOOP     , 0x0a */
+	memcached_bin_process_version,        /* MEMCACHED_BIN_CMD_VERSION  , 0x0b */
+	memcached_bin_process_get,            /* MEMCACHED_BIN_CMD_GETK     , 0x0c */
+	memcached_bin_process_get,            /* MEMCACHED_BIN_CMD_GETKQ    , 0x0d */
+	memcached_bin_process_pend,           /* MEMCACHED_BIN_CMD_APPEND   , 0x0e */
+	memcached_bin_process_pend,           /* MEMCACHED_BIN_CMD_PREPEND  , 0x0f */
+	memcached_bin_process_stat,           /* MEMCACHED_BIN_CMD_STAT     , 0x10 */
+	memcached_bin_process_set,            /* MEMCACHED_BIN_CMD_SETQ     , 0x11 */
+	memcached_bin_process_set,            /* MEMCACHED_BIN_CMD_ADDQ     , 0x12 */
+	memcached_bin_process_set,            /* MEMCACHED_BIN_CMD_REPLACEQ , 0x13 */
+	memcached_bin_process_delete,         /* MEMCACHED_BIN_CMD_DELETEQ  , 0x14 */
+	memcached_bin_process_delta,          /* MEMCACHED_BIN_CMD_INCRQ    , 0x15 */
+	memcached_bin_process_delta,          /* MEMCACHED_BIN_CMD_DECRQ    , 0x16 */
+	memcached_bin_process_quit,           /* MEMCACHED_BIN_CMD_QUITQ    , 0x17 */
+	memcached_bin_process_flush,          /* MEMCACHED_BIN_CMD_FLUSHQ   , 0x18 */
+	memcached_bin_process_pend,           /* MEMCACHED_BIN_CMD_APPENDQ  , 0x19 */
+	memcached_bin_process_pend,           /* MEMCACHED_BIN_CMD_PREPENDQ , 0x1a */
+	memcached_bin_process_verbosity,      /* MEMCACHED_BIN_CMD_VERBOSITY, 0x1b */
+	memcached_bin_process_gat,            /* MEMCACHED_BIN_CMD_TOUCH    , 0x1c */
+	memcached_bin_process_gat,            /* MEMCACHED_BIN_CMD_GAT      , 0x1d */
+	memcached_bin_process_gat,            /* MEMCACHED_BIN_CMD_GATQ     , 0x1e */
+	memcached_process_unknown,            /* RESERVED                   , 0x1f */
+	memcached_bin_process_sasl_list_mech, /* MEMCACHED_._SASL_LIST_MECHS, 0x20 */
+	memcached_bin_process_sasl_auth,      /* MEMCACHED_._SASL_AUTH      , 0x21 */
+	memcached_bin_process_sasl_auth,      /* MEMCACHED_._SASL_STEP      , 0x22 */
+	memcached_bin_process_gat,            /* MEMCACHED_BIN_CMD_GATK     , 0x23 */
+	memcached_bin_process_gat,            /* MEMCACHED_BIN_CMD_GATKQ    , 0x24 */
+	memcached_process_unknown,            /* RESERVED                   , 0x25 */
+	memcached_process_unknown,            /* RESERVED                   , 0x26 */
+	memcached_process_unknown,            /* RESERVED                   , 0x27 */
+	memcached_process_unknown,            /* RESERVED                   , 0x28 */
+	memcached_process_unknown,            /* RESERVED                   , 0x29 */
+	memcached_process_unknown,            /* RESERVED                   , 0x2a */
+	memcached_process_unknown,            /* RESERVED                   , 0x2b */
+	memcached_process_unknown,            /* RESERVED                   , 0x2c */
+	memcached_process_unknown,            /* RESERVED                   , 0x2d */
+	memcached_process_unknown,            /* RESERVED                   , 0x2e */
+	memcached_process_unknown,            /* RESERVED                   , 0x2f */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RGET     , 0x30 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RSET     , 0x31 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RSETQ    , 0x32 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RAPPEND  , 0x33 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RAPPENDQ , 0x34 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RPREPEND , 0x35 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RPREPENDQ, 0x36 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RDELETE  , 0x37 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RDELETEQ , 0x38 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RINCR    , 0x39 */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RINCRQ   , 0x3a */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RDECR    , 0x3b */
+	memcached_process_unsupported,        /* MEMCACHED_BIN_CMD_RDECRQ   , 0x3c */
 	NULL
 };
 
@@ -884,12 +992,19 @@ memcached_bin_process(struct memcached_connection *con)
 	int rv = 0;
 	/* Process message */
 	con->noreply = false;
+	if (is_authenticated(con) == false) {
+		memcached_error(MEMCACHED_RES_AUTH_ERROR);
+		/* TODO: really need this? */
+		/* con->close_connection = true; */
+		return -1;
+	}
 	if (memcached_bin_ntxn(con)) {
 		box_txn_begin();
 	}
 	if (con->hdr->cmd < memcached_bin_cmd_MAX) {
 		rv = memcached_bin_handler[con->hdr->cmd](con);
-		if (box_txn()) box_txn_commit();
+		if (box_txn())
+			box_txn_commit();
 	} else {
 		rv = memcached_process_unknown(con);
 	}
@@ -969,10 +1084,6 @@ memcached_bin_parse(struct memcached_connection *con)
 }
 
 /**
- * Write error code message to output buffer
- *
- * \param[in] con    Connection object for writing output to
- * \param[in] err    Error code (status)
  * \param[in] errstr Eror string (if available) with description (may be NULL)
  *
  */

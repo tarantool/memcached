@@ -219,7 +219,7 @@ local STOPPED = 's'
 local ERRORED = 'e'
 
 local stat_table = {
-    'total_items', 'curr_items', 'started',
+    'total_items', 'curr_items',
     'curr_conns', 'total_conns',
     'bytes_read', 'bytes_written',
     'cmd_get', 'get_hits', 'get_misses',

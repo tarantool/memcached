@@ -30,6 +30,7 @@ add_library(internalso SHARED
         "internal/memcached_layer.c"
         "internal/expiration.c"
         "internal/memcached.c"
+        "internal/msgpuck.c"
         "internal/mc_sasl.c"
 )
 

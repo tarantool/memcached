@@ -33,10 +33,23 @@
 # In practice, Cyrus-SASL is so commonly used and generally non-ABI-breaking that
 # we should be OK to depend on the host installation.
 
+include(CheckTypeSize)
+include(CheckSymbolExists)
+include(FindPackageHandleStandardArgs)
 
-find_path(CYRUS_SASL_INCLUDE_DIR sasl/sasl.h)
+find_path   (CYRUS_SASL_INCLUDE_DIR sasl/sasl.h)
 find_library(CYRUS_SASL_SHARED_LIB sasl2)
 
-include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CYRUS_SASL REQUIRED_VARS
-  CYRUS_SASL_SHARED_LIB CYRUS_SASL_INCLUDE_DIR)
+                                  CYRUS_SASL_SHARED_LIB
+                                  CYRUS_SASL_INCLUDE_DIR)
+
+if (CYRUS_SASL_FOUND)
+    message(STATUS "Looking for sasl_callback_ft")
+    try_compile(HAVE_SASL_CALLBACK_FT ${CMAKE_BINARY_DIR} "${CMAKE_SOURCE_DIR}/cmake/sasl_callback_ft.c")
+    if (HAVE_SASL_CALLBACK_FT)
+        message(STATUS "Looking for sasl_callback_ft.. Found")
+    else()
+        message(STATUS "Looking for sasl_callback_ft.. Not found")
+    endif()
+endif()

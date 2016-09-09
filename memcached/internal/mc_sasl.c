@@ -15,6 +15,10 @@
 
 #include <tarantool/module.h>
 
+#ifndef HAVE_SASL_CALLBACK_FT
+typedef int (*sasl_callback_ft)(void);
+#endif
+
 const char mc_auth_ok_response[]   = "Authenticated";
 size_t     mc_auth_ok_response_len = sizeof(mc_auth_ok_response) - 1;
 

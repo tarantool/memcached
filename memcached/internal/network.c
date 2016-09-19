@@ -153,3 +153,43 @@ mnet_read_ibuf(int fd, struct ibuf *buf, size_t sz)
 	buf->wpos += n;
 	return n;
 }
+
+int
+mnet_setsockopt_keepalive(int fd) {
+	/* k is for keep */
+	int on = 1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) == -1) {
+		return -1;
+	}
+
+#ifdef    __linux__
+	int kcnt = 5, kidle = 30, kintl = 60;
+
+	if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT,  &kcnt, sizeof(int) == -1) ||
+	    setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &kcnt, sizeof(int) == -1) ||
+	    setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTL, &kcnt, sizeof(int) == -1)) {
+		return -1;
+	}
+#endif /* __linux__ */
+
+	return 0;
+}
+
+int
+mnet_setsockopt(int fd, const char *family, const char *type) {
+	int on = 1;
+	struct linger linger = {0, 0};
+
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1 ||
+	    setsockopt(fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) == -1) {
+		return -1;
+	}
+	if (strcmp(type, "SOCK_STREAM") == 0 && strcmp(family, "AF_UNIX") != 0) {
+		if (mnet_setsockopt_keepalive(fd) == -1) {
+			return -1;
+		}
+	}
+
+	return 0;
+}

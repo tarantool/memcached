@@ -52,4 +52,6 @@ obuf_new();
 void
 iobuf_delete(struct ibuf *ibuf, struct obuf *obuf);
 
+int
+mnet_setsockopt(int fd, const char *family, const char *type);
 #endif /* NETWORK_H_INCLUDED */

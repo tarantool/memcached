@@ -172,6 +172,8 @@ enum memcached_options {
 
 void memcached_set_opt(struct memcached_service *, int, ...);
 
+int memcached_setsockopt(int fd, const char *family, const char *type);
+
 #define MEMCACHED_MAX_SIZE (1 << 20)
 
 #if defined(__cplusplus)

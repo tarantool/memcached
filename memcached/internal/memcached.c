@@ -374,3 +374,8 @@ struct memcached_stat *memcached_get_stat (struct memcached_service *srv)
 {
 	return &(srv->stat);
 }
+
+int memcached_setsockopt(int fd, const char *family, const char *type)
+{
+	return mnet_setsockopt(fd, family, type);
+}

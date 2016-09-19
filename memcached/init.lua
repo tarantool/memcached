@@ -80,11 +80,11 @@ memcached_get_stat (struct memcached_service *);
 struct memcached_service *
 memcached_create(const char *, uint32_t);
 
-int    memcached_start (struct memcached_service *);
-void   memcached_stop (struct memcached_service *);
-void   memcached_free (struct memcached_service *);
-
-void   memcached_handler(struct memcached_service *p, int fd);
+int    memcached_start     (struct memcached_service *);
+void   memcached_stop      (struct memcached_service *);
+void   memcached_free      (struct memcached_service *);
+void   memcached_handler   (struct memcached_service *p, int fd);
+int    memcached_setsockopt(int fd, const char *family, const char *type);
 ]]
 
 function startswith(str, start)
@@ -283,9 +283,15 @@ local memcached_methods = {
         self.listener = socket.tcp_server(parsed.host, parsed.service, {
             handler = memcached_handler
         })
+        local lname = self.listener:name()
         if self.listener == nil then
             self.status = ERRORED
             error(fmt('can\'t bind (%d) %s', errno(), errno.strerror()))
+        end
+        if (ffi.C.memcached_setsockopt(self.listener:fd(),
+                                       lname.family, lname.type) == -1) then
+            self.status = ERRORED
+            error(fmt('can\'t set options (%d) %s', errno(), errno.strerror()))
         end
         self.status = RUNNING
         return self

@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <fcntl.h>
 
@@ -164,11 +165,11 @@ mnet_setsockopt_keepalive(int fd) {
 	}
 
 #ifdef    __linux__
-	int kcnt = 5, kidle = 30, kintl = 60;
+	int kcnt = 5, kidle = 30, kintvl = 60;
 
-	if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT,  &kcnt, sizeof(int) == -1) ||
-	    setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &kcnt, sizeof(int) == -1) ||
-	    setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTL, &kcnt, sizeof(int) == -1)) {
+	if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT,   &kcnt,   sizeof(int) == -1) ||
+	    setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE,  &kidle,  sizeof(int) == -1) ||
+	    setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &kintvl, sizeof(int) == -1)) {
 		return -1;
 	}
 #endif /* __linux__ */

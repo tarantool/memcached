@@ -191,7 +191,7 @@ next:
 		/* Write back answer */
 		if (!con->noreply)
 			memcached_flush(con);
-		fiber_sleep(0);
+		fiber_reschedule();
 		batch_count = 0;
 		continue;
 	}

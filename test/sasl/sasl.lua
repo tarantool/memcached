@@ -61,7 +61,8 @@ local fio = require('fio')
 
 local sasldb = '/tmp/test-tarantool-memcached.sasldb'
 fio.unlink(sasldb)
-os.execute('echo testpass | saslpasswd2 -a tarantool-memcached -c -p testuser -f ' .. sasldb)
+-- os.execute('echo testpass | saslpasswd2 -a tarantool-memcached -c -p testuser -f ' .. sasldb)
+fio.symlink('sasl/sasl.db', sasldb)
 
 env['SASL_CONF_PATH'] = fio.pathjoin(fio.cwd(), '../sasl/config/')
 

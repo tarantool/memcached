@@ -1,0 +1,8 @@
+import os
+
+try:
+    from pymemcache.client.base import Client
+except ImportError:
+    self.skip = 1
+
+# vim: set ft=python :

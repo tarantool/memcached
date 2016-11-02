@@ -159,11 +159,12 @@ next:
 		if (rc == -1) {
 			memcached_loop_error(con);
 			con->write_end = obuf_create_svp(con->out);
-			memcached_skip_request(con);
 			if (con->close_connection) {
 				/* If magic is wrong we'll close connection */
 				say_info("Bad magic or exit. Exiting.");
 				break;
+			} else {
+				memcached_skip_request(con);
 			}
 			memcached_flush(con);
 			batch_count = 0;

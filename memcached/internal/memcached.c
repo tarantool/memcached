@@ -213,6 +213,11 @@ memcached_handler(struct memcached_service *p, int fd)
 	con.authentication_step = false;
 	con.sasl_ctx            = (struct sasl_ctx *)calloc(1,
 			sizeof(struct sasl_ctx));
+	if (con.sasl_ctx == NULL) {
+		say_error("Failed to allocate %zu bytes for 'sasl context'",
+			  sizeof(struct sasl_ctx));
+		return;
+	}
 	if (memcached_sasl_connection_init(&con)) {
 		return;
 	}

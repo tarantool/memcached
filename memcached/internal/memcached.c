@@ -285,7 +285,8 @@ memcached_free(struct memcached_service *srv)
 int
 memcached_start (struct memcached_service *srv)
 {
-	if (memcached_expire_start(srv) == -1)
+	/* Run expiration fiber only if expire_enabled is true */
+	if (srv->expire_enabled == true && memcached_expire_start(srv) == -1)
 		return -1;
 	return 0;
 }

@@ -242,14 +242,16 @@ local stat_table = {
     'auth_cmds', 'auth_errors'
 }
 
+local C = ffi.C
+
 local conf_table = {
-    readahead             = ffi.C.MEMCACHED_OPT_READAHEAD,
-    expire_enabled        = ffi.C.MEMCACHED_OPT_EXPIRE_ENABLED,
-    expire_items_per_iter = ffi.C.MEMCACHED_OPT_EXPIRE_COUNT,
-    expire_full_scan_time = ffi.C.MEMCACHED_OPT_EXPIRE_TIME,
-    verbosity             = ffi.C.MEMCACHED_OPT_VERBOSITY,
-    protocol              = ffi.C.MEMCACHED_OPT_PROTOCOL,
-    sasl                  = ffi.C.MEMCACHED_OPT_SASL
+    readahead             = C.MEMCACHED_OPT_READAHEAD,
+    expire_enabled        = C.MEMCACHED_OPT_EXPIRE_ENABLED,
+    expire_items_per_iter = C.MEMCACHED_OPT_EXPIRE_COUNT,
+    expire_full_scan_time = C.MEMCACHED_OPT_EXPIRE_TIME,
+    verbosity             = C.MEMCACHED_OPT_VERBOSITY,
+    protocol              = C.MEMCACHED_OPT_PROTOCOL,
+    sasl                  = C.MEMCACHED_OPT_SASL
 }
 
 local memcached_methods = {
@@ -263,7 +265,7 @@ local memcached_methods = {
         end
         for k, v in pairs(opts) do
             if conf_table[k] ~= nil then
-                ffi.C.memcached_set_opt(self.service, conf_table[k], v)
+                C.memcached_set_opt(self.service, conf_table[k], v)
             end
         end
         return self
@@ -271,14 +273,14 @@ local memcached_methods = {
     start = function (self)
         local function memcached_handler(socket, addr)
             log.debug('client %s:%s connected', addr.host, addr.port)
-            ffi.C.memcached_handler(self.service, socket:fd())
+            C.memcached_handler(self.service, socket:fd())
         end
         jit.off(memcached_handler)
 
         if self.status == RUNNING then
             error(fmt(err_is_started, self.name))
         end
-        ffi.C.memcached_start(self.service)
+        C.memcached_start(self.service)
         local parsed = uri.parse(self.uri)
         self.listener = socket.tcp_server(parsed.host, parsed.service, {
             handler = memcached_handler
@@ -288,8 +290,9 @@ local memcached_methods = {
             self.status = ERRORED
             error(fmt('can\'t bind (%d) %s', errno(), errno.strerror()))
         end
-        if (ffi.C.memcached_setsockopt(self.listener:fd(),
-                                       lname.family, lname.type) == -1) then
+        if (C.memcached_setsockopt(self.listener:fd(),
+                                   lname.family,
+                                   lname.type) == -1) then
             self.status = ERRORED
             error(fmt('can\'t set options (%d) %s', errno(), errno.strerror()))
         end
@@ -303,12 +306,12 @@ local memcached_methods = {
         if (self.listener ~= nil) then
             self.listener:close()
         end
-        local rc = ffi.C.memcached_stop(self.service)
+        local rc = C.memcached_stop(self.service)
         self.status = STOPPED
         return self
     end,
     info = function (self)
-        stats = ffi.C.memcached_get_stat(self.service)
+        stats = C.memcached_get_stat(self.service)
         retval = {}
         for k, v in pairs(stat_table) do
             retval[v] = stats[0][v]
@@ -356,11 +359,11 @@ local function memcached_init(name, uri, opts)
     else
         instance.space = box.space[instance.space_name]
     end
-    local service = ffi.C.memcached_create(instance.name, instance.space.id)
+    local service = C.memcached_create(instance.name, instance.space.id)
     if service == nil then
         error(fmt(err_enomem, "memcached service"))
     end
-    instance.service = ffi.gc(service, ffi.C.memcached_free)
+    instance.service = ffi.gc(service, C.memcached_free)
     memcached_services[instance.name] = setmetatable(instance, {
         __index = memcached_methods
     })

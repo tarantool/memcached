@@ -314,6 +314,7 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 			memcached_expire_stop(srv);
 		} else {
 			srv->expire_enabled = true;
+			memcached_expire_start(srv);
 		}
 		break;
 	}

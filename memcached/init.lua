@@ -266,6 +266,7 @@ local memcached_methods = {
         for k, v in pairs(opts) do
             if conf_table[k] ~= nil then
                 C.memcached_set_opt(self.service, conf_table[k], v)
+                self.opts[k] = v
             end
         end
         return self

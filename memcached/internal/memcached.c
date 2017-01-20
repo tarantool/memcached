@@ -335,7 +335,7 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 	}
 	case MEMCACHED_OPT_VERBOSITY: {
 		int flag = (int )va_arg(va, double);
-		if (flag > 0) {
+		if (flag > 0 && flag <= 3) {
 			srv->verbosity = (flag < 4 ? flag : 3);
 		} else if (flag > 3) {
 			srv->verbosity = 0;

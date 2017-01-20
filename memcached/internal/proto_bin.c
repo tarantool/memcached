@@ -119,11 +119,11 @@ memcached_package_verify(struct memcached_connection *con,
 		section = "ext";
 		goto error;
 	/* Checking key information */
-	} else if ((key == -1 && b->key_len) || (key == 1  && !b->key)) {
+	} else if ((key == -1 && b->key_len) || (key == 1 && !b->key)) {
 		section = "key";
 		goto error;
 	/* Checking value information */
-	} else if ((key == -1 && b->key_len) || (key == 1  && !b->key)) {
+	} else if ((val == -1 && b->val_len) || (val == 1 && !b->val)) {
 		section = "val";
 		goto error;
 	}
@@ -531,7 +531,7 @@ memcached_bin_process_gat(struct memcached_connection *con)
 			vpos = NULL;
 			vlen = 0;
 		}
-		if (h->cmd != MEMCACHED_BIN_CMD_GATK ||
+		if (h->cmd != MEMCACHED_BIN_CMD_GATK &&
 		    h->cmd != MEMCACHED_BIN_CMD_GATKQ) {
 			kpos = NULL;
 			klen = 0;
@@ -1100,8 +1100,7 @@ memcached_bin_error(struct memcached_connection *con,
 	}
 	if (con->cfg->verbosity >= memcached_get_result_verbosity(err))
 		say_error("memcached error %" PRIu16 ": %s", err, errstr);
-	size_t len = 0;
-	if (errstr) len = strlen(errstr);
+	size_t len = strlen(errstr);
 	if (memcached_bin_write(con, err, 0, 0, 0, len,
 				NULL, NULL, errstr) == -1)
 		return -1;

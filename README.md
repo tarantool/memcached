@@ -1,9 +1,9 @@
 <a href="http://tarantool.org">
   <img src="https://avatars2.githubusercontent.com/u/2344919?v=2&s=250" align="right">
 </a>
-<a href="https://travis-ci.org/tarantool/memcached">
+<!--a href="https://travis-ci.org/tarantool/memcached">
   <img src="https://travis-ci.org/tarantool/memcached.png?branch=master" align="right">
-</a>
+</a-->
 
 # memcached
 

@@ -10,9 +10,7 @@ default_cfg = {
     background = false,
 }
 
-if _TARANTOOL:match("1.6") ~= nil then
-    default_cfg.sophia_dir = workdir
-else
+if _TARANTOOL >= "1.7" then
     default_cfg.vinyl_dir = workdir
 end
 

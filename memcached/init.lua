@@ -340,7 +340,7 @@ local function memcached_init(name, uri, opts)
     instance.uri  = uri
     instance.space_name = opts.space_name or '__mc_' .. instance.name
     if box.space[instance.space_name] == nil then
-        local storage = startswith(conf.storage, 'mem') and 'memtx' or 'sophia'
+        local storage = startswith(conf.storage, 'mem') and 'memtx' or 'vinyl'
         local index   = startswith(conf.storage, 'mem') and 'hash' or nil
         instance.space = box.schema.create_space(instance.space_name, {
             engine = storage,

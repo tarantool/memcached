@@ -31,9 +31,10 @@ add_library(internalso SHARED
         "internal/memcached_layer.c"
         "internal/expiration.c"
         "internal/memcached.c"
-        "internal/msgpuck.c"
         "internal/mc_sasl.c"
 )
+
+target_link_libraries(internalso msgpuck)
 
 set_property(DIRECTORY PROPERTY CLEAN_NO_CUSTOM true)
 

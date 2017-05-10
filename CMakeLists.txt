@@ -31,10 +31,10 @@ endif()
 # Find MsgPuck library
 find_package(MsgPuck)
 if(NOT MSGPUCK_FOUND)
-#    add_library(msgpuck STATIC third_party/msgpuck/msgpuck.c)
-#    set(MSGPUCK_LIBRARIES msgpuck)
-    set(MSGPUCK_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third_party/msgpuck)
     find_package_message(MsgPuck "Using bundled MsgPuck" "${MSGPUCK_INCLUDE_DIRS}")
+    set(MSGPUCK_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/third_party/msgpuck)
+    add_library(msgpuck STATIC third_party/msgpuck/msgpuck.c)
+    set(MSGPUCK_LIBRARY msgpuck)
 endif()
 include_directories(${MSGPUCK_INCLUDE_DIRS})
 

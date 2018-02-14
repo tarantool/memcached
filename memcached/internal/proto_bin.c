@@ -190,41 +190,43 @@ memcached_bin_process_set(struct memcached_connection *con)
 			  h->opaque, h->cas);
 	}
 
-	box_tuple_t *tuple = NULL;
-	if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
-		box_txn_rollback();
-		return -1;
-	}
-
-	/* Get existence flags */
-	bool tuple_exists  = (tuple != NULL);
-	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
-
-	/* Check for key (non)existence for different commands */
-	if (cmd == MEMCACHED_SET_REPLACE && (!tuple_exists || tuple_expired)) {
-		memcached_set_errcode(con, MEMCACHED_RES_KEY_ENOENT);
-		return -1;
-	} else if (cmd == MEMCACHED_SET_ADD && tuple_exists) {
-		if (!tuple_expired) {
-			memcached_set_errcode(con, MEMCACHED_RES_KEY_EEXISTS);
+	if (cmd != MEMCACHED_SET_SET) {
+		box_tuple_t *tuple = NULL;
+		if (memcached_tuple_get(con, b->key, b->key_len, &tuple) == -1) {
+			box_txn_rollback();
 			return -1;
 		}
-		con->cfg->stat.reclaimed++;
-	} else if (cmd == MEMCACHED_SET_CAS) {
-		if (!tuple_exists || tuple_expired) {
-			con->cfg->stat.cas_misses++;
+
+		/* Get existence flags */
+		bool tuple_exists  = (tuple != NULL);
+		bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
+
+		/* Check for key (non)existence for different commands */
+		if (cmd == MEMCACHED_SET_REPLACE && (!tuple_exists || tuple_expired)) {
 			memcached_set_errcode(con, MEMCACHED_RES_KEY_ENOENT);
 			return -1;
+		} else if (cmd == MEMCACHED_SET_ADD && tuple_exists) {
+			if (!tuple_expired) {
+				memcached_set_errcode(con, MEMCACHED_RES_KEY_EEXISTS);
+				return -1;
+			}
+			con->cfg->stat.reclaimed++;
+		} else if (cmd == MEMCACHED_SET_CAS) {
+			if (!tuple_exists || tuple_expired) {
+				con->cfg->stat.cas_misses++;
+				memcached_set_errcode(con, MEMCACHED_RES_KEY_ENOENT);
+				return -1;
+			}
+			const char *pos   = box_tuple_field(tuple, 4);
+			assert(mp_typeof(*pos) == MP_UINT);
+			uint64_t cas_prev = mp_decode_uint(&pos);
+			if (cas_prev != h->cas) {
+				con->cfg->stat.cas_badval++;
+				memcached_set_errcode(con, MEMCACHED_RES_KEY_EEXISTS);
+				return -1;
+			}
+			con->cfg->stat.cas_hits++;
 		}
-		const char *pos   = box_tuple_field(tuple, 4);
-		assert(mp_typeof(*pos) == MP_UINT);
-		uint64_t cas_prev = mp_decode_uint(&pos);
-		if (cas_prev != h->cas) {
-			con->cfg->stat.cas_badval++;
-			memcached_set_errcode(con, MEMCACHED_RES_KEY_EEXISTS);
-			return -1;
-		}
-		con->cfg->stat.cas_hits++;
 	}
 
 	uint64_t new_cas = con->cfg->cas++;

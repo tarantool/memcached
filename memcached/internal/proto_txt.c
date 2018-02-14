@@ -125,47 +125,51 @@ memcached_txt_process_set(struct memcached_connection *con)
 	uint64_t cas_expected = 0;
 	const char       *key = con->request.key;
 	size_t        key_len = con->request.key_len;
-	if (cmd == MEMCACHED_TXT_CMD_CAS)
-		cas_expected = con->request.cas;
-	
-	box_tuple_t *tuple = NULL;
-	if (memcached_tuple_get(con, key, key_len, &tuple) == -1) {
-		box_txn_rollback();
-		return -1;
-	}
-	
-	/* Get existence flags */
-	bool tuple_exists  = (tuple != NULL);
-	bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
 
 	con->cfg->stat.cmd_set++;
 
-	/* Check for key (non)existence for different commands */
-	if (cmd == MEMCACHED_TXT_CMD_REPLACE && (!tuple_exists || tuple_expired)) {
-		memcached_txt_DUP(con, "NOT_STORED\r\n", 12);
-		return 0;
-	} else if (cmd == MEMCACHED_TXT_CMD_ADD && tuple_exists) {
-		if (!tuple_expired) {
+	if (cmd != MEMCACHED_TXT_CMD_SET) {
+	        if (cmd == MEMCACHED_TXT_CMD_CAS)
+        	        cas_expected = con->request.cas;
+
+		box_tuple_t *tuple = NULL;
+		if (memcached_tuple_get(con, key, key_len, &tuple) == -1) {
+			box_txn_rollback();
+			return -1;
+		}
+
+		/* Get existence flags */
+		bool tuple_exists  = (tuple != NULL);
+		bool tuple_expired = tuple_exists && is_expired_tuple(con->cfg, tuple);
+
+		/* Check for key (non)existence for different commands */
+		if (cmd == MEMCACHED_TXT_CMD_REPLACE && (!tuple_exists || tuple_expired)) {
 			memcached_txt_DUP(con, "NOT_STORED\r\n", 12);
 			return 0;
+		} else if (cmd == MEMCACHED_TXT_CMD_ADD && tuple_exists) {
+			if (!tuple_expired) {
+				memcached_txt_DUP(con, "NOT_STORED\r\n", 12);
+				return 0;
+			}
+			con->cfg->stat.reclaimed++;
+		} else if (cmd == MEMCACHED_TXT_CMD_CAS) {
+			if (!tuple_exists || tuple_expired) {
+				con->cfg->stat.cas_misses++;
+				memcached_txt_DUP(con, "NOT_FOUND\r\n", 11);
+				return 0;
+			}
+			const char *pos   = box_tuple_field(tuple, 4);
+			assert(mp_typeof(*pos) == MP_UINT);
+			uint64_t cas_prev = mp_decode_uint(&pos);
+			if (cas_prev != cas_expected) {
+				con->cfg->stat.cas_badval++;
+				memcached_txt_DUP(con, "EXISTS\r\n", 8);
+				return 0;
+			}
+			con->cfg->stat.cas_hits++;
 		}
-		con->cfg->stat.reclaimed++;
-	} else if (cmd == MEMCACHED_TXT_CMD_CAS) {
-		if (!tuple_exists || tuple_expired) {
-			con->cfg->stat.cas_misses++;
-			memcached_txt_DUP(con, "NOT_FOUND\r\n", 11);
-			return 0;
-		}
-		const char *pos   = box_tuple_field(tuple, 4);
-		assert(mp_typeof(*pos) == MP_UINT);
-		uint64_t cas_prev = mp_decode_uint(&pos);
-		if (cas_prev != cas_expected) {
-			con->cfg->stat.cas_badval++;
-			memcached_txt_DUP(con, "EXISTS\r\n", 8);
-			return 0;
-		}
-		con->cfg->stat.cas_hits++;
 	}
+
 	uint32_t      flags = con->request.flags;
 	uint64_t    exptime = convert_exptime(con->request.exptime);
 	const char   *value = con->request.data;

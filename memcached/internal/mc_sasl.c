@@ -272,3 +272,8 @@ int memcached_sasl_step(struct memcached_connection *con,
 	return -1;
 }
 
+void memcached_sasl_connection_destroy(struct memcached_connection *con) {
+	struct sasl_ctx *ctx = con->sasl_ctx;
+	sasl_dispose(&ctx->sasl_conn);
+}
+

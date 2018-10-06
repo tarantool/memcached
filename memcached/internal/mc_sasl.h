@@ -24,5 +24,6 @@ int memcached_sasl_auth(struct memcached_connection *con, const char *mech,
 int memcached_sasl_step(struct memcached_connection *con,
 			const char *challenge, size_t challenge_len,
 			const char **out, size_t *out_len);
+void memcached_sasl_connection_destroy(struct memcached_connection *con);
 
 #endif /* MC_SASL_H_INCLUDED */

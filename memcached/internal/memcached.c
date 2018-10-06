@@ -240,6 +240,7 @@ memcached_handler(struct memcached_service *p, int fd)
 	/* close connection and reflect it in stats */
 	con.cfg->stat.curr_conns--;
 	iobuf_delete(con.in, con.out);
+	memcached_sasl_connection_destroy(&con);
 	free((void *)con.sasl_ctx);
 	const box_error_t *err = box_error_last();
 	if (err)

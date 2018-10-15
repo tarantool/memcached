@@ -108,6 +108,7 @@ memcached_expire_start(struct memcached_service *p)
 	struct fiber *expire_fiber = NULL;
 	char name[128];
 	snprintf(name, 128, "__mc_%s_expire", p->name);
+	box_error_clear();
 	expire_fiber = fiber_new(name, memcached_expire_loop);
 	const box_error_t *err = box_error_last();
 	if (err) {

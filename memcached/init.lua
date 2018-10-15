@@ -8,7 +8,9 @@ local log    = require('log')
 
 local fmt = string.format
 
-ffi.load(package.searchpath('memcached.internal', package.cpath), true)
+local internal_so_path = package.search('memcached.internal')
+assert(internal_so_path, "Failed to find memcached/internal.so library")
+ffi.load(internal_so_path, true)
 
 ffi.cdef[[
 struct memcached_stat {

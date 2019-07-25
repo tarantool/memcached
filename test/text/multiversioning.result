@@ -56,7 +56,7 @@ box.stat()
     total: 0
     rps: 0
   SELECT:
-    total: 4
+    total: 7
     rps: 0
   INSERT:
     total: 2

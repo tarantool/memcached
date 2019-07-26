@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/sh
+
+set -eu  # Strict shell, w/o print commands (set -x), w/o -o pipefail
 
 curl -s https://packagecloud.io/install/repositories/tarantool/1_10/script.deb.sh | sudo bash
 sudo apt-get install -y tarantool tarantool-dev libevent-dev libsasl2-dev --force-yes

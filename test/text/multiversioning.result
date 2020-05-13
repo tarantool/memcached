@@ -50,36 +50,3 @@ STAT reclaimed 0
 STAT auth_cmds 0
 STAT auth_errors 0
 END
-box.stat()
----
-- DELETE:
-    total: 0
-    rps: 0
-  SELECT:
-    total: 7
-    rps: 0
-  INSERT:
-    total: 2
-    rps: 0
-  EVAL:
-    total: 0
-    rps: 0
-  CALL:
-    total: 0
-    rps: 0
-  REPLACE:
-    total: 1
-    rps: 0
-  UPSERT:
-    total: 0
-    rps: 0
-  AUTH:
-    total: 0
-    rps: 0
-  ERROR:
-    total: 0
-    rps: 0
-  UPDATE:
-    total: 1
-    rps: 0
-...

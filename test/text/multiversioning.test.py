@@ -48,6 +48,5 @@ server.cleanup()
 server.start()
 
 mc_client('stats\r\n')
-admin('box.stat()')
 
 sys.path = saved_path

@@ -78,6 +78,17 @@ memcached_flush(struct memcached_connection *con) {
 	return total;
 }
 
+static void
+memcached_connection_gc(struct memcached_connection *con)
+{
+	if (region_used(&con->gc) < 128 * 1024) {
+		region_reset(&con->gc);
+		return;
+	}
+
+	region_free(&con->gc);
+}
+
 static inline int
 memcached_loop_read(struct memcached_connection *con, size_t to_read)
 {
@@ -176,7 +187,10 @@ next:
 		}
 		assert(!con->close_connection);
 		rc = 0;
-		if (!con->noprocess) rc = con->cb.process_request(con);
+		if (!con->noprocess) {
+			rc = con->cb.process_request(con);
+			memcached_connection_gc(con);
+		}
 		con->write_end = obuf_create_svp(con->out);
 		memcached_skip_request(con);
 		if (rc == -1)
@@ -233,6 +247,8 @@ memcached_handler(struct memcached_service *p, int fd)
 		assert(0); /* unreacheable */
 	}
 
+	region_create(&con.gc, cord_slab_cache());
+
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;
 	con.cfg->stat.total_conns++;
@@ -242,6 +258,7 @@ memcached_handler(struct memcached_service *p, int fd)
 	iobuf_delete(con.in, con.out);
 	memcached_sasl_connection_destroy(&con);
 	free((void *)con.sasl_ctx);
+	region_destroy(&con.gc);
 	const box_error_t *err = box_error_last();
 	if (err)
 		say_error("%s", box_error_message(err));

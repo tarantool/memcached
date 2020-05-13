@@ -288,7 +288,7 @@ memcached_txt_process_pend(struct memcached_connection *con)
 	mp_next(&pos); /* skip cas */
 	flags            = mp_decode_uint(&pos);
 
-	char *begin = (char *)box_txn_alloc(data_len + vlen);
+	char *begin = (char *)region_alloc(&con->gc, data_len + vlen);
 	if (begin == NULL) {
 		memcached_error_ENOMEM(data_len + vlen, "value");
 		return -1;
@@ -322,7 +322,7 @@ memcached_txt_process_delete(struct memcached_connection *con)
 	con->cfg->stat.cmd_delete++;
 	uint32_t len = mp_sizeof_array(1) +
 		       mp_sizeof_str  (key_len);
-	char *begin = (char *)box_txn_alloc(len);
+	char *begin = (char *)region_alloc(&con->gc, len);
 	if (begin == NULL) {
 		memcached_error_ENOMEM(len, "key");
 		return -1;

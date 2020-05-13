@@ -71,7 +71,7 @@ memcached_tuple_set(struct memcached_connection *con,
 		       mp_sizeof_str  (vlen)   +
 		       mp_sizeof_uint (cas)    +
 		       mp_sizeof_uint (flags);
-	char *begin  = (char *)box_txn_alloc(len);
+	char *begin = (char *)region_alloc(&con->gc, len);
 	if (begin == NULL) {
 		memcached_error_ENOMEM(len, "tuple");
 		return -1;
@@ -95,7 +95,7 @@ memcached_tuple_get(struct memcached_connection *con,
 	/* Create key for getting previous tuple from space */
 	uint32_t len = mp_sizeof_array(1) +
 		       mp_sizeof_str  (key_len);
-	char *begin  = (char *)box_txn_alloc(len);
+	char *begin = (char *)region_alloc(&con->gc, len);
 	if (begin == NULL) {
 		memcached_error_ENOMEM(len, "key");
 		return -1;

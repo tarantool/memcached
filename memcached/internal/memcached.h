@@ -11,6 +11,7 @@
 
 
 #include <small/obuf.h>
+#include <small/region.h>
 #include "constants.h"
 
 struct memcached_connection;
@@ -142,6 +143,8 @@ struct memcached_connection {
 		memcached_loop_func_t     process_request;
 		memcached_error_func_t    process_error;
 	} cb; /* protocol specific callbacks */
+	/* A garbage collected memory pool used in request processing. */
+	struct region gc;
 };
 
 struct memcached_stat *

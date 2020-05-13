@@ -314,8 +314,8 @@ local memcached_methods = {
         return self
     end,
     info = function (self)
-        stats = C.memcached_get_stat(self.service)
-        retval = {}
+        local stats = C.memcached_get_stat(self.service)
+        local retval = {}
         for k, v in pairs(stat_table) do
             retval[v] = stats[0][v]
         end

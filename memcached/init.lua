@@ -10,7 +10,7 @@ local fmt = string.format
 
 local internal_so_path = package.search('memcached.internal')
 assert(internal_so_path, "Failed to find memcached/internal.so library")
-ffi.load(internal_so_path, true)
+local memcached_internal = ffi.load(internal_so_path)
 
 ffi.cdef[[
 struct memcached_stat {
@@ -267,7 +267,8 @@ local memcached_methods = {
         end
         for k, v in pairs(opts) do
             if conf_table[k] ~= nil then
-                C.memcached_set_opt(self.service, conf_table[k], v)
+                memcached_internal.memcached_set_opt(self.service,
+                                                     conf_table[k], v)
                 self.opts[k] = v
             end
         end
@@ -276,14 +277,14 @@ local memcached_methods = {
     start = function (self)
         local function memcached_handler(socket, addr)
             log.debug('client %s:%s connected', addr.host, addr.port)
-            C.memcached_handler(self.service, socket:fd())
+            memcached_internal.memcached_handler(self.service, socket:fd())
         end
         jit.off(memcached_handler)
 
         if self.status == RUNNING then
             error(fmt(err_is_started, self.name))
         end
-        C.memcached_start(self.service)
+        memcached_internal.memcached_start(self.service)
         local parsed = uri.parse(self.uri)
         self.listener = socket.tcp_server(parsed.host, parsed.service, {
             handler = memcached_handler
@@ -293,7 +294,7 @@ local memcached_methods = {
             self.status = ERRORED
             error(fmt('can\'t bind (%d) %s', errno(), errno.strerror()))
         end
-        if (C.memcached_setsockopt(self.listener:fd(),
+        if (memcached_internal.memcached_setsockopt(self.listener:fd(),
                                    lname.family,
                                    lname.type) == -1) then
             self.status = ERRORED
@@ -309,12 +310,12 @@ local memcached_methods = {
         if (self.listener ~= nil) then
             self.listener:close()
         end
-        local rc = C.memcached_stop(self.service)
+        local rc = memcached_internal.memcached_stop(self.service)
         self.status = STOPPED
         return self
     end,
     info = function (self)
-        local stats = C.memcached_get_stat(self.service)
+        local stats = memcached_internal.memcached_get_stat(self.service)
         local retval = {}
         for k, v in pairs(stat_table) do
             retval[v] = stats[0][v]
@@ -362,11 +363,12 @@ local function memcached_init(name, uri, opts)
     else
         instance.space = box.space[instance.space_name]
     end
-    local service = C.memcached_create(instance.name, instance.space.id)
+    local service = memcached_internal.memcached_create(instance.name,
+                                                        instance.space.id)
     if service == nil then
         error(fmt(err_enomem, "memcached service"))
     end
-    instance.service = ffi.gc(service, C.memcached_free)
+    instance.service = ffi.gc(service, memcached_internal.memcached_free)
     memcached_services[instance.name] = setmetatable(instance, {
         __index = memcached_methods
     })

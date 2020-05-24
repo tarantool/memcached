@@ -1,6 +1,6 @@
 [submodule "third_party/libmemcached"]
 	path = third_party/libmemcached
-	url = https://github.com/bigbes/libmemcached.git
+	url = https://github.com/tarantool/libmemcached.git
 [submodule "test-run"]
 	path = test-run
 	url = https://github.com/tarantool/test-run.git

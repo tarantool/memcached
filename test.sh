@@ -3,7 +3,7 @@
 set -eu  # Strict shell, w/o print commands (set -x), w/o -o pipefail
 
 curl -s https://packagecloud.io/install/repositories/tarantool/1_10/script.deb.sh | sudo bash
-sudo apt-get install -y tarantool tarantool-dev libevent-dev libsasl2-dev --force-yes
+sudo apt-get install -y tarantool tarantool-dev libevent-dev libtool libsasl2-dev --force-yes
 pip install --user python-daemon PyYAML six==1.9.0 msgpack-python gevent==1.1.2
 TARANTOOL_DIR=/usr/include cmake . -DCMAKE_BUILD_TYPE=Release
 

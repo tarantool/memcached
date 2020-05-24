@@ -2,7 +2,6 @@ sudo: required
 services:
   - docker
 
-dist: trusty
 language: c
 compiler: gcc
 

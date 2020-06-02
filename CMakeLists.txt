@@ -15,7 +15,13 @@ find_package(CyrusSASL)
 # include(cmake/FindTarantool.cmake)
 include_directories(${TARANTOOL_INCLUDE_DIRS})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+# We should add -std=c99 before small library inclusion, because
+# the library does not enforce a C dialect, but unable to be built
+# with -std=gnu90 (which is default on GCC 4.8, which is shipped
+# with Ubuntu Trusty).
+#
+# See https://github.com/tarantool/small/issues/25
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=c99")
 
 find_program(GIT git)
 if (EXISTS "${CMAKE_SOURCE_DIR}/.git" AND GIT)

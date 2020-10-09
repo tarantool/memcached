@@ -26,8 +26,9 @@ Clone this repository and then build it using CMake:
 
 ``` bash
 git clone https://github.com/tarantool/memcached.git
-cd memcached && git submodule update --init --recursive
-cd memcached && cmake . -DCMAKE_BUILD_TYPE=RelWithDebugInfo -DCMAKE_INSTALL_PREFIX=/usr
+cd memcached
+git submodule update --init --recursive
+cmake . -DCMAKE_BUILD_TYPE=RelWithDebugInfo -DCMAKE_INSTALL_PREFIX=/usr
 make
 make install
 ```

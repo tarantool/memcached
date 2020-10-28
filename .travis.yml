@@ -17,7 +17,14 @@ env:
     global:
       - PRODUCT=tarantool-memcached
     matrix:
-      - TARGET=test
+      - TARGET=test TARANTOOL_VERSION=1.10
+      - TARGET=test TARANTOOL_VERSION=2.1
+      - TARGET=test TARANTOOL_VERSION=2.2
+      - TARGET=test TARANTOOL_VERSION=2.3
+      - TARGET=test TARANTOOL_VERSION=2.4
+      - TARGET=test TARANTOOL_VERSION=2.5
+      - TARGET=test TARANTOOL_VERSION=2.6
+      - TARGET=test TARANTOOL_VERSION=2.7
       - OS=el DIST=6
       - OS=el DIST=7
       - OS=el DIST=8

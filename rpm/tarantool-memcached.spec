@@ -8,12 +8,12 @@ URL: https://github.com/tarantool/memcached
 Source0: https://github.com/tarantool/memcached/archive/%{version}/%{name}-%{version}.tar.gz
 BuildRequires: cmake >= 2.8
 BuildRequires: gcc >= 4.5
-BuildRequires: tarantool-devel >= 1.6.8.0
+BuildRequires: tarantool-devel >= 1.10.0
 BuildRequires: small-devel
 #BuildRequires: msgpuck-devel
 BuildRequires: /usr/bin/prove
 BuildRequires: cyrus-sasl-devel
-Requires: tarantool >= 1.6.8.0
+Requires: tarantool >= 1.10.0
 
 %description
 This package provides a Memcached protocol emulation for Tarantool.

@@ -2,7 +2,7 @@ package = 'memcached'
 version = '1.0.1-1'
 
 source  = {
-    url = 'git://github.com/tarantool/memcached.git';
+    url = 'git+https://github.com/tarantool/memcached.git';
     tag = '1.0.1';
 }
 

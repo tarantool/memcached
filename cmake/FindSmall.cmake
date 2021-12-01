@@ -10,7 +10,7 @@ find_path(SMALL_INCLUDE_DIR small/small.h)
 find_library(SMALL_LIBRARY NAMES small)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(small
+find_package_handle_standard_args(Small
     REQUIRED_VARS SMALL_INCLUDE_DIR SMALL_LIBRARY)
 set(SMALL_INCLUDE_DIRS ${SMALL_INCLUDE_DIR} ${SMALL_INCLUDE_DIR}/small/third_party)
 set(SMALL_LIBRARIES ${SMALL_LIBRARY})

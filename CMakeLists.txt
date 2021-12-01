@@ -9,6 +9,7 @@ endif()
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 # Find Tarantool and Lua dependecies
+find_package(LuaCheck)
 set(TARANTOOL_FIND_REQUIRED ON)
 find_package(Tarantool)
 find_package(CyrusSASL)
@@ -85,3 +86,8 @@ if(POLICY CMP0037)
     cmake_policy(SET CMP0037 OLD) # don't blame `test` target name
 endif(POLICY CMP0037)
 add_subdirectory(test)
+
+add_custom_target(luacheck
+  COMMAND ${LUACHECK} ${PROJECT_SOURCE_DIR}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)

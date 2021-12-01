@@ -7,7 +7,7 @@ box.cfg{
 
 package.cpath = './?.so;' .. package.cpath
 
-local inst = require('memcached').create(
+require('memcached').create(
     'memcached',
     os.getenv('LISTEN'):match(':(.*)')
 )

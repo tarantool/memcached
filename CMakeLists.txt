@@ -8,12 +8,11 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-# Find Tarantool and Lua dependecies
+# Find Tarantool and Lua dependencies
 find_package(LuaCheck)
 set(Tarantool_FIND_REQUIRED ON)
 find_package(Tarantool)
 find_package(CyrusSASL)
-# include(cmake/FindTarantool.cmake)
 include_directories(${TARANTOOL_INCLUDE_DIRS})
 
 # We should add -std=c99 before small library inclusion, because
@@ -64,7 +63,7 @@ include_directories(${CMAKE_SOURCE_DIR}/third_party)
 
 find_program(RAGEL ragel)
 
-# Find other dependecies
+# Find other dependencies
 
 # Set CFLAGS
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -Wextra")
@@ -81,10 +80,6 @@ endif(APPLE)
 # Build module
 add_subdirectory(memcached)
 
-# Add `make test`
-if(POLICY CMP0037)
-    cmake_policy(SET CMP0037 OLD) # don't blame `test` target name
-endif(POLICY CMP0037)
 add_subdirectory(test)
 
 add_custom_target(luacheck

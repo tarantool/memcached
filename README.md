@@ -1,6 +1,7 @@
 <a href="http://tarantool.org">
   <img src="https://avatars2.githubusercontent.com/u/2344919?v=2&s=250" align="right">
 </a>
+[![Static analysis](https://github.com/tarantool/memcached/actions/workflows/check.yaml/badge.svg)](https://github.com/tarantool/memcached/actions/workflows/check.yaml)
 [![Testing](https://github.com/tarantool/memcached/actions/workflows/testing.yaml/badge.svg)](https://github.com/tarantool/memcached/actions/workflows/testing.yaml)
 
 # memcached

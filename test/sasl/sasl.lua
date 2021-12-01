@@ -5,7 +5,6 @@ package.cpath = './?.so;' .. package.cpath
 --                    Manipulating environment variables                      --
 --------------------------------------------------------------------------------
 local ffi = require('ffi')
-local log = require('log')
 local errno = require('errno')
 
 ffi.cdef[[
@@ -43,7 +42,7 @@ local env = setmetatable({}, {
         return ffi.string(var)
     end,
     __newindex = function(self, key, value)
-        local rv = nil
+        local rv
         if value ~= nil then
             rv = ffi.C.setenv(key, value, 1)
         else
@@ -75,7 +74,7 @@ local memcached = require('memcached')
 local listen_port = env['LISTEN']:match(':(.*)')
 local admin_port  = env['ADMIN']
 
-local inst = memcached.create('memcached', listen_port, {
+memcached.create('memcached', listen_port, {
     expire_full_scan_time = 1,
     sasl = true
 }):grant('guest')

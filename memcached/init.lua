@@ -89,7 +89,7 @@ void   memcached_handler   (struct memcached_service *p, int fd);
 int    memcached_setsockopt(int fd, const char *family, const char *type);
 ]]
 
-function startswith(str, start)
+local function startswith(str, start)
        return string.sub(str, 1, string.len(start)) == start
 end
 
@@ -97,7 +97,7 @@ local typetable = {
     name = {
         'string',
         function () return 'memcached' end,
-        function (x) return true end,
+        function (_) return true end,
         [[Name of memcached instance]]
     },
     uri = {
@@ -115,7 +115,7 @@ local typetable = {
     expire_enabled = {
         'boolean',
         function() return true end,
-        function(x) return true end,
+        function(_) return true end,
         [[configure availability of expiration daemon]]
     },
     expire_items_per_iter = {
@@ -217,6 +217,9 @@ local function config_initial(cfg)
     box.error{ reason = err }
 end
 
+-- TODO: This function is unused, but I see a good idea behind it: show
+-- available options and its default values. Perhaps someday we will use it.
+-- luacheck: no unused
 local function config_help()
     for k, v in pairs(typetable) do
         log.info('%s: %s', k, v[4])
@@ -310,14 +313,14 @@ local memcached_methods = {
         if (self.listener ~= nil) then
             self.listener:close()
         end
-        local rc = memcached_internal.memcached_stop(self.service)
+        memcached_internal.memcached_stop(self.service)
         self.status = STOPPED
         return self
     end,
     info = function (self)
         local stats = memcached_internal.memcached_get_stat(self.service)
         local retval = {}
-        for k, v in pairs(stat_table) do
+        for _, v in pairs(stat_table) do
             retval[v] = stats[0][v]
         end
         return retval

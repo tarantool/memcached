@@ -7,7 +7,7 @@
 
 # memcached
 
-Memcached protocol 'wrapper' for tarantool.
+Memcached protocol 'wrapper' for Tarantool.
 
 ## Getting started
 
@@ -38,7 +38,7 @@ packages available from our binary repository at http://tarantool.org/dist/maste
 system package `libsasl2-dev`):
 
 ``` bash
-luarocks install https://raw.githubusercontent.com/tarantool/memcached/master/memcached-scm-1.rockspec --local
+luarocks install https://raw.githubusercontent.com/tarantool/memcached/master/rockspecs/memcached-scm-1.rockspec --local
 ```
 
 ### Usage
@@ -53,14 +53,14 @@ Now you're set up and ready to go!
 
 ### How to connect
 
-Install tarantool package from repository ([described here](http://tarantool.org/download.html)).
+Install Tarantool package from repository ([described here](https://www.tarantool.io/download/)).
 
 Paste the previous example to `/etc/tarantool/instances.enabled/memcached.lua` and start it with
 `tarantoolctl start memcached`.
 
 Then try the following example:
 
-``` session
+``` bash
 $ printf "set key 0 60 5\r\nvalue\r\n" | nc localhost 11211
 STORED
 $ printf "get key\r\n" | nc localhost 11211
@@ -79,7 +79,7 @@ END
 
 ## API
 
-* `local memcached = require('memcached')` - acquire a library  andle
+* `local memcached = require('memcached')` - acquire a library handle
 * `local instance = memcached.create(<name>, <uri>, <opts>)` - create a new instance, register it and run
   - `name` - a string with instance name
   - `uri`  - a string with uri to bind to, for example: `0.0.0.0:11211` (only TCP is supported now)
@@ -98,7 +98,7 @@ END
 * *expire_full_scan_time* - time required for a full index scan (in seconds). defaiult is 3600
 * *verbosity* - verbosity of memcached logging. default is 0.
 * ~~*flush_enabled* - flush command availability. default is true~~
-* *proto* - the protocol, one of `negotiation`, `binary` or `text`).
+* *protocol* - the protocol, one of `negotiation`, `binary` or `text`.
   - `negotiation` - detect the protocol automatically at handshake (the default)
   - `binary` - binary memcached protocol
   - `text` - text memcached protocol
@@ -111,7 +111,7 @@ END
 
 ## SASL support
 
-Usual rules for memcached are aplicable for this plugin:
+Usual rules for memcached are applicable for this plugin:
 
 1. Create user (NOTE: it'll use custom folder):
 
@@ -134,9 +134,9 @@ Usual rules for memcached are aplicable for this plugin:
 
 	 NOTE: This will set custom path for database path
 
-3. Run tarantool with memcached plugin with SASL enabled
+3. Run Tarantool with memcached plugin with SASL enabled
 
-	 ```
+	 ```lua
 	 local memcached = require('memcached')
 	 local instance = memcached.create('my_instance', '0.0.0.0:11211', {
 	   sasl = true

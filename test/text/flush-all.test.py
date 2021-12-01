@@ -16,7 +16,7 @@ mc_client = MemcachedTextConnection('localhost', port)
 ###################################
 def get_memcached_len(serv):
     resp = server.admin("box.space.__mc_memcached:len()", silent=True)
-    return yaml.load(resp)[0]
+    return yaml.safe_load(resp)[0]
 
 def wait_for_empty_space(serv = server):
     serv_admin = serv.admin

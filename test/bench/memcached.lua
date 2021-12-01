@@ -2,8 +2,8 @@
 
 box.cfg{
     wal_mode         = 'none',
-    slab_alloc_arena = 0.1,
-    logger_nonblock  = false,
+    memtx_memory     = 100 * 1024 * 1024,
+    log_nonblock  = false,
 }
 
 package.cpath = './?.so;' .. package.cpath

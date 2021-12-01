@@ -66,7 +66,7 @@ env['SASL_CONF_PATH'] = fio.pathjoin(fio.cwd(), '../sasl/config/')
 
 box.cfg{
     wal_mode = 'none',
-    slab_alloc_arena = 0.1,
+    memtx_memory = 100 * 1024 * 1024,
 }
 
 local memcached = require('memcached')

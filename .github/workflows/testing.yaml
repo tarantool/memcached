@@ -42,4 +42,8 @@ jobs:
         run: pip install -r test-run/requirements.txt
 
       - run: make test-memcached
+
       - run: make test-memcached-capable
+
+      - name: Run benchmarks
+        run: make test-memcached-bench

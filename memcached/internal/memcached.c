@@ -208,6 +208,9 @@ next:
 			memcached_flush(con);
 		fiber_reschedule();
 		batch_count = 0;
+                if (ibuf_used(con->in) > 0) {
+                    goto next;
+                }
 		continue;
 	}
 	memcached_flush(con);

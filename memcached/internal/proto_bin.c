@@ -1015,7 +1015,7 @@ memcached_bin_process(struct memcached_connection *con)
 
 /**
  * return -1 on error (forced closing of connection)
- * return  0 in everything ok
+ * return  0 if everything ok
  * - if con->noprocess == 1 then skip execution
  * return >1 if we need more data
  */

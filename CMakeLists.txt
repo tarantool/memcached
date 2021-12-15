@@ -10,7 +10,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 # Find Tarantool and Lua dependecies
 find_package(LuaCheck)
-set(TARANTOOL_FIND_REQUIRED ON)
+set(Tarantool_FIND_REQUIRED ON)
 find_package(Tarantool)
 find_package(CyrusSASL)
 # include(cmake/FindTarantool.cmake)

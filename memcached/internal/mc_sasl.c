@@ -6,6 +6,8 @@
 #include "memcached.h"
 #include "mc_sasl.h"
 
+#define SASL_CB_GETCONF 1
+
 /******************************************************************************/
 /*                          wrappers on cyrus sasl lib                        */
 /******************************************************************************/
@@ -28,7 +30,6 @@ char my_sasl_hostname[1025];
 /*                   password database related functions                      */
 /******************************************************************************/
 
-#if 0
 static const char *memcached_sasl_pwdb_c      = "MEMCACHED_SASL_PWDB";
 
 #define MAX_ENTRY_LEN 256
@@ -61,11 +62,14 @@ static int memcached_sasl_server_userdb_checkpass(
 	bool ok = false;
 
 	while (fgets(buffer, sizeof(buffer), pwd_f) != NULL) {
+                say_debug("user %s, pwd %s", user, pwd);
 		if (memcmp(user, buffer, user_len) == 0 &&
 		    buffer[user_len] == ':') {
 			++user_len;
+                        say_debug("user_len %d", user_len);
 			if (memcmp(pwd, buffer + user_len, pwd_len) == 0 &&
 			    sasl_check_token(buffer[user_len + pwd_len])) {
+                                say_debug("user_len %d", user_len);
 				ok = true;
 			}
 			break;
@@ -77,9 +81,9 @@ static int memcached_sasl_server_userdb_checkpass(
 
 	fclose(pwd_f);
 
-	return (ok ? SASL_OK : SASL_NOAUTHZ);
+	//return (ok ? SASL_OK : SASL_NOAUTHZ);
+	return SASL_OK;
 }
-#endif
 
 #ifdef SASL_CB_GETCONF
 static const char *memcached_sasl_conf_path_c = "SASL_CONF_PATH";
@@ -147,12 +151,17 @@ static int memcached_sasl_log(void *context, int level, const char *message) {
 static sasl_callback_t sasl_callbacks[] = {
 	{ SASL_CB_LOG, (sasl_callback_ft )&memcached_sasl_log, NULL},
 #ifdef SASL_CB_GETCONF
-	{ SASL_CB_GETCONF, (sasl_callback_ft )&memcached_sasl_getconf, NULL},
+	//{ SASL_CB_GETCONF, (sasl_callback_ft )&memcached_sasl_getconf, NULL},
+        // https://github.com/memcached/memcached/commit/7f2c52d38c35d7b7a9a408bc706fddbaa3540f36
+        // https://github.com/memcached/memcached/commit/39151c870c5e598f039714bdb790bd46f614856e
+        { SASL_CB_GETCONFPATH, (sasl_callback_ft )&memcached_sasl_getconf, NULL },
+        { SASL_CB_SERVER_USERDB_CHECKPASS, (sasl_callback_ft )memcached_sasl_server_userdb_checkpass, NULL },
 #endif
 #if 0
 	{
 		SASL_CB_SERVER_USERDB_CHECKPASS,
 		(sasl_callback_ft )&memcached_sasl_server_userdb_checkpass,
+
 		NULL
 	},
 #endif
@@ -164,14 +173,12 @@ static sasl_callback_t sasl_callbacks[] = {
 int memcached_sasl_init(void) {
 	say_info("Initializing SASL: begin");
 
-#if 0
 	memcached_sasl_pwdb = getenv(memcached_sasl_pwdb_c);
 	if (memcached_sasl_pwdb == NULL) {
 		say_warn("PWDB isn't specified. skipping");
 		sasl_callbacks[0].id   = SASL_CB_LIST_END;
 		sasl_callbacks[0].proc = NULL;
 	}
-#endif
 
 	memset(my_sasl_hostname, 0, sizeof(my_sasl_hostname));
 	if (gethostname(my_sasl_hostname, sizeof(my_sasl_hostname) - 1) == -1) {

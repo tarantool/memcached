@@ -107,7 +107,8 @@ END
   - ~~`disk` - store everything on hdd/ssd (using `vinyl` engine)~~ (not yet supported)
 * *space_name* - custom name for a memcached space, default is `__mc_<instance name>`
 * *if_not_exists* - do not throw error if an instance already exists.
-* *sasl* - enable or disable SASL support (disabled by default)
+* *sasl* - enable or disable SASL support (disabled by default). SASL is
+  allowed only with protocol 'binary'.
 
 ## SASL support
 

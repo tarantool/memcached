@@ -77,7 +77,8 @@ local admin_port  = env['ADMIN']
 
 local inst = memcached.create('memcached', listen_port, {
     expire_full_scan_time = 1,
-    sasl = true
+    sasl = true,
+    verbosity = 3,
 }):grant('guest')
 
 require('console').listen(admin_port)

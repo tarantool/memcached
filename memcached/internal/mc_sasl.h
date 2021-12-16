@@ -4,12 +4,6 @@
 struct sasl_conn;
 typedef struct sasl_conn sasl_conn_t;
 
-/*
- * struct sasl_conn;
- * typedef struct sasl_conn sasl_conn_t;
- * typedef int (sasl_callback_ft )(void);
- */
-
 struct sasl_ctx {
 	sasl_conn_t *sasl_conn;
 };

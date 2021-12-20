@@ -3,7 +3,7 @@
 
 #define TIMEOUT_INFINITY 365*86400*100.0
 
-#include <small/ibuf.h>
+#include <include/small/ibuf.h>
 
 size_t
 mnet_writev(int fd, struct iovec *iov, int iovcnt, size_t size_hint);

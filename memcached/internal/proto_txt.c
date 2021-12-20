@@ -4,8 +4,8 @@
 
 #include <tarantool/module.h>
 #include <msgpuck.h>
-#include <small/ibuf.h>
-#include <small/obuf.h>
+#include <include/small/ibuf.h>
+#include <include/small/obuf.h>
 
 #include "memcached.h"
 #include "constants.h"

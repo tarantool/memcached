@@ -11,7 +11,7 @@
 #include <tarantool/module.h>
 
 #include <msgpuck.h>
-#include <small/obuf.h>
+#include <include/small/obuf.h>
 
 #include "error.h"
 #include "memcached.h"

@@ -15,8 +15,8 @@
 #include "memcached_layer.h"
 #include "mc_sasl.h"
 
-#include <small/ibuf.h>
-#include <small/obuf.h>
+#include <include/small/ibuf.h>
+#include <include/small/obuf.h>
 
 static inline int
 memcached_bin_write(struct memcached_connection *con, uint16_t err,

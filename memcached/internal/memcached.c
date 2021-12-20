@@ -34,8 +34,8 @@
 #include <stdbool.h>
 
 #include <tarantool/module.h>
-#include <small/ibuf.h>
-#include <small/obuf.h>
+#include <include/small/ibuf.h>
+#include <include/small/obuf.h>
 
 #include "memcached.h"
 #include "memcached_layer.h"

@@ -10,8 +10,8 @@
  */
 
 
-#include <small/obuf.h>
-#include <small/region.h>
+#include <include/small/obuf.h>
+#include <include/small/region.h>
 #include "constants.h"
 
 struct memcached_connection;

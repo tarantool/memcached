@@ -29,7 +29,7 @@ jobs:
           tarantool-version: ${{ matrix.tarantool-version }}
 
       - name: Install build requirements
-        run: sudo apt-get -y install libsasl2-dev
+        run: sudo apt-get -y install libsasl2-dev libevent-dev
 
       - run: cmake .
 
@@ -42,3 +42,4 @@ jobs:
         run: pip install -r test-run/requirements.txt
 
       - run: make test-memcached
+      - run: make test-memcached-capable

@@ -54,9 +54,7 @@ if(NOT SMALL_FOUND)
 endif()
 include_directories(${SMALL_INCLUDE_DIRS})
 
-include(cmake/BuildLibmemcached.cmake)
 include(cmake/BuildMemtier.cmake)
-libmemcached_build()
      memtier_build()
 
 include_directories(${CMAKE_SOURCE_DIR}/third_party)

@@ -15,24 +15,24 @@ mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
 def iequal(left, right, level = 1):
     if (left != right):
         tb = traceback.extract_stack()[-(level + 1)]
-        print "Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
-                repr(left), repr(right))
+        print("Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
+                repr(left), repr(right)))
         return False
     return True
 
 def inequal(left, right, level = 0):
     if (left == right):
         tb = traceback.extract_stack()[-(level + 1)]
-        print "Error on line %s:%d: %s equal %s" % (tb[0], tb[1],
-                repr(left), repr(right))
+        print("Error on line %s:%d: %s equal %s" % (tb[0], tb[1],
+                repr(left), repr(right)))
         return False
     return True
 
 def issert(stmt, level = 0):
     if bool(stmt):
         tb = traceback.extract_stack()[-(level + 1)]
-        print "Error on line %s:%d: is False" % (tb[0], tb[1],
-                repr(left), repr(right))
+        print("Error on line %s:%d: is False" % (tb[0], tb[1],
+                repr(left), repr(right)))
         return False
     return True
 
@@ -80,7 +80,7 @@ if True:
 
 res = mc.sasl_list()
 if res[0]['val'].find('PLAIN') == -1:
-    print "Error"
+    print("Error")
 
 secret = '%c%s%c%s' % (0, 'testuser', 0, 'testpass')
 res = mc.sasl_start("X" * 40, secret)

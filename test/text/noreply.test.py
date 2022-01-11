@@ -12,7 +12,7 @@ from internal.memcached_connection import MemcachedTextConnection
 port = int(iproto.uri.split(':')[1])
 mc_client = MemcachedTextConnection('localhost', port)
 
-print """# Test that commands can take 'noreply' parameter. """
+print("""# Test that commands can take 'noreply' parameter. """)
 mc_client("flush_all noreply\r\n")
 mc_client("flush_all 0 noreply\r\n")
 

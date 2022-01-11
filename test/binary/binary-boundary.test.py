@@ -15,8 +15,8 @@ mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
 def iequal(left, right, level = 1):
     if (left != right):
         tb = traceback.extract_stack()[-(level + 1)]
-        print "Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
-                repr(left), repr(right))
+        print("Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
+                repr(left), repr(right)))
         if (isinstance(left, basestring)):
             if (len(left) != len(right)):
                 print("length is different")

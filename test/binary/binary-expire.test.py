@@ -15,15 +15,15 @@ mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
 def iequal(left, right, level = 1):
     if (left != right):
         tb = traceback.extract_stack()[-(level + 1)]
-        print "Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
-                repr(left), repr(right))
+        print("Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
+                repr(left), repr(right)))
         return False
     return True
 
 def issert(stmt, level = 1):
     if not bool(stmt):
         tb = traceback.extract_stack()[-(level + 1)]
-        print "Error on line %s:%d: result is False" % (tb[0], tb[1])
+        print("Error on line %s:%d: result is False" % (tb[0], tb[1]))
         return False
     return True
 

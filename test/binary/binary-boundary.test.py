@@ -10,6 +10,8 @@ sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))
 from internal.memcached_connection import MemcachedBinaryConnection
 from internal.memcached_connection import STATUS, COMMANDS
 
+from internal.compat import string_types
+
 mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
 
 def iequal(left, right, level = 1):
@@ -17,7 +19,7 @@ def iequal(left, right, level = 1):
         tb = traceback.extract_stack()[-(level + 1)]
         print("Error on line %s:%d: %s not equal %s" % (tb[0], tb[1],
                 repr(left), repr(right)))
-        if (isinstance(left, basestring)):
+        if (isinstance(left, string_types)):
             if (len(left) != len(right)):
                 print("length is different")
         return False
@@ -39,7 +41,7 @@ for i in range(1900, 2100):
     val  = "x" * i
     mc.setq(key, val, flags=82, nosend=True)
     mc.setq("alt_%s" % key, "blah", flags=82, nosend=True)
-    data = "".join(mc.commands)
+    data = b"".join(mc.commands)
     mc.commands = []
 
     if (len(data) > 2024):

@@ -41,7 +41,7 @@ server.admin("box.space.__mc_memcached:truncate()", silent=True)
 
 stat = mc.stat("reset")
 
-for i in xrange(10000):
+for i in range(10000):
     mc.set('key-%d' % i, 'value-%d' % i, expire=1)
 
 stat = mc.stat()

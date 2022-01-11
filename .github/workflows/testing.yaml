@@ -33,10 +33,10 @@ jobs:
 
       - run: cmake .
 
-      - name: Setup Python 2 for tests
+      - name: Setup Python 3 for tests
         uses: actions/setup-python@v2
         with:
-          python-version: 2.7
+          python-version: 3.7
 
       - name: Install test requirements
         run: pip install -r test-run/requirements.txt

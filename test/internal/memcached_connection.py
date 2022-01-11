@@ -4,6 +4,7 @@ import sys
 from struct import Struct
 
 from lib.tarantool_connection import TarantoolConnection
+from internal.compat import bytes_to_str, str_to_bytes
 
 HEADER        = '!BBHBBHLLQ'
 HEADER_STRUCT = Struct(HEADER)
@@ -165,7 +166,7 @@ class MemcachedBinaryConnection(TarantoolConnection):
         self.connect()
 
     def send(self):
-        commands = ''.join(self.commands)
+        commands = b''.join(self.commands)
         self.socket.sendall(commands)
         self.commands = []
 
@@ -237,7 +238,14 @@ class MemcachedBinaryConnection(TarantoolConnection):
             # decode result of (incr/decr)(q)
             if is_indecrq(op):
                 val = INDECR_STRUCT.unpack_from(val)[0]
-        if val is not None:
+            else:
+                # Ideally we should lean on 4th bit in flags to
+                # decide whether to interpret this value as binary
+                # or as text.
+                #
+                # Unconditional interpreting it as a text is
+                # enough for testing purposes, though.
+                val = bytes_to_str(val)
             retval['val'] = val
 
         return retval
@@ -268,9 +276,9 @@ class MemcachedBinaryConnection(TarantoolConnection):
         retval = [
             struct.pack(MAGIC['request'], op, key_len, ext_len, dtype, 0,
                         tot_len, opaque, cas, *extra),
-            key, val
+            str_to_bytes(key), str_to_bytes(val)
         ]
-        cmd = ''.join(retval)
+        cmd = b''.join(retval)
         self.commands.append(cmd)
 
     @binary_decorator
@@ -477,7 +485,7 @@ class MemcachedBinaryConnection(TarantoolConnection):
             if 'key' in rv and not rv['key'] and \
                'val' in rv and not rv['val']:
                 return ans
-            ans[rv['key']] = rv['val']
+            ans[bytes_to_str(rv['key'])] = rv['val']
         return ans
 
     @binary_decorator
@@ -559,7 +567,7 @@ class MemcachedTextConnection(TarantoolConnection):
 
     def send(self, commands, silent = False):
         self.commands = commands
-        self.socket.sendall(commands)
+        self.socket.sendall(str_to_bytes(commands))
         if not silent:
             print("<<" + '-' * 50)
             sys.stdout.write(self.commands.strip() + '\n')
@@ -699,7 +707,7 @@ class MemcachedTextConnection(TarantoolConnection):
             index = buf.find(MEMCACHED_SEPARATOR)
             if index > 0:
                 break
-            data = self.socket.recv(1048576)
+            data = bytes_to_str(self.socket.recv(1048576))
             if not data:
                 return None
             buf += data

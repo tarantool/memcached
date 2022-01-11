@@ -18,7 +18,7 @@ for i in range(1, batch_count + 1):
     key = "test_key_%d" % i
     mc.setq(key, val, flags = 82, nosend=True)
 
-data = "".join(mc.commands)
+data = b"".join(mc.commands)
 mc.socket.sendall(data)
 
 # Get any key right after setting.

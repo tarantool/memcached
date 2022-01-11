@@ -26,20 +26,20 @@ def wait_for_empty_space(serv = server):
         time.sleep(0.01)
 ###################################
 
-print """# Test flush_all with zero delay. """
+print("""# Test flush_all with zero delay. """)
 mc_client("set foo 0 0 6\r\nfooval\r\n")
 mc_client("get foo\r\n")
 mc_client("flush_all\r\n")
 mc_client("get foo\r\n")
 
-print """# check that flush_all doesn't blow away items that immediately get set """
+print("""# check that flush_all doesn't blow away items that immediately get set """)
 mc_client("set foo 0 0 3\r\nnew\r\n")
 mc_client("get foo\r\n")
 
-print """# and the other form, specifying a flush_all time... """
+print("""# and the other form, specifying a flush_all time... """)
 expire = time.time() + 1
-print "flush_all time + 1"
-print mc_client("flush_all %d\r\n" % expire, silent=True)
+print("flush_all time + 1")
+print(mc_client("flush_all %d\r\n" % expire, silent=True))
 mc_client("get foo\r\n")
 
 mc_client("set foo 0 0 3\r\n123\r\n")

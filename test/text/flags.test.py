@@ -19,9 +19,9 @@ for flags in flags_list:
     result = mc_client("gets foo\r\n")
     ret_flags = int(result.split()[2])
     if flags == ret_flags:
-        print "success: flags (0x%x) == ret_flags (0x%x)" % (flags, ret_flags)
+        print("success: flags (0x%x) == ret_flags (0x%x)" % (flags, ret_flags))
     else:
-        print "fail: flags (0x%x) != ret_flags (0x%x)" % (flags, ret_flags)
+        print("fail: flags (0x%x) != ret_flags (0x%x)" % (flags, ret_flags))
 
 mc_client("flush_all\r\n")
 

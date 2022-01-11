@@ -20,6 +20,7 @@ cmd = shlex.split('capable/memcapable -a -p %s -h %s -v' %
 
 task = Popen(cmd, stdout=PIPE, stderr=STDOUT)
 
-print task.communicate()[0]
+testcase = task.communicate()[0]
+print(testcase)
 
 sys.path = saved_path

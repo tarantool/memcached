@@ -150,7 +150,7 @@ Usual rules for memcached are applicable for this plugin:
 	 import bmemcached
 	 client = bmemcached.Client(('127.0.0.1:11211', ), 'testuser', 'testpasswd')
 	 client.set('key', 'value')
-	 print client.get('key')
+	 print(client.get('key'))
 	 ```
 
 For custom configuration file path, please, use `SASL_CONF_PATH` environment variable.

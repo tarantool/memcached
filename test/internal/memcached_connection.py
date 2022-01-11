@@ -561,7 +561,7 @@ class MemcachedTextConnection(TarantoolConnection):
         self.commands = commands
         self.socket.sendall(commands)
         if not silent:
-            print "<<" + '-' * 50
+            print("<<" + '-' * 50)
             sys.stdout.write(self.commands.strip() + '\n')
             #sys.stdout.write(self.commands)
 
@@ -595,7 +595,7 @@ class MemcachedTextConnection(TarantoolConnection):
                 self.reply_unknown(cmd)
 
         if not silent:
-            print ">>" + '-'*50
+            print(">>" + '-'*50)
             sys.stdout.write(self.reply.strip() + '\n')
             #sys.stdout.write(self.reply)
 
@@ -643,7 +643,7 @@ class MemcachedTextConnection(TarantoolConnection):
                 break
             else:
                 # unknown
-                print "error: unknown line: '%s'" % key
+                print("error: unknown line: '%s'" % key)
                 self.reply += "error: unknown line: '%s'" % key
                 break
 

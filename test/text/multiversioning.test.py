@@ -13,7 +13,7 @@ port = int(iproto.uri.split(':')[1])
 mc_client = MemcachedTextConnection('localhost', port)
 
 buf_size = 256 * 1024
-buf = "0123456789abcdef" * (buf_size / 16)
+buf = "0123456789abcdef" * int(buf_size / 16)
 buf_upper = buf.upper()
 
 memcached1 = mc_client

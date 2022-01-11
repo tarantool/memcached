@@ -15,10 +15,9 @@ Memcached protocol 'wrapper' for Tarantool.
 
  * Tarantol 1.6.8+ with header files (tarantool && tarantool-dev packages).
  * Cyrus SASL library (with header files)
- * Python >= 2.7, <3 with next packages (for testing only):
-   - PyYAML
-   - msgpack-python
-   - six==1.9.0
+ * Python >= 3.7 with next packages (for testing only):
+   - PyYAML 5+
+   - gevent 21+
 
 ### Installation
 

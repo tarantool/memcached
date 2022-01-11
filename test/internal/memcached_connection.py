@@ -203,8 +203,8 @@ class MemcachedBinaryConnection(TarantoolConnection):
         assert(magic == MAGIC['response'])
         if status == STATUS['OK']:
             assert(ext_len == ext_lenv)
-            assert(((key_lenv > 0 or key_lenv is None) and key_len > 0) or key_len == 0)
-            assert(((val_lenv > 0 or val_lenv is None) and val_len > 0) or val_len == 0)
+            assert(((key_lenv is None or key_lenv > 0) and key_len > 0) or key_len == 0)
+            assert(((val_lenv is None or val_lenv > 0) and val_len > 0) or val_len == 0)
         else:
             assert(val_len > 0)
 

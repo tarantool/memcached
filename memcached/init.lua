@@ -186,6 +186,7 @@ local typetable = {
 
 local err_enomem          = "Can't allocate memory for %s"
 local err_bad_args        = "Arguments must be in dictionary"
+local err_bad_box         = "Please call box.cfg{} first"
 local err_no_such_option  = "No such option '%s'"
 local err_bad_option_type = "Bad '%s' option type, expected '%s', got '%s'"
 local err_bad_value       = "Bad value for argument '%s'"
@@ -338,6 +339,9 @@ local function memcached_init(name, uri, opts)
             error(fmt(err_bad_instance, name))
         end
         return memcached_services[name]
+    end
+    if type(box.cfg) == 'function' then
+        error(fmt(err_bad_box, name))
     end
     local conf = config_initial(opts)
     local instance = {}

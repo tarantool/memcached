@@ -42,8 +42,8 @@ local function run_memtier(instance, memtier_path, proto)
         '--hide-histogram'
     }
 
-    local stdout = is_test_run and popen.opts.PIPE or popen.opts.INHERIT
-    local stderr = is_test_run and popen.opts.PIPE or popen.opts.INHERIT
+    local stdout = is_test_run and popen.opts.DEVNULL or popen.opts.INHERIT
+    local stderr = is_test_run and popen.opts.DEVNULL or popen.opts.INHERIT
     local ph = popen.new(memtier_argv, {
         stdout = stdout,
         stderr = stderr,
@@ -65,4 +65,4 @@ test:is(fio.path.exists(memtier_path), true, 'memtier_benchmark binary is availa
 test:is(run_memtier(mc, memtier_path, 'text'), 0, 'memtier with text protocol')
 test:is(run_memtier(mc, memtier_path, 'binary'), 0, 'memtier with binary protocol')
 
-os.exit(0)
+os.exit(test:check() and 0 or 1)

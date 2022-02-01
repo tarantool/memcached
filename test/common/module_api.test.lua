@@ -6,12 +6,36 @@ package.cpath = './?.so;' .. package.cpath
 local memcached = require('memcached')
 local test = tap.test('memcached module api')
 
-local function is_port_open(port)
-    local sock, _ = socket.tcp_connect('127.0.0.1', port)
+-- 1. Open connection to memcached instance.
+-- 2. Set a key 'key' to value 5.
+-- 3. Get a value of key 'key'.
+-- 4. Make sure value is equal to 5.
+-- 5. Close connection.
+local function check_memcached(port, timeout)
+    timeout = timeout or 0.5
+    local sock, err = socket.tcp_connect('127.0.0.1', port, timeout)
     if sock == nil then
+        print(err)
         return false
     end
-    return true
+    sock:nonblock(true)
+
+    -- Set a value.
+    local cmd = 'set key 0 60 5\r\nvalue\r\n'
+    local send = sock:send(cmd)
+    assert(send > 0)
+
+    -- Get a value.
+    send = sock:send('get key\r\n')
+    assert(send > 0)
+    local read = sock:read(23)
+    local v = read:match('VALUE key 0 ([0-9])')
+    assert(v == '5')
+
+    -- Close connection.
+    sock:close()
+
+    return tonumber(v) == 5
 end
 
 if type(box.cfg) == 'function' then
@@ -39,7 +63,7 @@ local mc_1 = memcached.create(mc_1_name, tostring(mc_1_port), {
     space_name = mc_1_space_name
 })
 test:isnt(mc_1, nil, '1st memcached instance object is not nil')
-test:is(is_port_open(mc_1_port), true, '1st memcached instance is started')
+test:is(check_memcached(mc_1_port), true, 'connected to 1st memcached instance')
 mc_1:stop()
 
 -- memcached.create(): instance 2
@@ -52,7 +76,7 @@ local mc_2 = memcached.create(mc_2_name, tostring(mc_2_port), {
     space_name = mc_2_space_name
 })
 test:isnt(mc_2, nil, '2nd memcached instance object is not nil')
-test:is(is_port_open(mc_2_port), true, '2nd memcached instance is started')
+test:is(check_memcached(mc_2_port), true, 'connected to 2nd memcached instance')
 mc_2:stop()
 
 -- memcached.server with created and started instances

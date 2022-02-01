@@ -82,6 +82,10 @@ memcached_get_stat (struct memcached_service *);
 struct memcached_service *
 memcached_create(const char *, uint32_t);
 
+void memcached_slab_arena_create();
+
+void memcached_slab_cache_create();
+
 int    memcached_start     (struct memcached_service *);
 void   memcached_stop      (struct memcached_service *);
 void   memcached_free      (struct memcached_service *);
@@ -385,6 +389,13 @@ end
 local function memcached_get(name)
     return memcached_services[name]
 end
+
+local function memcached_init()
+    memcached_internal.memcached_slab_arena_create()
+    memcached_internal.memcached_slab_cache_create()
+end
+
+memcached_init()
 
 return {
     create = memcached_create_instance,

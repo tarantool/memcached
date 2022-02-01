@@ -14,6 +14,7 @@
 #include <small/ibuf.h>
 #include <small/obuf.h>
 
+#include "alloc.h"
 #include "memcached.h"
 #include "constants.h"
 #include "network.h"
@@ -31,8 +32,8 @@ iobuf_mempool_create()
 {
 	static __thread bool inited = false;
 	if (inited) return;
-	mempool_create(&ibuf_pool, cord_slab_cache(), sizeof(struct ibuf));
-	mempool_create(&obuf_pool, cord_slab_cache(), sizeof(struct obuf));
+	mempool_create(&ibuf_pool, memcached_slab_cache(), sizeof(struct ibuf));
+	mempool_create(&obuf_pool, memcached_slab_cache(), sizeof(struct obuf));
 	inited = 1;
 }
 
@@ -48,7 +49,7 @@ ibuf_new()
 {
 	void *ibuf = mempool_alloc(&ibuf_pool);
 	if (ibuf == NULL) return NULL;
-	ibuf_create((struct ibuf *)ibuf, cord_slab_cache(), iobuf_readahead);
+	ibuf_create((struct ibuf *)ibuf, memcached_slab_cache(), iobuf_readahead);
 	return ibuf;
 }
 
@@ -57,7 +58,7 @@ obuf_new()
 {
 	void *obuf = mempool_alloc(&obuf_pool);
 	if (obuf == NULL) return NULL;
-	obuf_create((struct obuf *)obuf, cord_slab_cache(), iobuf_readahead);
+	obuf_create((struct obuf *)obuf, memcached_slab_cache(), iobuf_readahead);
 	return obuf;
 }
 

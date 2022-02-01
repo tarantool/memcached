@@ -37,6 +37,7 @@
 #include <small/ibuf.h>
 #include <small/obuf.h>
 
+#include "alloc.h"
 #include "memcached.h"
 #include "memcached_layer.h"
 #include "error.h"
@@ -45,6 +46,12 @@
 #include "proto_txt.h"
 #include "expiration.h"
 #include "mc_sasl.h"
+
+__attribute__((destructor)) static void
+destroy_allocations()  {
+	memcached_slab_cache_destroy();
+	memcached_slab_arena_destroy();
+}
 
 static inline int
 memcached_skip_request(struct memcached_connection *con) {
@@ -250,7 +257,7 @@ memcached_handler(struct memcached_service *p, int fd)
 		assert(0); /* unreacheable */
 	}
 
-	region_create(&con.gc, cord_slab_cache());
+	region_create(&con.gc, memcached_slab_cache());
 
 	/* read-write cycle */
 	con.cfg->stat.curr_conns++;

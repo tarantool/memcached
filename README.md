@@ -94,7 +94,7 @@ END
 * *readahead* - (default) size of readahead buffer for connection. default is `box->cfg->readahead`
 * *expire_enabled* - availability of expiration daemon. default is `true`.
 * *expire_items_per_iter* - scan count for expiration (tuples processed in one transaction). default is 200.
-* *expire_full_scan_time* - time required for a full index scan (in seconds). defaiult is 3600
+* *expire_full_scan_time* - time required for a full index scan (in seconds). default is 3600
 * *verbosity* - verbosity of memcached logging. default is 0.
 * ~~*flush_enabled* - flush command availability. default is true~~
 * *protocol* - the protocol, one of `negotiation`, `binary` or `text`.

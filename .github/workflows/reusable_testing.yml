@@ -31,13 +31,6 @@ jobs:
         # dependencies when migrating to other OS version.
         run: sudo dpkg -i tarantool_*.deb tarantool-common_*.deb tarantool-dev_*.deb
 
-      # TODO: Remove this when https://github.com/tarantool/memcached/issues/96
-      # is resolved.
-      - name: Get the tarantool version
-        run: |
-          TNT_VERSION=$(tarantool --version | grep -e '^Tarantool')
-          echo "TNT_VERSION=$TNT_VERSION" >> $GITHUB_ENV
-
       - name: Setup python3 for tests
         uses: actions/setup-python@v2
         with:
@@ -51,7 +44,3 @@ jobs:
 
       - run: cmake . && make
       - run: make test-memcached
-        # TODO: Remove this when https://github.com/tarantool/memcached/issues/96
-        # is resolved.
-        if: ${{ startsWith(env.TNT_VERSION, 'Tarantool 1.10') ||
-          startsWith(env.TNT_VERSION, 'Tarantool 2.8') }}

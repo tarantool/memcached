@@ -293,11 +293,11 @@ local memcached_methods = {
         self.listener = socket.tcp_server(parsed.host, parsed.service, {
             handler = memcached_handler
         })
-        local lname = self.listener:name()
         if self.listener == nil then
             self.status = ERRORED
             error(fmt('can\'t bind (%d) %s', errno(), errno.strerror()))
         end
+        local lname = self.listener:name()
         if (memcached_internal.memcached_setsockopt(self.listener:fd(),
                                    lname.family,
                                    lname.type) == -1) then

@@ -11,7 +11,7 @@ jobs:
       github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       matrix:
-        tarantool-version: ['1.10', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8']
+        tarantool-version: ['1.10', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '2.x-latest']
       fail-fast: false
     runs-on: [ubuntu-latest]
     steps:
@@ -23,10 +23,17 @@ jobs:
           # for running tests.
           submodules: recursive
 
-      - name: Setup Tarantool
+      - name: Setup Tarantool (version is not equal to latest 2.x)
+        if: matrix.tarantool-version != '2.x-latest'
         uses: tarantool/setup-tarantool@v1
         with:
           tarantool-version: ${{ matrix.tarantool-version }}
+
+      - name: Setup Tarantool 2.x (latest)
+        if: matrix.tarantool-version == '2.x-latest'
+        run: |
+          curl -L https://tarantool.io/pre-release/2/installer.sh | sudo bash
+          sudo apt install -y tarantool tarantool-dev
 
       - name: Install build requirements
         run: sudo apt-get -y install libsasl2-dev libevent-dev

@@ -332,7 +332,7 @@ local memcached_methods = {
     end
 }
 
-local function memcached_init(name, uri, opts)
+local function memcached_create_instance(name, uri, opts)
     opts = opts or {}
     if memcached_services[name] ~= nil then
         if not opts.if_not_exists then
@@ -387,7 +387,7 @@ local function memcached_get(name)
 end
 
 return {
-    create = memcached_init,
+    create = memcached_create_instance,
     get    = memcached_get,
     server = setmetatable({}, {
         __index = memcached_services

@@ -1,8 +1,6 @@
 #include <tarantool/module.h>
 #include <small/slab_cache.h>
 
-#include "memcached_persistent.h"
-
 void *
 box_persistent_malloc(size_t len, size_t *total)
 {

@@ -347,7 +347,7 @@ local function memcached_init(name, uri, opts)
     local instance = {}
     instance.opts = conf
     instance.name = name
-    instance.uri  = uri
+    instance.uri  = tostring(uri)
     instance.space_name = opts.space_name or '__mc_' .. instance.name
     if box.space[instance.space_name] == nil then
         local storage = startswith(conf.storage, 'mem') and 'memtx' or 'vinyl'

@@ -109,7 +109,7 @@ local typetable = {
     readahead = {
         'number',
         function() return box.cfg.readahead end,
-        function(x) return x > 0 and x < math.pow(2, 10) end,
+        function(x) return x > 0 and x <= math.pow(2, 31) - 1 end,
         [[size of readahead buffer]]
     },
     expire_enabled = {

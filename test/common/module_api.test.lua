@@ -2,9 +2,11 @@
 
 local socket = require('socket')
 local tap = require('tap')
+local ffi = require('ffi')
 package.cpath = './?.so;' .. package.cpath
 local memcached = require('memcached')
 local test = tap.test('memcached module api')
+local abs = require('math').abs
 
 -- 1. Open connection to memcached instance.
 -- 2. Set a key 'key' to value 5.
@@ -46,12 +48,25 @@ if type(box.cfg) == 'function' then
     box.schema.user.grant('guest', 'read,write,execute', 'universe')
 end
 
-test:plan(15)
+test:plan(31)
 
 -- memcached.server: module is initialized, no instances
 
 test:istable(memcached.server, 'type of memcached.server is a table')
 test:is(#memcached.server, 0, 'memcached.server is empty')
+
+-- memcached.slab(): memcached module is initialized, no instances
+
+test:istable(memcached.slab, 'memcached.slab (no instances) returns a table')
+test:isfunction(memcached.slab.info, 'memcached.slab.info() (no instances) returns a function')
+local slab_info = memcached.slab.info()
+test:iscdata(slab_info.quota_size, ffi.typeof('uint64_t'),
+    'memcached.slab.info().quota_size (no instances) returns a cdata')
+test:is(slab_info.quota_size, 4398046510080, 'memcached.slab.info().quota_size (no instances) is correct')
+test:iscdata(slab_info.quota_used, ffi.typeof('uint64_t'),
+    'memcached.slab.info().quota_used (no instances) returns a cdata')
+test:is(slab_info.quota_used, 0, 'memcached.slab.info().quota_used (no instances) is correct')
+test:isstring(slab_info.quota_used_ratio, 'memcached.slab.info().quota_used_ratio (no instances) returns a string')
 
 -- memcached.create(): instance 1
 
@@ -107,5 +122,27 @@ local instance_2_info = memcached.get(mc_2_name)
 test:is(instance_2_info.name, mc_2.name, 'memcached.get(): name of instance 2 is correct')
 test:is(instance_2_info.space_name, mc_2.space_name, 'memcached.get(): space name of instance 2 is correct')
 test:is(instance_2_info.space.id, mc_2.space.id, 'memcached.get(): space id of instance 2 is correct')
+
+-- memcached.slab(): check numbers with created memcached instances
+
+mc_1:start()
+mc_2:start()
+
+test:istable(memcached.slab, 'memcached.slab returns a table')
+test:isfunction(memcached.slab.info, 'memcached.slab.info() returns a function')
+local slab_info = memcached.slab.info()
+test:istable(slab_info, 'memcached.slab.info() returns a table')
+test:iscdata(slab_info.quota_size, ffi.typeof('uint64_t'), 'memcached.slab.info().quota_size returns a cdata')
+test:is(slab_info.quota_size, 4398046510080, 'memcached.slab.info().quota_size is correct')
+test:iscdata(slab_info.quota_used, ffi.typeof('uint64_t'), 'memcached.slab.info().quota_used returns a cdata')
+test:is(slab_info.quota_used, 4194304, 'memcached.slab.info().quota_used is correct')
+test:isstring(slab_info.quota_used_ratio, 'memcached.slab.info().quota_used_ratio returns a string')
+local expected_ratio = tonumber(100 * slab_info.quota_used / slab_info.quota_size)
+local actual_ratio = tonumber(slab_info.quota_used_ratio:match('^(%d.%d+)%%'))
+local eps_is_correct = abs(actual_ratio - expected_ratio) < 1
+test:is(eps_is_correct, true, 'memcached.slab.info().quota_used_ratio is correct')
+
+mc_1:stop()
+mc_2:stop()
 
 os.exit(test:check() and 0 or 1)

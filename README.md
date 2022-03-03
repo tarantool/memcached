@@ -79,6 +79,7 @@ END
 ## API
 
 * `local memcached = require('memcached')` - acquire a library handle
+* `local slab = memcached.slab.info()` - show information about slab arena and quota.
 * `local instance = memcached.create(<name>, <uri>, <opts>)` - create a new instance, register it and run
   - `name` - a string with instance name
   - `uri`  - a string with uri to bind to, for example: `0.0.0.0:11211` (only TCP is supported now)

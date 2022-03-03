@@ -54,6 +54,12 @@ struct memcached_stat {
     uint64_t      auth_errors;
 };
 
+struct slab_arena_info {
+	size_t quota_size;
+	size_t quota_used;
+	double quota_used_ratio;
+};
+
 void
 memcached_set_opt (struct memcached_service *srv, int opt, ...);
 
@@ -85,6 +91,9 @@ memcached_create(const char *, uint32_t);
 void memcached_slab_arena_create();
 
 void memcached_slab_cache_create();
+
+struct slab_arena_info *
+memcached_slab_arena_info();
 
 int    memcached_start     (struct memcached_service *);
 void   memcached_stop      (struct memcached_service *);
@@ -236,6 +245,12 @@ local memcached_services = {}
 local RUNNING = 'r'
 local STOPPED = 's'
 local ERRORED = 'e'
+
+local slab_arena_info_table = {
+    'quota_size',
+    'quota_used',
+    'quota_used_ratio',
+}
 
 local stat_table = {
     'total_items', 'curr_items',
@@ -390,6 +405,17 @@ local function memcached_get(name)
     return memcached_services[name]
 end
 
+local function memcached_slab_info()
+    local slab_arena_info = memcached_internal.memcached_slab_arena_info()
+    local slab_info = {}
+    for _, v in pairs(slab_arena_info_table) do
+        slab_info[v] = tonumber64(slab_arena_info[0][v])
+    end
+    slab_info['quota_used_ratio'] = string.format('%0.2f%%', slab_info['quota_used_ratio'])
+
+    return slab_info
+end
+
 local function memcached_init()
     memcached_internal.memcached_slab_arena_create()
     memcached_internal.memcached_slab_cache_create()
@@ -399,6 +425,9 @@ memcached_init()
 
 return {
     create = memcached_create_instance,
+    slab   = {
+        info = memcached_slab_info,
+    },
     get    = memcached_get,
     server = setmetatable({}, {
         __index = memcached_services

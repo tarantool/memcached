@@ -1,6 +1,7 @@
 std = "luajit"
 globals = {
     "box",
+    "tonumber64",
 }
 ignore = {
     -- Accessing an undefined field of a global variable <package>.

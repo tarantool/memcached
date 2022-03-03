@@ -16,4 +16,7 @@ memcached_slab_cache_destroy();
 struct slab_cache *
 memcached_slab_cache();
 
+struct slab_arena_info *
+memcached_slab_arena_info();
+
 #endif /* ALLOC_H_INCLUDED */

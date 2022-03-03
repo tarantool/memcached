@@ -6,6 +6,35 @@ static struct slab_arena arena;
 static struct slab_cache slabc;
 static struct quota quota;
 
+struct slab_arena_info {
+	uint64_t quota_size;
+	uint64_t quota_used;
+	double quota_used_ratio;
+};
+
+struct slab_arena_info slab_info;
+
+/*
+ * Function produce an output with information of total quota size, used quota
+ * size and quota used ratio. Note that function relies on a fact that
+ * memcached uses a single slab cache for all allocations it made.
+ */
+struct slab_arena_info *
+memcached_slab_arena_info()
+{
+	/*
+	 * How much quota has been booked - reflects the total
+	 * size of slabs in various slab caches.
+	 */
+	slab_info.quota_used = (uint64_t)quota_used(arena.quota);
+
+	slab_info.quota_size = (uint64_t)quota_total(arena.quota);
+	slab_info.quota_used_ratio = 100 * ((double) slab_info.quota_used /
+				     ((double) slab_info.quota_size + 0.0001));
+
+	return &slab_info;
+}
+
 void
 memcached_slab_arena_create()
 {

@@ -40,6 +40,7 @@ add_library(internalso SHARED
         "internal/expiration.c"
         "internal/memcached.c"
         "internal/mc_sasl.c"
+        "${CMAKE_SOURCE_DIR}/third_party/memcached_ibuf.c"
 )
 
 target_link_libraries(internalso msgpuck)

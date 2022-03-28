@@ -11,11 +11,11 @@
 
 #include <tarantool/module.h>
 #include <small/mempool.h>
-#include <small/ibuf.h>
 #include <small/obuf.h>
 
 #include "alloc.h"
 #include "memcached.h"
+#include "memcached_ibuf.h"
 #include "constants.h"
 #include "network.h"
 

@@ -15,7 +15,7 @@
 #include "memcached_layer.h"
 #include "mc_sasl.h"
 
-#include <small/ibuf.h>
+#include "memcached_ibuf.h"
 #include <small/obuf.h>
 
 static inline int

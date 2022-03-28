@@ -34,7 +34,8 @@
 
 /** Initialize an input buffer. */
 void
-ibuf_create(struct ibuf *ibuf, struct slab_cache *slabc, size_t start_capacity)
+memcached_ibuf_create(struct ibuf *ibuf, struct slab_cache *slabc,
+		      size_t start_capacity)
 {
 	ibuf->slabc = slabc;
 	ibuf->buf = ibuf->rpos = ibuf->wpos = ibuf->end = NULL;
@@ -43,7 +44,7 @@ ibuf_create(struct ibuf *ibuf, struct slab_cache *slabc, size_t start_capacity)
 }
 
 void
-ibuf_destroy(struct ibuf *ibuf)
+memcached_ibuf_destroy(struct ibuf *ibuf)
 {
 	if (ibuf->buf) {
 		struct slab *slab = slab_from_data(ibuf->buf);
@@ -53,12 +54,12 @@ ibuf_destroy(struct ibuf *ibuf)
 
 /** Free memory allocated by this buffer */
 void
-ibuf_reinit(struct ibuf *ibuf)
+memcached_ibuf_reinit(struct ibuf *ibuf)
 {
 	struct slab_cache *slabc = ibuf->slabc;
 	size_t start_capacity = ibuf->start_capacity;
-	ibuf_destroy(ibuf);
-	ibuf_create(ibuf, slabc, start_capacity);
+	memcached_ibuf_destroy(ibuf);
+	memcached_ibuf_create(ibuf, slabc, start_capacity);
 }
 
 /**
@@ -67,11 +68,11 @@ ibuf_reinit(struct ibuf *ibuf)
  * the beginning.
  */
 void *
-ibuf_reserve_slow(struct ibuf *ibuf, size_t size)
+memcached_ibuf_reserve_slow(struct ibuf *ibuf, size_t size)
 {
 	assert(ibuf->wpos + size > ibuf->end);
-	size_t used = ibuf_used(ibuf);
-	size_t capacity = ibuf_capacity(ibuf);
+	size_t used = memcached_ibuf_used(ibuf);
+	size_t capacity = memcached_ibuf_capacity(ibuf);
 	/*
 	 * Check if we have enough space in the
 	 * current buffer. In this case de-fragment it

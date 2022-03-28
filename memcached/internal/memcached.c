@@ -56,9 +56,9 @@ destroy_allocations()  {
 static inline int
 memcached_skip_request(struct memcached_connection *con) {
 	struct ibuf *in = con->in;
-	while (ibuf_used(in) < con->len && con->noprocess) {
-		con->len -= ibuf_used(in);
-		ibuf_reset(in);
+	while (memcached_ibuf_used(in) < con->len && con->noprocess) {
+		con->len -= memcached_ibuf_used(in);
+		memcached_ibuf_reset(in);
 		ssize_t read = mnet_read_ibuf(con->fd, in, 1);
 		if (read == -1)
 			memcached_error_ENOMEM(1, "ibuf");
@@ -77,10 +77,10 @@ memcached_flush(struct memcached_connection *con) {
 				    obuf_iovcnt(con->out),
 				    obuf_size(con->out));
 	con->cfg->stat.bytes_written += total;
-	if (ibuf_used(con->in) == 0)
-		ibuf_reset(con->in);
+	if (memcached_ibuf_used(con->in) == 0)
+		memcached_ibuf_reset(con->in);
 	obuf_reset(con->out);
-	if (ibuf_reserve(con->in, con->cfg->readahead) == NULL)
+	if (memcached_ibuf_reserve(con->in, con->cfg->readahead) == NULL)
 		return -1;
 	return total;
 }
@@ -99,7 +99,7 @@ memcached_connection_gc(struct memcached_connection *con)
 static inline int
 memcached_loop_read(struct memcached_connection *con, size_t to_read)
 {
-	if (ibuf_reserve(con->in, to_read) == NULL) {
+	if (memcached_ibuf_reserve(con->in, to_read) == NULL) {
 /*		memcached_error_ENOMEM(to_read, "ibuf");*/
 		return -1;
 	}
@@ -205,7 +205,7 @@ next:
 		if (con->close_connection) {
 			say_debug("Requesting exit. Exiting.");
 			break;
-		} else if (rc == 0 && ibuf_used(con->in) > 0 &&
+		} else if (rc == 0 && memcached_ibuf_used(con->in) > 0 &&
 			   batch_count < con->cfg->batch_count) {
 			batch_count++;
 			goto next;
@@ -215,7 +215,7 @@ next:
 			memcached_flush(con);
 		fiber_reschedule();
 		batch_count = 0;
-		if (ibuf_used(con->in) > 0) {
+		if (memcached_ibuf_used(con->in) > 0) {
 			goto next;
 		}
 		continue;

@@ -1,5 +1,5 @@
-#ifndef TARANTOOL_SMALL_IBUF_H_INCLUDED
-#define TARANTOOL_SMALL_IBUF_H_INCLUDED
+#ifndef MEMCACHED_IBUF_H_INCLUDED
+#define MEMCACHED_IBUF_H_INCLUDED
 /*
  * Copyright 2010-2016, Tarantool AUTHORS, please see AUTHORS file.
  *
@@ -69,17 +69,18 @@ struct ibuf
 };
 
 void
-ibuf_create(struct ibuf *ibuf, struct slab_cache *slabc, size_t start_capacity);
+memcached_ibuf_create(struct ibuf *ibuf, struct slab_cache *slabc,
+		      size_t start_capacity);
 
 void
-ibuf_destroy(struct ibuf *ibuf);
+memcached_ibuf_destroy(struct ibuf *ibuf);
 
 void
-ibuf_reinit(struct ibuf *ibuf);
+memcached_ibuf_reinit(struct ibuf *ibuf);
 
 /** How much data is read and is not parsed yet. */
 static inline size_t
-ibuf_used(struct ibuf *ibuf)
+memcached_ibuf_used(struct ibuf *ibuf)
 {
 	assert(ibuf->wpos >= ibuf->rpos);
 	return ibuf->wpos - ibuf->rpos;
@@ -87,7 +88,7 @@ ibuf_used(struct ibuf *ibuf)
 
 /** How much data can we fit beyond buf->wpos */
 static inline size_t
-ibuf_unused(struct ibuf *ibuf)
+memcached_ibuf_unused(struct ibuf *ibuf)
 {
 	assert(ibuf->wpos <= ibuf->end);
 	return ibuf->end - ibuf->wpos;
@@ -95,7 +96,7 @@ ibuf_unused(struct ibuf *ibuf)
 
 /** How much memory is allocated */
 static inline size_t
-ibuf_capacity(struct ibuf *ibuf)
+memcached_ibuf_capacity(struct ibuf *ibuf)
 {
 	return ibuf->end - ibuf->buf;
 }
@@ -105,7 +106,7 @@ ibuf_capacity(struct ibuf *ibuf)
  * in case of realloc.
  */
 static inline size_t
-ibuf_pos(struct ibuf *ibuf)
+memcached_ibuf_pos(struct ibuf *ibuf)
 {
 	assert(ibuf->buf <= ibuf->rpos);
 	return ibuf->rpos - ibuf->buf;
@@ -113,30 +114,30 @@ ibuf_pos(struct ibuf *ibuf)
 
 /** Forget all cached input. */
 static inline void
-ibuf_reset(struct ibuf *ibuf)
+memcached_ibuf_reset(struct ibuf *ibuf)
 {
 	ibuf->rpos = ibuf->wpos = ibuf->buf;
 }
 
 void *
-ibuf_reserve_slow(struct ibuf *ibuf, size_t size);
+memcached_ibuf_reserve_slow(struct ibuf *ibuf, size_t size);
 
 static inline void *
-ibuf_reserve(struct ibuf *ibuf, size_t size)
+memcached_ibuf_reserve(struct ibuf *ibuf, size_t size)
 {
 	if (ibuf->wpos + size <= ibuf->end)
 		return ibuf->wpos;
-	return ibuf_reserve_slow(ibuf, size);
+	return memcached_ibuf_reserve_slow(ibuf, size);
 }
 
 static inline void *
-ibuf_alloc(struct ibuf *ibuf, size_t size)
+memcached_ibuf_alloc(struct ibuf *ibuf, size_t size)
 {
 	void *ptr;
 	if (ibuf->wpos + size <= ibuf->end)
 		ptr = ibuf->wpos;
 	else {
-		ptr = ibuf_reserve_slow(ibuf, size);
+		ptr = memcached_ibuf_reserve_slow(ibuf, size);
 		if (ptr == NULL)
 			return NULL;
 	}
@@ -145,22 +146,23 @@ ibuf_alloc(struct ibuf *ibuf, size_t size)
 }
 
 static inline void *
-ibuf_reserve_cb(void *ctx, size_t *size)
+memcached_ibuf_reserve_cb(void *ctx, size_t *size)
 {
 	struct ibuf *buf = (struct ibuf *) ctx;
-	void *p = ibuf_reserve(buf, *size ? *size : buf->start_capacity);
-	*size = ibuf_unused(buf);
+	void *p = memcached_ibuf_reserve(
+		buf, *size ? *size : buf->start_capacity);
+	*size = memcached_ibuf_unused(buf);
 	return p;
 }
 
 static inline void *
-ibuf_alloc_cb(void *ctx, size_t size)
+memcached_ibuf_alloc_cb(void *ctx, size_t size)
 {
-	return ibuf_alloc((struct ibuf *) ctx, size);
+	return memcached_ibuf_alloc((struct ibuf *) ctx, size);
 }
 
 #if defined(__cplusplus)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* TARANTOOL_SMALL_IBUF_H_INCLUDED */
+#endif /* MEMCACHED_IBUF_H_INCLUDED */

@@ -190,3 +190,8 @@ For custom configuration file path, please, use `SASL_CONF_PATH` environment var
 ## Caution
 
 This rock is in early beta.
+
+## Hacking
+
+We're collecting information for the module developers in the
+[HACKING.md](HACKING.md) file.

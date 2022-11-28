@@ -21,10 +21,19 @@ This package provides a Memcached protocol emulation for Tarantool.
 
 %build
 %cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo
-make %{?_smp_mflags}
+%if 0%{?fedora} >= 33 || 0%{?rhel} >= 8
+  %cmake_build
+%else
+  make %{?_smp_mflags}
+%endif
+
 
 %install
-%make_install
+%if 0%{?fedora} >= 33 || 0%{?rhel} >= 8
+  %cmake_install
+%else
+  %make_install
+%endif
 
 %files
 %{_libdir}/tarantool/*/

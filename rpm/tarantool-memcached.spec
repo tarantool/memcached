@@ -9,8 +9,6 @@ Source0: https://github.com/tarantool/memcached/archive/%{version}/%{name}-%{ver
 BuildRequires: cmake >= 2.8
 BuildRequires: gcc >= 4.5
 BuildRequires: tarantool-devel >= 1.10.0
-BuildRequires: small-devel
-#BuildRequires: msgpuck-devel
 BuildRequires: /usr/bin/prove
 BuildRequires: cyrus-sasl-devel
 Requires: tarantool >= 1.10.0

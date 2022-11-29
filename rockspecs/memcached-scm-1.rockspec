@@ -13,7 +13,7 @@ description = {
     ]];
     homepage = 'https://github.com/tarantool/memcached.git';
     license  = 'BSD';
-    maintainer = "Eugine Blikh <bigbes@tarantool.org>";
+    maintainer = "Leonid Vasiliev <lvasiliev@tarantool.org>";
 }
 
 dependencies = {

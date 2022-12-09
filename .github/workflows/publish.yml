@@ -50,7 +50,7 @@ jobs:
       # [1]: https://github.com/luarocks/luarocks/wiki/Types-of-rocks
       - uses: tarantool/setup-tarantool@v2
         with:
-          tarantool-version: '1.10'
+          tarantool-version: '2.10'
       - run: tarantoolctl rocks pack memcached-${{ env.TAG }}-1.rockspec
 
       # Upload .rockspec and .src.rock.

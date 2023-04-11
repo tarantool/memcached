@@ -98,6 +98,20 @@ server.wait_lsn(master_id, lsn + 2)
 print("""# readd add - shoud be success""")
 mc_client("add add 0 1 7\r\naddval2\r\n")
 
+server.wait_lsn(master_id, lsn + 3)
+print("""# return from RO - key should be removed""")
+mc_client("add key 0 1 3\r\nfoo\r\n")
+print("""# set RO""")
+server.admin("box.cfg({read_only = true})", silent=True)
+log = server.get_log()
+while log.seek_once("Expire: the instance has been moved to a read-only mode") < 0:
+    time.sleep(0.01)
+time.sleep(1)
+print("""# set RW""")
+server.admin("box.cfg({read_only = false})", silent=True)
+server.wait_lsn(master_id, lsn + 6)
+server.admin("box.space.__mc_memcached:len()", silent=False)
+
 mc_client("flush_all\r\n")
 
 sys.path = saved_path

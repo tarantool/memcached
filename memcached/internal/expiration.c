@@ -10,6 +10,7 @@
 #include "memcached_layer.h"
 
 #include "error.h"
+#include "utils.h"
 
 int
 memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
@@ -58,16 +59,31 @@ memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
 int
 memcached_expire_loop(va_list ap)
 {
+	static int box_ro;
 	struct memcached_service *p = va_arg(ap, struct memcached_service *);
 	char key[2], *key_end = mp_encode_array(key, 0);
 	box_iterator_t *iter = NULL;
 	int rv = 0;
 	say_info("Memcached expire fiber started");
-restart:
-	if (iter == NULL) {
+restart: ;
+	int old_state = box_ro;
+
+	if (memcached_box_is_ro(&box_ro) != true) {
+		say_error("Cannot get box.info.ro value");
+		goto finish;
+	}
+
+	if (box_ro) {
+		if (old_state != box_ro) {
+			say_info("Expire: the instance has been moved to a read-only mode");
+		}
+		goto delay;
+	}
+
+	if (rv == -1 || iter == NULL) {
 		iter = box_index_iterator(p->space_id, 0, ITER_ALL, key, key_end);
 	}
-	if (rv == -1 || iter == NULL) {
+	if (iter == NULL) {
 		const box_error_t *err = box_error_last();
 		say_error("Unexpected error %u: %s",
 				box_error_code(err),
@@ -82,7 +98,7 @@ restart:
 				box_error_message(err));
 		goto finish;
 	}
-
+delay: ;
 	/* This part is where we rest after all deletes */
 	double delay = ((double )p->expire_count * p->expire_time) /
 			(box_index_len(p->space_id, 0) + 1);

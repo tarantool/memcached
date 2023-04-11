@@ -18,6 +18,9 @@ safe_strtoull(const char *begin, const char *end, uint64_t *out);
 void
 memcached_binary_header_dump(struct memcached_hdr *hdr);
 
+bool
+memcached_box_is_ro(int *result);
+
 /* Macros to define enum and corresponding strings. */
 #define ENUM0_MEMBER(s, ...) s,
 #define ENUM_MEMBER(s, v, ...) s = v,

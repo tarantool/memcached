@@ -5,6 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <tarantool/lua.h>
 #include <tarantool/module.h>
 #include <msgpuck.h>
 
@@ -100,4 +101,31 @@ strindex(const char **haystack, const char *needle, uint32_t hmax)
 		if (strcasecmp(haystack[index], needle) == 0)
 			return index;
 	return hmax;
+}
+
+/** Get box.info.ro value.
+ *
+ * @param result pointer to where the value will be stored.
+ * @return true if the value was retrieved successfully.
+*/
+bool
+memcached_box_is_ro(int *result)
+{
+	lua_State *L = luaT_state();
+	int top = lua_gettop(L);
+	int ro;
+
+	lua_getfield(L, LUA_GLOBALSINDEX, "box");
+	lua_getfield(L, -1, "info");
+	lua_getfield(L, -1, "ro");
+
+	if (!lua_isboolean(L, -1)) {
+		return false;
+	}
+
+	ro = lua_toboolean(L, -1);
+	lua_settop(L, top);
+	*result = ro;
+
+	return true;
 }

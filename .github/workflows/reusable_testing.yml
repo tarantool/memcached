@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Clone the memcached module
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{ github.repository_owner }}/memcached
           # Enable recursive submodules checkout as test-run git module is used
@@ -22,7 +22,7 @@ jobs:
           submodules: recursive
 
       - name: Download the tarantool build artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.artifact_name }}
 

@@ -61,6 +61,11 @@ COMMANDS = {
     'sasl_step'  : [0x22, Struct(HEADER + ''),    0,  None, 0   ],
 }
 
+# The current version of test-run returns port zero in the LISTEN variable.
+# Since memcache has not yet implemented an API for receiving a real listen
+# port, it will have to be hardcoded.
+CONNECT_PORT = "20509"
+
 def is_indecrq(cmd):
     if cmd in (COMMANDS['incr'][0], COMMANDS['decr'][0], COMMANDS['incrq'][0],
             COMMANDS['decrq'][0]):

@@ -7,10 +7,9 @@ import traceback
 saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
-from internal.memcached_connection import MemcachedTextConnection
+from internal.memcached_connection import MemcachedTextConnection, CONNECT_PORT
 
-port = int(iproto.uri.split(':')[1])
-mc_client = MemcachedTextConnection('localhost', port)
+mc_client = MemcachedTextConnection('localhost', CONNECT_PORT)
 
 mc_client("cas bad blah 0 0 0\r\n")
 mc_client("cas bad 0 blah 0 0\r\n")
@@ -73,7 +72,7 @@ else:
     print("fail: foo1_cas == foo2_cas")
 
 memcached1 = mc_client
-memcached2 = MemcachedTextConnection('localhost', port)
+memcached2 = MemcachedTextConnection('localhost', CONNECT_PORT)
 
 print("""# gets foo from memcached1 - should success """)
 result = memcached1("gets foo1\r\n", silent = True)

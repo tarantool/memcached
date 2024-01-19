@@ -8,9 +8,9 @@ sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))
 
 from internal.memcached_connection import MemcachedBinaryConnection
 from internal.memcached_connection import MemcachedTextConnection
-from internal.memcached_connection import STATUS, COMMANDS
+from internal.memcached_connection import STATUS, COMMANDS, CONNECT_PORT
 
-mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+mc = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
 
 def iequal(left, right, level = 1):
     if (left != right):
@@ -59,22 +59,22 @@ def delete(key, when):
 print("""#---------------------------# sasl tests #--------------------------#""")
 
 if True:
-    mc1 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc1 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     res = mc1.set('x', 'somevalue')
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
 if True:
-    mc1 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc1 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     res = mc1.delete('x', 'somevalue')
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
 if True:
-    mc1 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc1 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     res = mc1.set('x', 'somevalue')
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
 if True:
-    mc1 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc1 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     res = mc1.flush()
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
@@ -117,7 +117,7 @@ if True:
     empty('x')
 
 if True:
-    mc1 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc1 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     secret = '%c%s%c%s' % (0, 'testuser', 0, 'wrongpass')
     res = mc1.sasl_start('PLAIN', secret)
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
@@ -126,12 +126,12 @@ if True:
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
 if True:
-    mc1 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc1 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     secret = '%c%s%c%s' % (0, 'testuser', 0, 'wrongpass')
     res = mc1.sasl_start('PLAIN', secret)
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
-    mc2 = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+    mc2 = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
     secret = '%c%s%c%s' % (0, 'testuser', 0, 'testpass')
     res = mc2.sasl_start('PLAIN', secret)
     iequal(res[0]['status'], 0)

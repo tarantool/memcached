@@ -7,9 +7,12 @@ box.cfg{
 
 package.cpath = './?.so;' .. package.cpath
 
+-- The current version of test-run returns port zero in the LISTEN variable.
+-- Since memcache has not yet implemented an API for receiving a real listen
+-- port, it will have to be hardcoded.
 require('memcached').create(
     'memcached',
-    os.getenv('LISTEN'):match(':(.*)')
+    '20509'
 )
 
 require('console').listen(os.getenv('ADMIN'))

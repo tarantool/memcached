@@ -7,10 +7,9 @@ import traceback
 saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
-from internal.memcached_connection import MemcachedTextConnection
+from internal.memcached_connection import MemcachedTextConnection, CONNECT_PORT
 
-port = int(iproto.uri.split(':')[1])
-mc_client = MemcachedTextConnection('localhost', port)
+mc_client = MemcachedTextConnection('localhost', CONNECT_PORT)
 
 print("""# incr/decr big value """)
 mc_client("set bug21 0 0 19\r\n9223372036854775807\r\n")

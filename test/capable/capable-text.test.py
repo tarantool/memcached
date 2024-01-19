@@ -10,15 +10,15 @@ saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
 from internal.memcached_connection import MemcachedBinaryConnection
-from internal.memcached_connection import STATUS, COMMANDS
+from internal.memcached_connection import STATUS, COMMANDS, CONNECT_PORT
 
 from internal.compat import bytes_to_str
 
-mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+mc = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
 mc.flush()
 
 cmd = shlex.split('capable/memcapable -a -p %s -h %s -v' %
-        (iproto.py_con.port, '127.0.0.1'))
+        (CONNECT_PORT, '127.0.0.1'))
 
 task = Popen(cmd, stdout=PIPE, stderr=STDOUT)
 

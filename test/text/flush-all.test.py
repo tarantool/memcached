@@ -8,10 +8,9 @@ import traceback
 saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
-from internal.memcached_connection import MemcachedTextConnection
+from internal.memcached_connection import MemcachedTextConnection, CONNECT_PORT
 
-port = int(iproto.uri.split(':')[1])
-mc_client = MemcachedTextConnection('localhost', port)
+mc_client = MemcachedTextConnection('localhost', CONNECT_PORT)
 
 ###################################
 def get_memcached_len(serv):

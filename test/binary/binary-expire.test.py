@@ -8,9 +8,9 @@ saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
 from internal.memcached_connection import MemcachedBinaryConnection
-from internal.memcached_connection import STATUS, COMMANDS
+from internal.memcached_connection import STATUS, COMMANDS, CONNECT_PORT
 
-mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
+mc = MemcachedBinaryConnection("127.0.0.1", CONNECT_PORT)
 
 def iequal(left, right, level = 1):
     if (left != right):

@@ -7,17 +7,16 @@ import traceback
 saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
-from internal.memcached_connection import MemcachedTextConnection
+from internal.memcached_connection import MemcachedTextConnection, CONNECT_PORT
 
-port = int(iproto.uri.split(':')[1])
-mc_client = MemcachedTextConnection('localhost', port)
+mc_client = MemcachedTextConnection('localhost', CONNECT_PORT)
 
 buf_size = 256 * 1024
 buf = "0123456789abcdef" * int(buf_size / 16)
 buf_upper = buf.upper()
 
 memcached1 = mc_client
-memcached2 = MemcachedTextConnection('localhost', port)
+memcached2 = MemcachedTextConnection('localhost', CONNECT_PORT)
 
 print("""# Store big in lower case via first memcached client """)
 print("set big 0 0 %d\r\n<big-value-lower-case>" % buf_size)

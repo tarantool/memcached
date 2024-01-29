@@ -143,6 +143,8 @@ mnet_read_ahead(int fd, void *buf, size_t bufsz, size_t sz)
 			return total;
 		}
 		coio_wait(fd, COIO_READ, TIMEOUT_INFINITY);
+		if (fiber_is_cancelled())
+			return total;
 	}
 }
 

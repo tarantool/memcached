@@ -20,6 +20,7 @@ jobs:
           - { os: 'debian', dist: 'bullseye' }
           - { os: 'el', dist: '7' }
           - { os: 'el', dist: '8' }
+          - { os: 'fedora', dist: '34' }
           - { os: 'fedora', dist: '35' }
           - { os: 'fedora', dist: '36' }
           - { os: 'ubuntu', dist: 'xenial' }

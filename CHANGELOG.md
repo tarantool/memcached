@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Build of packages for Fedora 34 platform.
-
 ### Changed
 
 ### Fixed
+
+## [1.1.2] - 2022-08-21
+
+This small release adds Fedora 34 platform to packaging.
+
+### Added
+
+- Build of packages for Fedora 34 platform (#128).
 
 ## [1.1.1] - 2022-04-11
 

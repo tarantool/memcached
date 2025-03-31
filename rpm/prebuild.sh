@@ -17,6 +17,6 @@ if [[ "$os" == "almalinux" && "$dist" == 9* ]]; then
     sudo sh -c "echo 8 > /etc/centos-release"
     curl -LsSf https://tarantool.io/release/3/installer.sh | sudo bash
 else
-    # We need to execute the 1.10 script due to it works for other platforms.
-    curl -LsSf https://tarantool.io/release/1.10/installer.sh | sudo bash
+    # We need to execute the 2 script due to it works for other platforms.
+    curl -LsSf https://tarantool.io/release/2/installer.sh | sudo bash
 fi

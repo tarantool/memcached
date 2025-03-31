@@ -11,12 +11,12 @@ jobs:
       github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       matrix:
-        tarantool-version: ['1.10', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '2.x-latest']
+        tarantool-version: ['2.11', '3.3']
       fail-fast: false
-    runs-on: [ubuntu-20.04]
+    runs-on: [ubuntu-24.04]
     steps:
       - name: Clone the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/memcached
           # Enable recursive submodules checkout as test-run git module is used
@@ -25,7 +25,7 @@ jobs:
 
       - name: Setup Tarantool (version is not equal to latest 2.x)
         if: matrix.tarantool-version != '2.x-latest'
-        uses: tarantool/setup-tarantool@v1
+        uses: tarantool/setup-tarantool@v3
         with:
           tarantool-version: ${{ matrix.tarantool-version }}
 
@@ -36,14 +36,14 @@ jobs:
           sudo apt install -y tarantool tarantool-dev
 
       - name: Install build requirements
-        run: sudo apt-get -y install libsasl2-dev libevent-dev
+        run: sudo apt-get -y install libsasl2-dev libevent-dev libpcre3-dev
 
       - run: cmake .
 
       - name: Setup Python 3 for tests
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: 3.9
 
       - name: Install test requirements
         run: pip install -r test-run/requirements.txt

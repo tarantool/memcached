@@ -9,17 +9,22 @@ jobs:
     if: |
       github.event_name == 'push' ||
       github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup Tarantool
-      uses: tarantool/setup-tarantool@v1
+      uses: tarantool/setup-tarantool@v3
       with:
-        tarantool-version: '2.8'
+        tarantool-version: '3.3'
 
     - name: Setup luacheck
-      run: tarantoolctl rocks install luacheck 0.25.0
+      run: |
+        sudo apt update
+        sudo apt install -y curl
+        curl -L https://tarantool.io/release/3/installer.sh | bash
+        sudo apt install -y tt
+        tt rocks install luacheck 0.25.0
 
     - run: cmake -S . -B build
 

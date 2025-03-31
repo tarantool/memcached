@@ -17,18 +17,15 @@ jobs:
         platform:
           - { os: 'almalinux', dist: '8'}
           - { os: 'almalinux', dist: '9'}
-          - { os: 'debian', dist: 'stretch' }
-          - { os: 'debian', dist: 'buster' }
           - { os: 'debian', dist: 'bullseye' }
-          - { os: 'el', dist: '7' }
+          - { os: 'debian', dist: 'bookworm' }
           - { os: 'el', dist: '8' }
-          - { os: 'fedora', dist: '34' }
           - { os: 'fedora', dist: '35' }
           - { os: 'fedora', dist: '36' }
-          - { os: 'ubuntu', dist: 'xenial' }
           - { os: 'ubuntu', dist: 'bionic' }
           - { os: 'ubuntu', dist: 'focal' }
           - { os: 'ubuntu', dist: 'jammy' }
+          - { os: 'ubuntu', dist: 'noble' }
 
     env:
       OS: ${{ matrix.platform.os }}
@@ -36,13 +33,13 @@ jobs:
 
     steps:
       - name: Clone the module
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
 
       - name: Clone the packpack tool
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: packpack/packpack
           path: packpack

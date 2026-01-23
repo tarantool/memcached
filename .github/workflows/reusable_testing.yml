@@ -34,7 +34,7 @@ jobs:
       - name: Setup python3 for tests
         uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: 3.9
 
       - name: Install build requirements
         run: sudo apt-get -y install libsasl2-dev
